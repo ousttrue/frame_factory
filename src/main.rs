@@ -36,7 +36,7 @@ unsafe extern "system" fn wndproc(
     match msg {
         WM_DESTROY => {
             PostQuitMessage(0);
-            return 0;
+            0
         }
         _ => DefWindowProcW(window, msg, wparam, lparam),
     }

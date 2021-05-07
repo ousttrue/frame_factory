@@ -36,7 +36,7 @@ unsafe extern "system" fn wndproc(
     match msg {
         WM_DESTROY => {
             PostQuitMessage(0);
-            0
+            return 0;
         }
         _ => DefWindowProcW(window, msg, wparam, lparam),
     }
@@ -229,14 +229,13 @@ impl Iterator for FrameIter {
     fn next(&mut self) -> Option<Self::Item> {
         unsafe {
             let mut msg: MSG = mem::zeroed();
-            while PeekMessageW(&mut msg, self.hwnd, 0, 0, PM_REMOVE) > 0 {
+            while PeekMessageW(&mut msg, ptr::null_mut(), 0, 0, PM_REMOVE) > 0 {
+                if msg.message == WM_QUIT {
+                    return None;
+                };
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
-
-            if msg.message == WM_QUIT {
-                return None;
-            };
         }
 
         Some(())

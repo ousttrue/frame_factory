@@ -88,68 +88,88 @@ fn create_window(class_name: &str, window_name: &str) -> Result<HWND, &'static s
     }
 }
 
+struct Renderer {
+    d3d_device: ComPtr<d3d11::ID3D11Device>,
+    d3d_context: ComPtr<d3d11::ID3D11DeviceContext>,
+    dxgi_swapchain: ComPtr<dxgi::IDXGISwapChain>,
+}
+
+impl Renderer {
+    fn new(hwnd: HWND) -> Result<Renderer, &'static str> {
+        let mut d3d_device: ComPtr<d3d11::ID3D11Device> = ComPtr::new();
+        let mut d3d_context: ComPtr<d3d11::ID3D11DeviceContext> = ComPtr::new();
+        let mut dxgi_swapchain: ComPtr<dxgi::IDXGISwapChain> = ComPtr::new();
+
+        let mut usage = dxgi::Usage::default();
+        usage.set_dxgi_usage(dxgi::USAGE_RENDER_TARGET_OUTPUT);
+        let swapchain_desc = dxgi::SwapChainDesc {
+            buffer_desc: dxgi::ModeDesc {
+                width: 1280,
+                height: 720,
+                format: dxgi::Format::R8G8B8A8Unorm,
+                ..Default::default()
+            },
+            sample_desc: dxgi::SampleDesc {
+                count: 1,
+                quality: 0,
+            },
+            buffer_count: 1,
+            buffer_usage: usage,
+            output_window: hwnd,
+            windowed: TRUE,
+            ..Default::default()
+        };
+
+        let feature_levels = [d3d11::FeatureLevel::Level_11_0];
+        let mut actual_feature_level: d3d11::FeatureLevel = feature_levels[0];
+        let result = unsafe {
+            d3d11::D3D11CreateDeviceAndSwapChain(
+                ptr::null(),
+                d3d11::DriverType::Hardware,
+                ptr::null_mut(),
+                d3d11::CREATE_DEVICE_DEBUG,
+                feature_levels.as_ptr(),
+                feature_levels.len() as u32,
+                d3d11::SDK_VERSION,
+                &swapchain_desc,
+                dxgi_swapchain.as_mut_ptr(),
+                d3d_device.as_mut_ptr(),
+                &mut actual_feature_level,
+                d3d_context.as_mut_ptr(),
+            )
+        };
+        if result != 0 {
+            return Err("D3D11CreateDeviceAndSwapChain");
+        }
+        assert!(!dxgi_swapchain.is_null());
+        assert!(!d3d_device.is_null());
+        assert!(!d3d_context.is_null());
+
+        Ok(Renderer {
+            dxgi_swapchain,
+            d3d_device,
+            d3d_context,
+        })
+    }
+}
+
 fn run() -> Result<(), Box<dyn error::Error>> {
     let hwnd = create_window("WindowClass", "D3D11 Demo")?;
 
-    let mut d3d_device: ComPtr<d3d11::ID3D11Device> = ComPtr::new();
-    let mut d3d_context: ComPtr<d3d11::ID3D11DeviceContext> = ComPtr::new();
-    let mut dxgi_swapchain: ComPtr<dxgi::IDXGISwapChain> = ComPtr::new();
-
-    let mut usage = dxgi::Usage::default();
-    usage.set_dxgi_usage(dxgi::USAGE_RENDER_TARGET_OUTPUT);
-
-    let swapchain_desc = dxgi::SwapChainDesc {
-        buffer_desc: dxgi::ModeDesc {
-            width: 1280,
-            height: 720,
-            format: dxgi::Format::R8G8B8A8Unorm,
-            ..Default::default()
-        },
-        sample_desc: dxgi::SampleDesc {
-            count: 1,
-            quality: 0,
-        },
-        buffer_count: 1,
-        buffer_usage: usage,
-        output_window: hwnd,
-        windowed: TRUE,
-        ..Default::default()
-    };
-
-    let feature_levels = [d3d11::FeatureLevel::Level_11_0];
-    let mut actual_feature_level: d3d11::FeatureLevel = feature_levels[0];
-
-    let result = unsafe {
-        d3d11::D3D11CreateDeviceAndSwapChain(
-            ptr::null(),
-            d3d11::DriverType::Hardware,
-            ptr::null_mut(),
-            d3d11::CREATE_DEVICE_DEBUG,
-            feature_levels.as_ptr(),
-            feature_levels.len() as u32,
-            d3d11::SDK_VERSION,
-            &swapchain_desc,
-            dxgi_swapchain.as_mut_ptr(),
-            d3d_device.as_mut_ptr(),
-            &mut actual_feature_level,
-            d3d_context.as_mut_ptr(),
-        )
-    };
-    assert_eq!(result, 0);
-    assert!(!dxgi_swapchain.is_null());
-    assert!(!d3d_device.is_null());
-    assert!(!d3d_context.is_null());
+    let renderer = Renderer::new(hwnd)?;
 
     let mut d3d_back_buffer: ComPtr<d3d11::ID3D11Texture2D> = ComPtr::new();
     let result = unsafe {
-        dxgi_swapchain.get_buffer(0, &d3d_back_buffer.iid(), d3d_back_buffer.as_mut_ptr())
+        renderer
+            .dxgi_swapchain
+            .get_buffer(0, &d3d_back_buffer.iid(), d3d_back_buffer.as_mut_ptr())
     };
     assert_eq!(result, 0);
     assert!(!d3d_back_buffer.is_null());
 
     let mut d3d_rtv: ComPtr<d3d11::ID3D11RenderTargetView> = ComPtr::new();
     let result = unsafe {
-        d3d_device.create_render_target_view(
+        renderer.d3d_device.create_render_target_view(
             d3d_back_buffer.as_ptr(),
             ptr::null(),
             d3d_rtv.as_mut_ptr(),
@@ -158,14 +178,18 @@ fn run() -> Result<(), Box<dyn error::Error>> {
     assert_eq!(result, 0);
     assert!(!d3d_rtv.is_null());
 
-    unsafe { d3d_context.om_set_render_targets(1, &d3d_rtv.as_ptr(), ptr::null()) };
+    unsafe {
+        renderer
+            .d3d_context
+            .om_set_render_targets(1, &d3d_rtv.as_ptr(), ptr::null())
+    };
 
     let viewport = d3d11::Viewport {
         width: 1280.0,
         height: 720.0,
         ..Default::default()
     };
-    unsafe { d3d_context.rs_set_viewports(1, &viewport) };
+    unsafe { renderer.d3d_context.rs_set_viewports(1, &viewport) };
 
     let mut msg: MSG = unsafe { mem::zeroed() };
     loop {
@@ -181,8 +205,12 @@ fn run() -> Result<(), Box<dyn error::Error>> {
         };
 
         unsafe {
-            d3d_context.clear_render_target_view(d3d_rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
-            dxgi_swapchain.present(0, dxgi::PresentFlags::default());
+            renderer
+                .d3d_context
+                .clear_render_target_view(d3d_rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
+            renderer
+                .dxgi_swapchain
+                .present(0, dxgi::PresentFlags::default());
         }
     }
 

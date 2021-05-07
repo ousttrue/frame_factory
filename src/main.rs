@@ -151,6 +151,13 @@ impl Renderer {
             d3d_context,
         })
     }
+
+    fn present(&self) {
+        unsafe {
+            self.dxgi_swapchain
+                .present(0, dxgi::PresentFlags::default());
+        }
+    }
 }
 
 struct RenderTarget {
@@ -186,6 +193,24 @@ impl RenderTarget {
 
         Ok(RenderTarget { d3d_rtv })
     }
+
+    fn prepare(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
+        unsafe {
+            // set render target
+            d3d_context.om_set_render_targets(1, &self.d3d_rtv.as_ptr(), ptr::null());
+
+            // viewport
+            let viewport = d3d11::Viewport {
+                width: 1280.0,
+                height: 720.0,
+                ..Default::default()
+            };
+            d3d_context.rs_set_viewports(1, &viewport);
+
+            // clear
+            d3d_context.clear_render_target_view(self.d3d_rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
+        }
+    }
 }
 
 fn run() -> Result<(), Box<dyn error::Error>> {
@@ -193,20 +218,8 @@ fn run() -> Result<(), Box<dyn error::Error>> {
 
     let renderer = Renderer::new(hwnd)?;
 
-    let render_target = RenderTarget::from_swapchain(&renderer.d3d_device, &renderer.dxgi_swapchain)?;
-
-    unsafe {
-        renderer
-            .d3d_context
-            .om_set_render_targets(1, &render_target.d3d_rtv.as_ptr(), ptr::null())
-    };
-
-    let viewport = d3d11::Viewport {
-        width: 1280.0,
-        height: 720.0,
-        ..Default::default()
-    };
-    unsafe { renderer.d3d_context.rs_set_viewports(1, &viewport) };
+    let render_target =
+        RenderTarget::from_swapchain(&renderer.d3d_device, &renderer.dxgi_swapchain)?;
 
     let mut msg: MSG = unsafe { mem::zeroed() };
     loop {
@@ -221,14 +234,9 @@ fn run() -> Result<(), Box<dyn error::Error>> {
             break;
         };
 
-        unsafe {
-            renderer
-                .d3d_context
-                .clear_render_target_view(render_target.d3d_rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
-            renderer
-                .dxgi_swapchain
-                .present(0, dxgi::PresentFlags::default());
-        }
+        render_target.prepare(&renderer.d3d_context);
+
+        renderer.present();
     }
 
     Ok(())

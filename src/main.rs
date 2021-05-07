@@ -4,10 +4,10 @@ extern crate kernel32;
 extern crate user32;
 extern crate winapi;
 
-use std::ffi::OsStr;
 use std::mem;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr;
+use std::{error, ffi::OsStr};
 
 use com_rs::ComPtr;
 use directx_sys::{d3d11, dxgi};
@@ -42,11 +42,9 @@ unsafe extern "system" fn wndproc(
     }
 }
 
-fn main() {
-    let class_name = utf16_str("WindowClass");
-    let window_title = utf16_str("D3D11 Demo");
-
-    let hwnd = unsafe {
+fn create_window(class_name: &str, window_name: &str) -> Result<HWND, &'static str> {
+    unsafe {
+        let class_name = utf16_str(class_name);
         let wcex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as u32,
             style: CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
@@ -61,8 +59,11 @@ fn main() {
             lpszClassName: class_name.as_ptr(),
             hIconSm: ptr::null_mut(),
         };
-        RegisterClassExW(&wcex);
+        if RegisterClassExW(&wcex) == 0 {
+            return Err("RegisterClassExWS");
+        }
 
+        let window_title = utf16_str(window_name);
         let hwnd = CreateWindowExW(
             WS_EX_APPWINDOW,
             class_name.as_ptr(),
@@ -77,12 +78,18 @@ fn main() {
             GetModuleHandleW(ptr::null()),
             ptr::null_mut(),
         );
+        if hwnd.is_null() {
+            return Err("CreateWindowExW");
+        }
 
         ShowWindow(hwnd, SW_SHOW);
         UpdateWindow(hwnd);
+        Ok(hwnd)
+    }
+}
 
-        hwnd
-    };
+fn run() -> Result<(), Box<dyn error::Error>> {
+    let hwnd = create_window("WindowClass", "D3D11 Demo")?;
 
     let mut d3d_device: ComPtr<d3d11::ID3D11Device> = ComPtr::new();
     let mut d3d_context: ComPtr<d3d11::ID3D11DeviceContext> = ComPtr::new();
@@ -178,4 +185,10 @@ fn main() {
             dxgi_swapchain.present(0, dxgi::PresentFlags::default());
         }
     }
+
+    Ok(())
+}
+
+fn main() {
+    run().unwrap();
 }

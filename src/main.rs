@@ -153,35 +153,52 @@ impl Renderer {
     }
 }
 
+struct RenderTarget {
+    d3d_rtv: ComPtr<d3d11::ID3D11RenderTargetView>,
+}
+
+impl RenderTarget {
+    fn from_swapchain(
+        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        dxgi_swapchain: &ComPtr<dxgi::IDXGISwapChain>,
+    ) -> Result<RenderTarget, &'static str> {
+        let mut d3d_back_buffer: ComPtr<d3d11::ID3D11Texture2D> = ComPtr::new();
+        let result = unsafe {
+            dxgi_swapchain.get_buffer(0, &d3d_back_buffer.iid(), d3d_back_buffer.as_mut_ptr())
+        };
+        if result != 0 {
+            return Err("ID3D11Texture2D::get_buffer");
+        }
+        assert!(!d3d_back_buffer.is_null());
+
+        let mut d3d_rtv: ComPtr<d3d11::ID3D11RenderTargetView> = ComPtr::new();
+        let result = unsafe {
+            d3d_device.create_render_target_view(
+                d3d_back_buffer.as_ptr(),
+                ptr::null(),
+                d3d_rtv.as_mut_ptr(),
+            )
+        };
+        if result != 0 {
+            return Err("create_render_target_view");
+        }
+        assert!(!d3d_rtv.is_null());
+
+        Ok(RenderTarget { d3d_rtv })
+    }
+}
+
 fn run() -> Result<(), Box<dyn error::Error>> {
     let hwnd = create_window("WindowClass", "D3D11 Demo")?;
 
     let renderer = Renderer::new(hwnd)?;
 
-    let mut d3d_back_buffer: ComPtr<d3d11::ID3D11Texture2D> = ComPtr::new();
-    let result = unsafe {
-        renderer
-            .dxgi_swapchain
-            .get_buffer(0, &d3d_back_buffer.iid(), d3d_back_buffer.as_mut_ptr())
-    };
-    assert_eq!(result, 0);
-    assert!(!d3d_back_buffer.is_null());
-
-    let mut d3d_rtv: ComPtr<d3d11::ID3D11RenderTargetView> = ComPtr::new();
-    let result = unsafe {
-        renderer.d3d_device.create_render_target_view(
-            d3d_back_buffer.as_ptr(),
-            ptr::null(),
-            d3d_rtv.as_mut_ptr(),
-        )
-    };
-    assert_eq!(result, 0);
-    assert!(!d3d_rtv.is_null());
+    let render_target = RenderTarget::from_swapchain(&renderer.d3d_device, &renderer.dxgi_swapchain)?;
 
     unsafe {
         renderer
             .d3d_context
-            .om_set_render_targets(1, &d3d_rtv.as_ptr(), ptr::null())
+            .om_set_render_targets(1, &render_target.d3d_rtv.as_ptr(), ptr::null())
     };
 
     let viewport = d3d11::Viewport {
@@ -207,7 +224,7 @@ fn run() -> Result<(), Box<dyn error::Error>> {
         unsafe {
             renderer
                 .d3d_context
-                .clear_render_target_view(d3d_rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
+                .clear_render_target_view(render_target.d3d_rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
             renderer
                 .dxgi_swapchain
                 .present(0, dxgi::PresentFlags::default());

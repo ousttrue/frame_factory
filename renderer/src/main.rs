@@ -1,3 +1,4 @@
+extern crate com_ptr;
 extern crate winapi;
 
 use std::mem;
@@ -5,18 +6,14 @@ use std::os::windows::ffi::OsStrExt;
 use std::ptr;
 use std::{error, ffi::OsStr};
 
+use com_ptr::ComPtr;
 use winapi::Interface;
 use winapi::{
     shared::minwindef::*,
     um::{libloaderapi, winuser},
 };
 use winapi::{
-    shared::{
-        dxgi,
-        dxgiformat::{DXGI_FORMAT_R8G8B8A8_UNORM},
-        dxgitype,
-        windef::*,
-    },
+    shared::{dxgi, dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM, dxgitype, windef::*},
     um::{d3d11, d3dcommon},
 };
 
@@ -114,9 +111,9 @@ impl Iterator for Window {
 }
 
 struct Renderer {
-    d3d_device: *mut d3d11::ID3D11Device,
-    d3d_context: *mut d3d11::ID3D11DeviceContext,
-    dxgi_swapchain: *mut dxgi::IDXGISwapChain,
+    d3d_device: ComPtr<d3d11::ID3D11Device>,
+    d3d_context: ComPtr<d3d11::ID3D11DeviceContext>,
+    dxgi_swapchain: ComPtr<dxgi::IDXGISwapChain>,
 }
 
 impl Renderer {
@@ -141,12 +138,9 @@ impl Renderer {
             ..Default::default()
         };
 
-        // let mut d3d_device: ComPtr<d3d11::ID3D11Device> = ComPtr::new();
-        // let mut d3d_context: ComPtr<d3d11::ID3D11DeviceContext> = ComPtr::new();
-        // let mut dxgi_swapchain: ComPtr<dxgi::IDXGISwapChain> = ComPtr::new();
         let feature_levels = [d3dcommon::D3D_FEATURE_LEVEL_11_0];
         let mut actual_feature_level = feature_levels[0];
-
+        
         let mut d3d_device: *mut d3d11::ID3D11Device = ptr::null_mut();
         let mut d3d_context: *mut d3d11::ID3D11DeviceContext = ptr::null_mut();
         let mut dxgi_swapchain: *mut dxgi::IDXGISwapChain = ptr::null_mut();
@@ -170,16 +164,16 @@ impl Renderer {
                 return Err("D3D11CreateDeviceAndSwapChain");
             }
             Ok(Renderer {
-                d3d_device: d3d_device,
-                d3d_context: d3d_context,
-                dxgi_swapchain: dxgi_swapchain,
+                d3d_device: ComPtr::from_raw(d3d_device),
+                d3d_context: ComPtr::from_raw(d3d_context),
+                dxgi_swapchain: ComPtr::from_raw(dxgi_swapchain),
             })
         }
     }
 
     fn present(&self) {
         unsafe {
-            self.dxgi_swapchain.as_ref().unwrap().Present(0, 0);
+            self.dxgi_swapchain.Present(0, 0);
         }
     }
 }
@@ -189,11 +183,14 @@ struct RenderTarget {
 }
 
 impl RenderTarget {
-    fn from_swapchain(d3d_device: *mut d3d11::ID3D11Device, dxgi_swapchain: *mut dxgi::IDXGISwapChain) -> Result<RenderTarget, &'static str> {
+    fn from_swapchain(
+        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        dxgi_swapchain: &ComPtr<dxgi::IDXGISwapChain>,
+    ) -> Result<RenderTarget, &'static str> {
         let mut d3d_back_buffer: *mut d3d11::ID3D11Texture2D = ptr::null_mut();
         let result = unsafe {
             let mut p: *mut *mut d3d11::ID3D11Texture2D = &mut d3d_back_buffer;
-            dxgi_swapchain.as_ref().unwrap().GetBuffer(
+            dxgi_swapchain.GetBuffer(
                 0,
                 &d3d11::ID3D11Texture2D::uuidof(),
                 p as *mut *mut winapi::ctypes::c_void,
@@ -206,24 +203,22 @@ impl RenderTarget {
 
         let mut d3d_rtv: *mut d3d11::ID3D11RenderTargetView = ptr::null_mut();
         let result = unsafe {
-                d3d_device.as_ref().unwrap()
-                .CreateRenderTargetView(d3d_back_buffer as *mut d3d11::ID3D11Resource, ptr::null(), &mut d3d_rtv)
+            d3d_device.CreateRenderTargetView(
+                d3d_back_buffer as *mut d3d11::ID3D11Resource,
+                ptr::null(),
+                &mut d3d_rtv,
+            )
         };
         if result != 0 {
             return Err("create_render_target_view");
         }
         assert!(!d3d_rtv.is_null());
 
-        unsafe {
-            Ok(RenderTarget {
-                d3d_rtv: d3d_rtv,
-            })
-        }
+        unsafe { Ok(RenderTarget { d3d_rtv: d3d_rtv }) }
     }
 
-    fn prepare(&self, d3d_context: *mut d3d11::ID3D11DeviceContext) {
+    fn prepare(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
         unsafe {
-            let d3d_context = d3d_context.as_ref().unwrap();
             // set render target
             d3d_context.OMSetRenderTargets(1, [self.d3d_rtv].as_ptr(), ptr::null_mut());
 
@@ -245,9 +240,9 @@ fn run() -> Result<(), Box<dyn error::Error>> {
     let window = Window::new("WindowClass", "D3D11 Demo")?;
     let renderer = Renderer::new(&window)?;
     let render_target =
-        RenderTarget::from_swapchain(renderer.d3d_device, renderer.dxgi_swapchain)?;
+        RenderTarget::from_swapchain(&renderer.d3d_device, &renderer.dxgi_swapchain)?;
     for _ in window {
-        render_target.prepare(renderer.d3d_context);
+        render_target.prepare(&renderer.d3d_context);
         renderer.present();
     }
     Ok(())

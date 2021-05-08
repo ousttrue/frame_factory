@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 winapi = { version = "0.3", features = ["impl-default", "winuser", "libloaderapi", "dxgi", "d3d11"] }
+com_ptr = "0.2.1"

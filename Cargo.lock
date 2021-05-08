@@ -10,10 +10,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "frame_factory"
+name = "renderer"
 version = "0.1.0"
 dependencies = [
  "com_ptr",
+ "winapi",
+]
+
+[[package]]
+name = "sample"
+version = "0.1.0"
+dependencies = [
+ "renderer",
  "winapi",
 ]
 

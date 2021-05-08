@@ -7,37 +7,53 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'frame_factory'",
+            "name": "Debug unit tests in library 'renderer'",
             "cargo": {
                 "args": [
-                    "build",
-                    "--bin=frame_factory",
-                    "--package=frame_factory"
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=renderer"
                 ],
                 "filter": {
-                    "name": "frame_factory",
-                    "kind": "bin"
+                    "name": "renderer",
+                    "kind": "lib"
                 }
             },
             "args": [],
-            "env": {
-                "RUST_BACKTRACE": "full",
-            },
             "cwd": "${workspaceFolder}"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'frame_factory'",
+            "name": "Debug executable 'sample'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=sample",
+                    "--package=sample"
+                ],
+                "filter": {
+                    "name": "sample",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'sample'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=frame_factory",
-                    "--package=frame_factory"
+                    "--bin=sample",
+                    "--package=sample"
                 ],
                 "filter": {
-                    "name": "frame_factory",
+                    "name": "sample",
                     "kind": "bin"
                 }
             },

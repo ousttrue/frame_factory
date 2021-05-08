@@ -1,5 +1,5 @@
 [package]
-name = "renderer"
+name = "sample"
 version = "0.1.0"
 authors = ["ousttrue <ousttrue@gmail.com>"]
 edition = "2018"
@@ -7,5 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-winapi = { version = "0.3", features = ["impl-default", "winuser", "libloaderapi", "dxgi", "d3d11"] }
-com_ptr = "0.2.1"
+winapi = { version = "0.3", features = ["impl-default", "winuser", "libloaderapi"] }
+renderer = { path = "../renderer" }

@@ -56,11 +56,6 @@ unsafe fn CompileShaderFromSource(
     Ok(ComPtr::from_raw(blob))
 }
 
-pub struct Shader {
-    pub vertex: ComPtr<d3d11::ID3D11VertexShader>,
-    pub pixel: ComPtr<d3d11::ID3D11PixelShader>,
-}
-
 fn to_dxgi_format(
     value_type: d3dcommon::D3D_REGISTER_COMPONENT_TYPE,
     mask: u8,
@@ -138,6 +133,12 @@ unsafe fn create_input_layout(
     Ok(ComPtr::from_raw(input_layout))
 }
 
+pub struct Shader {
+    pub vs: ComPtr<d3d11::ID3D11VertexShader>,
+    pub ps: ComPtr<d3d11::ID3D11PixelShader>,
+    pub input_layout: ComPtr<d3d11::ID3D11InputLayout>,
+}
+
 impl Shader {
     pub fn compile_vertex_shader(
         d3d_device: &ComPtr<d3d11::ID3D11Device>,
@@ -195,10 +196,16 @@ impl Shader {
         unsafe { Ok(ComPtr::from_raw(shader)) }
     }
 
-    pub fn new(
-        vertex: ComPtr<d3d11::ID3D11VertexShader>,
-        pixel: ComPtr<d3d11::ID3D11PixelShader>,
-    ) -> Shader {
-        Shader { vertex, pixel }
+    pub fn set(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
+        unsafe {
+            // VS
+            d3d_context.VSSetShader(self.vs.as_ptr(), ptr::null(), 0);
+
+            // PS
+            d3d_context.PSSetShader(self.ps.as_ptr(), ptr::null(), 0);
+
+            // IA InputLayout
+            d3d_context.IASetInputLayout(self.input_layout.as_ptr());
+        }
     }
 }

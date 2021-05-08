@@ -8,3 +8,4 @@ mod tests {
 
 pub mod renderer;
 pub mod render_target;
+pub mod shader;

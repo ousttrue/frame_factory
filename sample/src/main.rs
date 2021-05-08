@@ -11,7 +11,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let source = std::fs::read_to_string("simple.hlsl")?;
 
-    let vs = Shader::compile_vertex_shader(&renderer.d3d_device, &source, "vsMain\0")?;
+    let (vs, input_layout) = Shader::compile_vertex_shader(&renderer.d3d_device, &source, "vsMain\0")?;
     let ps = Shader::compile_pixel_shader(&renderer.d3d_device, &source, "psMain\0")?;
     let shader = Shader::new(vs, ps);
 

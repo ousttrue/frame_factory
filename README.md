@@ -1,6 +1,13 @@
 # frame_factory
 rust 練習
 
+## ToDo
+
+* Cube, MVP Matrix, RightHanded Y-UP
+* Texture
+* c++ frontend + imgui
+* glTF2
+
 ## Windows API
 
 * https://crates.io/crates/winapi

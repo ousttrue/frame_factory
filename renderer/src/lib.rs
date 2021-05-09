@@ -10,3 +10,4 @@ pub mod renderer;
 pub mod render_target;
 pub mod shader;
 pub mod vertex_buffer;
+pub mod com_util;

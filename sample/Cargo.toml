@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 winapi = { version = "0.3", features = ["impl-default", "winuser", "libloaderapi"] }
 renderer = { path = "../renderer" }
+cgmath = "0.18.0"

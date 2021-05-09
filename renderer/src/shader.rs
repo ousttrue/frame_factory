@@ -16,7 +16,7 @@ unsafe fn to_string(blob: &ComPtr<d3dcommon::ID3DBlob>) -> String {
     String::from_raw_parts(buf, blob.GetBufferSize(), blob.GetBufferSize())
 }
 
-unsafe fn CompileShaderFromSource(
+unsafe fn compile_shader_from_source(
     filename: &str,
     source: &str,
     entry_point: &str,
@@ -152,7 +152,7 @@ impl Shader {
         String,
     > {
         let compiled_vertex_shader =
-            unsafe { CompileShaderFromSource("vs\0", source, entry_point, "vs_4_0\0")? };
+            unsafe { compile_shader_from_source("vs\0", source, entry_point, "vs_4_0\0")? };
 
         let mut shader: *mut d3d11::ID3D11VertexShader = ptr::null_mut();
         let hr = unsafe {
@@ -178,7 +178,7 @@ impl Shader {
         source: &str,
         entry_point: &str,
     ) -> Result<ComPtr<d3d11::ID3D11PixelShader>, String> {
-        let compiled = unsafe { CompileShaderFromSource("ps\0", source, entry_point, "ps_4_0\0")? };
+        let compiled = unsafe { compile_shader_from_source("ps\0", source, entry_point, "ps_4_0\0")? };
 
         let mut shader: *mut d3d11::ID3D11PixelShader = ptr::null_mut();
         let hr = unsafe {

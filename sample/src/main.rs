@@ -9,7 +9,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let render_target =
         RenderTarget::from_swapchain(&renderer.d3d_device, &renderer.dxgi_swapchain)?;
 
-    let source = std::fs::read_to_string("simple.hlsl")?;
+    let source = std::fs::read_to_string("shaders/simple.hlsl")?;
 
     let (vs, input_layout) =
         Shader::compile_vertex_shader(&renderer.d3d_device, &source, "vsMain\0")?;

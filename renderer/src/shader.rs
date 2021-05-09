@@ -1,6 +1,6 @@
 use crate::com_util::{ComCreate, ComError};
 use com_ptr::ComPtr;
-use std::ptr;
+use std::{ffi::CStr, ptr};
 use winapi::{ctypes::c_void, shared::ntdef::HRESULT, Interface};
 use winapi::{
     shared::dxgiformat,
@@ -127,8 +127,116 @@ unsafe fn create_input_layout(
     )
 }
 
+pub struct ConstantBufferSlot {
+    pub name: String,
+    pub buffer: ComPtr<d3d11::ID3D11Buffer>,
+}
+
+impl ConstantBufferSlot {
+    pub fn new(
+        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        shader_desc: d3d11shader::D3D11_SHADER_BUFFER_DESC,
+    ) -> Result<ConstantBufferSlot, ComError> {
+        let desc = d3d11::D3D11_BUFFER_DESC {
+            ByteWidth: shader_desc.Size,
+            Usage: d3d11::D3D11_USAGE_DEFAULT,
+            BindFlags: d3d11::D3D11_BIND_CONSTANT_BUFFER,
+            ..Default::default()
+        };
+
+        let buffer = ComPtr::create_if_success(|pp| unsafe {
+            d3d_device.CreateBuffer(&desc, ptr::null_mut(), pp)
+        })?;
+
+        Ok(ConstantBufferSlot {
+            name: unsafe { String::from(CStr::from_ptr(shader_desc.Name).to_str().unwrap()) },
+            buffer,
+        })
+    }
+}
+
+pub struct ConstantBufferShader {
+    pub slots: Vec<Box<ConstantBufferSlot>>,
+}
+
+impl ConstantBufferShader {
+    unsafe fn new(
+        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        reflection: &ComPtr<d3d11shader::ID3D11ShaderReflection>,
+    ) -> Result<ConstantBufferShader, ComError> {
+        let mut shader_desc = d3d11shader::D3D11_SHADER_DESC::default();
+        reflection.GetDesc(&mut shader_desc);
+
+        let mut constant_buffer = ConstantBufferShader { slots: vec![] };
+
+        // analize constant buffer
+        for i in 0..shader_desc.ConstantBuffers {
+            let cb = reflection.GetConstantBufferByIndex(i).as_ref().unwrap();
+            let mut desc = d3d11shader::D3D11_SHADER_BUFFER_DESC::default();
+            cb.GetDesc(&mut desc);
+            println!(
+                "[{}: {}] {} bytes",
+                i,
+                CStr::from_ptr(desc.Name).to_str().unwrap(),
+                desc.Size
+            );
+
+            let buffer = Box::new(ConstantBufferSlot::new(d3d_device, desc)?);
+            constant_buffer.slots.push(buffer);
+
+            // impl->AddCBSlot(pDevice, desc.Size);
+            for j in 0..desc.Variables {
+                let v = cb.GetVariableByIndex(j).as_ref().unwrap();
+                let mut var = d3d11shader::D3D11_SHADER_VARIABLE_DESC::default();
+                v.GetDesc(&mut var);
+                println!(
+                    "({}) {} {} {} bytes",
+                    j,
+                    CStr::from_ptr(var.Name).to_str().unwrap(),
+                    var.StartOffset,
+                    var.Size
+                );
+                // impl->AddCBVariable(i, vdesc);
+            }
+        }
+
+        Ok(constant_buffer)
+    }
+
+    pub fn update(
+        &self,
+        d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>,
+        slot_index: usize,
+        data: *const c_void,
+    ) {
+        if let Some(slot) = self.slots.get(slot_index) {
+            let slot = slot.as_ref();
+            let p: *mut d3d11::ID3D11Buffer = slot.buffer.as_ptr();
+            unsafe {
+                d3d_context.UpdateSubresource(
+                    p as *mut d3d11::ID3D11Resource,
+                    0,
+                    ptr::null_mut(),
+                    data,
+                    0,
+                    0,
+                )
+            };
+        }
+    }
+
+    pub fn set_vs(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
+        for (i, slot) in self.slots.iter().enumerate() {
+            unsafe {
+                d3d_context.VSSetConstantBuffers(i as u32, 1, &mut slot.buffer.as_ptr());
+            };
+        }
+    }
+}
+
 pub struct Shader {
     pub vs: ComPtr<d3d11::ID3D11VertexShader>,
+    pub vs_constant_buffer: ConstantBufferShader,
     pub ps: ComPtr<d3d11::ID3D11PixelShader>,
     pub input_layout: ComPtr<d3d11::ID3D11InputLayout>,
 }
@@ -142,6 +250,7 @@ impl Shader {
         (
             ComPtr<d3d11::ID3D11VertexShader>,
             ComPtr<d3d11::ID3D11InputLayout>,
+            ConstantBufferShader,
         ),
         ComError,
     > {
@@ -166,7 +275,9 @@ impl Shader {
             create_input_layout(d3d_device, &compiled_vertex_shader, &reflection, pp)
         })?;
 
-        Ok((shader, input_layout))
+        let constant_buffer = unsafe { ConstantBufferShader::new(d3d_device, &reflection)? };
+
+        Ok((shader, input_layout, constant_buffer))
     }
 
     pub fn compile_pixel_shader(
@@ -198,6 +309,7 @@ impl Shader {
         unsafe {
             // VS
             d3d_context.VSSetShader(self.vs.as_ptr(), ptr::null(), 0);
+            self.vs_constant_buffer.set_vs(d3d_context);
 
             // PS
             d3d_context.PSSetShader(self.ps.as_ptr(), ptr::null(), 0);

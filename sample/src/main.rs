@@ -1,10 +1,15 @@
 mod window;
 
+use winapi::ctypes::c_void;
+
 extern crate renderer;
-use renderer::{render_target::RenderTarget, renderer::Renderer, shader::Shader, vertex_buffer::VertexBuffer};
+use renderer::{
+    render_target::RenderTarget, renderer::Renderer, shader::Shader, vertex_buffer::VertexBuffer,
+};
 
 extern crate cgmath;
-use cgmath::One;
+use cgmath::{Matrix, One};
+
 
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let hwnd = window::create_window("WindowClass", "D3D11 Demo")?;
@@ -14,13 +19,14 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let source = std::fs::read_to_string("shaders/mvp.hlsl")?;
 
-    let (vs, input_layout) =
+    let (vs, input_layout, vs_constant_buffer) =
         Shader::compile_vertex_shader(&renderer.d3d_device, &source, "vsMain\0").unwrap();
     let ps = Shader::compile_pixel_shader(&renderer.d3d_device, &source, "psMain\0").unwrap();
     let shader = Shader {
         vs,
         ps,
         input_layout,
+        vs_constant_buffer,
     };
 
     let vertex_buffer = VertexBuffer::create_triangle(&renderer.d3d_device)?;
@@ -31,11 +37,19 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let model: cgmath::Matrix4<f32> = cgmath::Matrix4::one();
 
     for _ in window::main_loop(hwnd) {
+        // update constant buffer
+        shader
+            .vs_constant_buffer
+            .update(&renderer.d3d_context, 0, model.as_ptr() as *const c_void);
+
+        // frame
         render_target.prepare(&renderer.d3d_context);
 
+        // model
         shader.set(&renderer.d3d_context);
         vertex_buffer.draw(&renderer.d3d_context);
 
+        // flush
         renderer.present();
     }
     Ok(())

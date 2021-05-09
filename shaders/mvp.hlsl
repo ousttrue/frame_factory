@@ -3,15 +3,15 @@ struct VS_IN
     float3 Position: POSITION;
 };
 
-// each frame
-cbuffer cb0
+
+cbuffer frame
 {
 	row_major matrix ViewMatrix;
 	row_major matrix ProjectionMatrix;
 }
 
-// each model
-cbuffer cb1
+
+cbuffer model
 {
 	row_major matrix ModelMatrix;
 }
@@ -24,7 +24,7 @@ struct PS_IN
 PS_IN vsMain(VS_IN input)
 {
     PS_IN output;
-	output.Position = float4(input.Position, 1);
+	output.Position = mul(float4(input.Position, 1), ModelMatrix);
     return output;    
 }
 

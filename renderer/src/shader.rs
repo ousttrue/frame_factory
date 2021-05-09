@@ -1,7 +1,7 @@
-use crate::com_util::ComCreate;
+use crate::com_util::{ComCreate, ComError};
 use com_ptr::ComPtr;
 use std::ptr;
-use winapi::{ctypes::c_void, Interface};
+use winapi::{ctypes::c_void, shared::ntdef::HRESULT, Interface};
 use winapi::{
     shared::dxgiformat,
     um::{d3d11, d3dcommon, d3dcompiler, winnt::LPCSTR},
@@ -21,7 +21,7 @@ unsafe fn compile_shader_from_source(
     source: &str,
     entry_point: &str,
     shader_model: &str,
-) -> Result<*mut d3dcommon::ID3DBlob, String> {
+) -> Result<*mut d3dcommon::ID3DBlob, ComError> {
     let shader_flags = d3dcompiler::D3DCOMPILE_ENABLE_STRICTNESS;
 
     // #if defined(DEBUG) || defined(_DEBUG)
@@ -50,7 +50,7 @@ unsafe fn compile_shader_from_source(
     if hr != 0 {
         let error = ComPtr::from_raw(error);
         let message = to_string(&error);
-        return Err(message);
+        return Err(ComError::Message(message));
     }
 
     Ok(blob)
@@ -77,27 +77,22 @@ fn to_dxgi_format(
 
 unsafe fn create_reflection(
     compiled_vertex_shader: &ComPtr<d3dcommon::ID3DBlob>,
-) -> Result<*mut d3d11shader::ID3D11ShaderReflection, String> {
-    let mut reflection: *mut d3d11shader::ID3D11ShaderReflection = ptr::null_mut();
-    let p: *mut *mut d3d11shader::ID3D11ShaderReflection = &mut reflection;
-    let hr = D3DReflect(
+    reflection: *mut *mut d3d11shader::ID3D11ShaderReflection,
+) -> HRESULT {
+    D3DReflect(
         compiled_vertex_shader.GetBufferPointer(),
         compiled_vertex_shader.GetBufferSize(),
         &d3d11shader::ID3D11ShaderReflection::uuidof(),
-        p as *mut *mut c_void,
-    );
-    if hr != 0 {
-        return Err(String::from("D3DReflect"));
-    }
-    Ok(reflection)
+        reflection as *mut *mut c_void,
+    )
 }
 
 unsafe fn create_input_layout(
     d3d_device: &ComPtr<d3d11::ID3D11Device>,
     compiled_vertex_shader: &ComPtr<d3dcommon::ID3DBlob>,
-) -> Result<*mut d3d11::ID3D11InputLayout, String> {
-    let reflection = ComPtr::new(|| create_reflection(compiled_vertex_shader))?;
-
+    reflection: &ComPtr<d3d11shader::ID3D11ShaderReflection>,
+    input_layout: *mut *mut d3d11::ID3D11InputLayout,
+) -> HRESULT {
     // Create InputLayout
     let mut shaderdesc = d3d11shader::D3D11_SHADER_DESC::default();
     reflection.GetDesc(&mut shaderdesc);
@@ -120,22 +115,16 @@ unsafe fn create_input_layout(
     }
 
     if elements.len() == 0 {
-        return Err(String::from("no elements"));
+        return -1;
     }
 
-    let mut input_layout: *mut d3d11::ID3D11InputLayout = ptr::null_mut();
-    let hr = d3d_device.CreateInputLayout(
+    d3d_device.CreateInputLayout(
         elements.as_ptr(),
         elements.len() as UINT,
         compiled_vertex_shader.GetBufferPointer(),
         compiled_vertex_shader.GetBufferSize(),
-        &mut input_layout,
-    );
-    if hr != 0 {
-        return Err(String::from("CreateInputLayout"));
-    }
-
-    Ok(input_layout)
+        input_layout,
+    )
 }
 
 pub struct Shader {
@@ -154,7 +143,7 @@ impl Shader {
             ComPtr<d3d11::ID3D11VertexShader>,
             ComPtr<d3d11::ID3D11InputLayout>,
         ),
-        String,
+        ComError,
     > {
         let compiled_vertex_shader = ComPtr::new(|| unsafe {
             compile_shader_from_source("vs\0", source, entry_point, "vs_4_0\0")
@@ -167,11 +156,15 @@ impl Shader {
                 ptr::null_mut(),
                 pp,
             )
-        })
-        .map_err(|_hr| "CreateVertexShader")?;
+        })?;
 
-        let input_layout =
-            ComPtr::new(|| unsafe { create_input_layout(d3d_device, &compiled_vertex_shader) })?;
+        let reflection = ComPtr::create_if_success(|pp| unsafe {
+            create_reflection(&compiled_vertex_shader, pp)
+        })?;
+
+        let input_layout = ComPtr::create_if_success(|pp| unsafe {
+            create_input_layout(d3d_device, &compiled_vertex_shader, &reflection, pp)
+        })?;
 
         Ok((shader, input_layout))
     }
@@ -180,7 +173,7 @@ impl Shader {
         d3d_device: &ComPtr<d3d11::ID3D11Device>,
         source: &str,
         entry_point: &str,
-    ) -> Result<ComPtr<d3d11::ID3D11PixelShader>, String> {
+    ) -> Result<ComPtr<d3d11::ID3D11PixelShader>, ComError> {
         let compiled = ComPtr::new(|| unsafe {
             compile_shader_from_source("ps\0", source, entry_point, "ps_4_0\0")
         })?;
@@ -195,7 +188,7 @@ impl Shader {
             )
         };
         if hr != 0 {
-            return Err(String::from("fail to CreatePixelShader"));
+            return Err(ComError::StaticMessage("fail to CreatePixelShader"));
         }
 
         unsafe { Ok(ComPtr::from_raw(shader)) }

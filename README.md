@@ -19,7 +19,7 @@ rust 練習
 * [x] Window と Renderer を dll 分離
 * [x] c++ frontend + imgui
 * [x] MVP Matrix, ConstantBuffer
-* [ ] WinMain, imgui frame event
+* [ ] WinMain, WindowResize
 * [ ] Camera, Mouse
 * [ ] Cube, RightHanded Y-UP
 * [ ] SubMesh Material

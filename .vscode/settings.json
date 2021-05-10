@@ -4,5 +4,6 @@
         "dxgi",
         "dxgiformat",
         "hwnd"
-    ]
+    ],
+    "C_Cpp.clang_format_style": "file"
 }

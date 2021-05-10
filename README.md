@@ -4,7 +4,7 @@ rust 練習
 ## ToDo
 
 * [x] Window と Renderer を dll 分離
-* [ ] c++ frontend + imgui
+* [x] c++ frontend + imgui
 * [x] MVP Matrix, ConstantBuffer
 * [ ] Cube, RightHanded Y-UP
 * [ ] SubMesh Material

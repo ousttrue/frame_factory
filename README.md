@@ -3,12 +3,14 @@ rust 練習
 
 ## ToDo
 
-* Cube, MVP Matrix, RightHanded Y-UP
-* SubMesh Material
-* Camera, Mouse
-* Texture
-* c++ frontend + imgui
-* glTF2
+* [x] Window と Renderer を dll 分離
+* [ ] c++ frontend + imgui
+* [x] MVP Matrix, ConstantBuffer
+* [ ] Cube, RightHanded Y-UP
+* [ ] SubMesh Material
+* [ ] Camera, Mouse
+* [ ] Texture
+* [ ] glTF2
 
 ## Windows API
 

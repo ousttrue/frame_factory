@@ -47,6 +47,7 @@ dependencies = [
 name = "renderer"
 version = "0.1.0"
 dependencies = [
+ "cgmath",
  "com_ptr",
  "winapi",
 ]

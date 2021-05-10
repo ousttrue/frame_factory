@@ -8,7 +8,7 @@ use cgmath::{Matrix, One};
 use render_target::RenderTarget;
 use renderer::Renderer;
 use shader::Shader;
-use std::ffi::c_void;
+use std::{ffi::c_void, ptr};
 use vertex_buffer::VertexBuffer;
 use winapi::shared::windef::HWND;
 
@@ -23,14 +23,17 @@ mod tests {
 static mut G_RENDERER: Option<Renderer> = None;
 
 #[no_mangle]
-pub extern "C" fn FRAME_FACTORY_initialize(hwnd: HWND) -> bool {
+pub extern "C" fn FRAME_FACTORY_initialize(hwnd: HWND) -> *const c_void {
     if let Ok(renderer) = renderer::Renderer::new(hwnd) {
-        unsafe { G_RENDERER = Some(renderer) }
-
-        true
-    } else {
-        false
+        unsafe {
+            G_RENDERER = Some(renderer);
+            if let Some(renderer) = &G_RENDERER {
+                return renderer.d3d_device.as_ptr() as *const c_void;
+            }
+        }
     }
+
+    ptr::null()
 }
 
 struct Scene {
@@ -53,9 +56,6 @@ impl Scene {
         // model
         self.shader.set(&renderer.d3d_context);
         self.vertex_buffer.draw(&renderer.d3d_context);
-
-        // flush
-        renderer.present();
     }
 }
 
@@ -115,5 +115,12 @@ pub extern "C" fn FRAME_FACTORY_sample_render() {
         if let Some(scene) = unsafe { &G_SCENE } {
             scene.render(&renderer);
         }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_flush() {
+    if let Some(renderer) = unsafe { &G_RENDERER } {
+        renderer.present();
     }
 }

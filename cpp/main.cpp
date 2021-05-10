@@ -2,16 +2,22 @@
 #include <vector>
 #include <stdint.h>
 #include <fstream>
+#include <d3d11.h>
+#include <wrl/client.h>
+#include <imgui.h>
+#include <backends/imgui_impl_win32.h>
+#include <backends/imgui_impl_dx11.h>
 
 extern "C"
 {
-    auto FRAME_FACTORY_initialize(HWND hwnd) -> bool;
+    auto FRAME_FACTORY_initialize(HWND hwnd) -> void *;
 
     auto FRAME_FACTORY_sample_scene(const char *source, size_t source_size,
                                     const char *vs_main, const char *ps_main)
         -> bool;
 
     auto FRAME_FACTORY_sample_render() -> void;
+    auto FRAME_FACTORY_flush() -> void;
 }
 
 LRESULT CALLBACK wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -66,7 +72,7 @@ auto create_window(const wchar_t *class_name, const wchar_t *window_name)
 static std::vector<char> ReadAllBytes(char const *filename)
 {
     std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
-    if(!ifs)
+    if (!ifs)
     {
         return {};
     }
@@ -101,7 +107,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (!FRAME_FACTORY_initialize(hwnd))
+    auto d3d = (ID3D11Device *)FRAME_FACTORY_initialize(hwnd);
+    if (!d3d)
     {
         return 2;
     }
@@ -119,9 +126,50 @@ int main(int argc, char **argv)
         return 4;
     }
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable
+    // Keyboard Controls io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; //
+    // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    // ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplWin32_Init(hwnd);
+
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
+    d3d->GetImmediateContext(&context);
+
+    ImGui_ImplDX11_Init(d3d, context.Get());
+
+    bool show_demo_window = true;
     while (main_loop(hwnd))
     {
+        {
+            // Start the Dear ImGui frame
+            ImGui_ImplDX11_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui::NewFrame();
+            ImGui::ShowDemoWindow(&show_demo_window);
+            // Rendering
+            ImGui::Render();
+        }
+
+        // const float clear_color_with_alpha[4] = { clear_color.x *
+        // clear_color.w, clear_color.y * clear_color.w, clear_color.z *
+        // clear_color.w, clear_color.w };
+        // g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView,
+        // NULL);
+        // g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView,
+        // clear_color_with_alpha);
         FRAME_FACTORY_sample_render();
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+        FRAME_FACTORY_flush();
     }
 
     return 0;

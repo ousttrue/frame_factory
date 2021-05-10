@@ -1,14 +1,27 @@
-# frame_factory
+# frame_factory 🏭
 rust 練習
+
+```
++------------------------------+
+|rust renderer dll             |
+|Scene Resource Renderer(D3D11)|
++------------------------------+
+  A            A
+  |            |
++--------+     |
+| Window |     |
+|c++ main|-> imgui
++--------+
+```
 
 ## ToDo
 
 * [x] Window と Renderer を dll 分離
 * [x] c++ frontend + imgui
 * [x] MVP Matrix, ConstantBuffer
+* [ ] Camera, Mouse
 * [ ] Cube, RightHanded Y-UP
 * [ ] SubMesh Material
-* [ ] Camera, Mouse
 * [ ] Texture
 * [ ] glTF2
 

@@ -37,14 +37,14 @@ pub extern "C" fn FRAME_FACTORY_initialize(hwnd: HWND) -> *const c_void {
 
     unsafe {
         G_SCENE = None;
-        if let Some(renderer) = &G_RENDERER {
-            if let Ok(debug) = renderer
-                .d3d_device
-                .query_interface::<d3d11sdklayers::ID3D11Debug>()
-            {
-                debug.ReportLiveDeviceObjects(d3d11sdklayers::D3D11_RLDO_DETAIL);
-            }
-        }
+        // if let Some(renderer) = &G_RENDERER {
+        //     if let Ok(debug) = renderer
+        //         .d3d_device
+        //         .query_interface::<d3d11sdklayers::ID3D11Debug>()
+        //     {
+        //         debug.ReportLiveDeviceObjects(d3d11sdklayers::D3D11_RLDO_DETAIL);
+        //     }
+        // }
         G_RENDERER = None;
     }
     ptr::null()

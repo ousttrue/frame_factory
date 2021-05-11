@@ -1,7 +1,10 @@
 use std::ptr;
 
 use com_ptr::ComPtr;
-use winapi::{shared::{dxgi, dxgiformat, dxgitype, minwindef, windef::HWND}, um::{d3d11, d3dcommon}};
+use winapi::{
+    shared::{dxgi, dxgiformat, dxgitype, minwindef, windef::HWND},
+    um::{d3d11, d3dcommon},
+};
 
 pub struct Renderer {
     pub d3d_device: ComPtr<d3d11::ID3D11Device>,
@@ -33,7 +36,7 @@ impl Renderer {
 
         let feature_levels = [d3dcommon::D3D_FEATURE_LEVEL_11_0];
         let mut actual_feature_level = feature_levels[0];
-        
+
         let mut d3d_device: *mut d3d11::ID3D11Device = ptr::null_mut();
         let mut d3d_context: *mut d3d11::ID3D11DeviceContext = ptr::null_mut();
         let mut dxgi_swapchain: *mut dxgi::IDXGISwapChain = ptr::null_mut();
@@ -66,8 +69,14 @@ impl Renderer {
 
     pub fn present(&self) {
         unsafe {
+            self.d3d_context.OMSetRenderTargets(0, ptr::null(), ptr::null_mut());
             self.dxgi_swapchain.Present(0, 0);
         }
     }
 }
 
+impl Drop for Renderer {
+    fn drop(&mut self) {
+        println!("Renderer.drop");
+    }
+}

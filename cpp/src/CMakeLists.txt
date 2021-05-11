@@ -1,6 +1,7 @@
 SET(TARGET_NAME "cpp_sample")
 ADD_EXECUTABLE(${TARGET_NAME} WIN32
     main.cpp
+    window_util.cpp
 )
 
 TARGET_LINK_DIRECTORIES(${TARGET_NAME} PRIVATE

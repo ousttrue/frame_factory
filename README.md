@@ -22,6 +22,7 @@ rust 練習
 * [x] WinMain
 * [x] WindowResize
 * [ ] docking, RenderTarget
+* [ ] save window state
 * [ ] Camera, Mouse
 * [ ] Cube, RightHanded Y-UP
 * [ ] SubMesh Material

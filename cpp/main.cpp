@@ -120,7 +120,8 @@ auto main_loop(HWND hwnd) -> bool
     return true;
 }
 
-int main(int argc, char **argv)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine, int nCmdShow)
 {
     auto hwnd = create_window(L"CLASS_NAME", L"WINDOW_NAME");
     if (!hwnd)

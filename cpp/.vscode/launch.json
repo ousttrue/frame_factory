@@ -18,7 +18,7 @@
                     "value": "${env:PATH};${workspaceFolder}\\..\\rust\\target\\debug"
                 }
             ],
-            "console": "externalTerminal"
+            "console": "integratedTerminal"
         },
    ]
 }

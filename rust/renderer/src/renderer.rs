@@ -18,8 +18,8 @@ impl Renderer {
         // usage.set_dxgi_usage(dxgi::USAGE_RENDER_TARGET_OUTPUT);
         let swapchain_desc = dxgi::DXGI_SWAP_CHAIN_DESC {
             BufferDesc: dxgitype::DXGI_MODE_DESC {
-                Width: 1280,
-                Height: 720,
+                // Width: 1280,
+                // Height: 720,
                 Format: dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM,
                 ..Default::default()
             },

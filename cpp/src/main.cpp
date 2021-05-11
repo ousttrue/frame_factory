@@ -72,20 +72,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
         d3d->GetImmediateContext(&context);
 
-        // ImGui_ImplDX11_Init(d3d, context.Get());
+        ImGui_ImplDX11_Init(d3d, context.Get());
 
         bool show_demo_window = true;
         while (main_loop(hwnd))
         {
-            // {
-            //     // Start the Dear ImGui frame
-            //     ImGui_ImplDX11_NewFrame();
-            //     ImGui_ImplWin32_NewFrame();
-            //     ImGui::NewFrame();
-            //     ImGui::ShowDemoWindow(&show_demo_window);
-            //     // Rendering
-            //     ImGui::Render();
-            // }
+            {
+                // Start the Dear ImGui frame
+                ImGui_ImplDX11_NewFrame();
+                ImGui_ImplWin32_NewFrame();
+                ImGui::NewFrame();
+                ImGui::ShowDemoWindow(&show_demo_window);
+                // Rendering
+                ImGui::Render();
+            }
 
             // const float clear_color_with_alpha[4] = { clear_color.x *
             // clear_color.w, clear_color.y * clear_color.w, clear_color.z *
@@ -95,19 +95,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             // g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView,
             // clear_color_with_alpha);
             FRAME_FACTORY_sample_render();
-            // ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
             FRAME_FACTORY_flush();
         }
 
-        // // Cleanup
-        // ImGui_ImplDX11_Shutdown();
-        // ImGui_ImplWin32_Shutdown();
-        // ImGui::DestroyContext();
+        // Cleanup
+        ImGui_ImplDX11_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+        ImGui::DestroyContext();
     }
 
     FRAME_FACTORY_destory();
 
-    // CleanupDeviceD3D();
     DestroyWindow(hwnd);
     UnregisterClassW(CLASS_NAME, GetModuleHandle(nullptr));
 

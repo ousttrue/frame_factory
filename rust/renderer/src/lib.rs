@@ -24,11 +24,13 @@ static mut G_RENDERER: Option<Renderer> = None;
 
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_initialize(hwnd: HWND) -> *const c_void {
-    if let Ok(renderer) = renderer::Renderer::new(hwnd) {
-        unsafe {
-            G_RENDERER = Some(renderer);
-            if let Some(renderer) = &G_RENDERER {
-                return renderer.d3d_device.as_ptr() as *const c_void;
+    if !hwnd.is_null() {
+        if let Ok(renderer) = renderer::Renderer::new(hwnd) {
+            unsafe {
+                G_RENDERER = Some(renderer);
+                if let Some(renderer) = &G_RENDERER {
+                    return renderer.d3d_device.as_ptr() as *const c_void;
+                }
             }
         }
     }

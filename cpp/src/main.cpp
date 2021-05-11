@@ -75,7 +75,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         ImGui_ImplDX11_Init(d3d, context.Get());
 
         bool show_demo_window = true;
-        while (main_loop(hwnd))
+
+        for(WindowState state={}; !state.closed; state=main_loop(hwnd))
         {
             {
                 // Start the Dear ImGui frame
@@ -87,15 +88,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 ImGui::Render();
             }
 
-            // const float clear_color_with_alpha[4] = { clear_color.x *
-            // clear_color.w, clear_color.y * clear_color.w, clear_color.z *
-            // clear_color.w, clear_color.w };
-            // g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView,
-            // NULL);
-            // g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView,
-            // clear_color_with_alpha);
+            FRAME_FACTORY_new_frame(state.width, state.height);
+            // draw scene
             FRAME_FACTORY_sample_render();
+            // GUI
             ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+            // flush backbuffer
             FRAME_FACTORY_flush();
         }
 

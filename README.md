@@ -20,7 +20,8 @@ rust 練習
 * [x] c++ frontend + imgui
 * [x] MVP Matrix, ConstantBuffer
 * [x] WinMain
-* [ ] WindowResize
+* [x] WindowResize
+* [ ] docking, RenderTarget
 * [ ] Camera, Mouse
 * [ ] Cube, RightHanded Y-UP
 * [ ] SubMesh Material

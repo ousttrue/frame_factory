@@ -2,24 +2,24 @@ use std::ptr;
 
 use com_ptr::ComPtr;
 use winapi::{
+    Interface,
     shared::{dxgi, dxgiformat, dxgitype, minwindef, windef::HWND},
     um::{d3d11, d3dcommon},
 };
+
+use crate::com_util::{ComCreate, ComError};
 
 pub struct Renderer {
     pub d3d_device: ComPtr<d3d11::ID3D11Device>,
     pub d3d_context: ComPtr<d3d11::ID3D11DeviceContext>,
     pub dxgi_swapchain: ComPtr<dxgi::IDXGISwapChain>,
+    pub back_buffer: Option<ComPtr<d3d11::ID3D11RenderTargetView>>,
 }
 
 impl Renderer {
     pub fn new(hwnd: HWND) -> Result<Renderer, &'static str> {
-        // let mut usage = dxgi::Usage::default();
-        // usage.set_dxgi_usage(dxgi::USAGE_RENDER_TARGET_OUTPUT);
         let swapchain_desc = dxgi::DXGI_SWAP_CHAIN_DESC {
             BufferDesc: dxgitype::DXGI_MODE_DESC {
-                // Width: 1280,
-                // Height: 720,
                 Format: dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM,
                 ..Default::default()
             },
@@ -64,13 +64,60 @@ impl Renderer {
                 d3d_device: ComPtr::from_raw(d3d_device),
                 d3d_context: ComPtr::from_raw(d3d_context),
                 dxgi_swapchain: ComPtr::from_raw(dxgi_swapchain),
+                back_buffer: None,
             })
         }
     }
 
+    pub fn get_or_create_backbuffer(
+        &mut self,
+        width: u32,
+        height: u32,
+    ) -> Result<ComPtr<d3d11::ID3D11RenderTargetView>, ComError> {
+        if let Some(rtv) = &self.back_buffer {
+            let mut desc = dxgi::DXGI_SWAP_CHAIN_DESC::default();
+            unsafe { self.dxgi_swapchain.GetDesc(&mut desc) };
+            if desc.BufferDesc.Width == width && desc.BufferDesc.Height == height {
+                // already created
+                return Ok(rtv.clone());
+            }
+        }
+
+        // clear
+        self.back_buffer = None;
+
+        // resize
+        unsafe {
+            self.dxgi_swapchain
+                .ResizeBuffers(0, width, height, dxgiformat::DXGI_FORMAT_UNKNOWN, 0)
+        };
+
+        let d3d_back_buffer: ComPtr<d3d11::ID3D11Resource> =
+            ComPtr::create_if_success(|pp| unsafe {
+                self.dxgi_swapchain.GetBuffer(
+                    0,
+                    &d3d11::ID3D11Texture2D::uuidof(),
+                    pp as *mut *mut winapi::ctypes::c_void,
+                )
+            })?;
+
+        let d3d_rtv: ComPtr<d3d11::ID3D11RenderTargetView> =
+            ComPtr::create_if_success(|pp| unsafe {
+                self.d3d_device
+                    .CreateRenderTargetView(d3d_back_buffer.as_ptr(), ptr::null(), pp)
+            })?;
+
+        let clone = d3d_rtv.clone();
+
+        self.back_buffer = Some(d3d_rtv);
+
+        Ok(clone)
+    }
+
     pub fn present(&self) {
         unsafe {
-            self.d3d_context.OMSetRenderTargets(0, ptr::null(), ptr::null_mut());
+            self.d3d_context
+                .OMSetRenderTargets(0, ptr::null(), ptr::null_mut());
             self.dxgi_swapchain.Present(0, 0);
         }
     }

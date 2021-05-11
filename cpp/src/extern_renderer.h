@@ -14,6 +14,7 @@ extern "C"
                                     const char *vs_main, const char *ps_main)
         -> bool;
 
+    auto FRAME_FACTORY_new_frame(uint32_t width, uint32_t height) -> void;
     auto FRAME_FACTORY_sample_render() -> void;
     auto FRAME_FACTORY_flush() -> void;
 }

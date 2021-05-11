@@ -71,18 +71,24 @@ auto create_window(const wchar_t *class_name, const wchar_t *window_name)
     return hwnd;
 }
 
-auto main_loop(HWND hwnd) -> bool
+auto main_loop(HWND hwnd) -> WindowState
 {
+    WindowState state{};
     MSG msg;
     while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE) > 0)
     {
         if (msg.message == WM_QUIT)
         {
-            return false;
+            state.closed = true;
+            break;
         }
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
 
-    return true;
+    RECT rect;
+    GetClientRect(hwnd, &rect);
+    state.width = rect.right;
+    state.height = rect.bottom;
+    return state;
 }

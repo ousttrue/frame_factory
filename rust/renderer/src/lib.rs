@@ -1,16 +1,17 @@
 mod com_util;
-mod render_target;
 mod renderer;
 mod shader;
 mod vertex_buffer;
 
 use cgmath::{Matrix, One};
-use render_target::RenderTarget;
 use renderer::Renderer;
 use shader::Shader;
 use std::{ffi::c_void, ptr};
 use vertex_buffer::VertexBuffer;
-use winapi::{shared::windef::HWND, um::d3d11sdklayers};
+use winapi::{
+    shared::windef::HWND,
+    um::{d3d11, d3d11sdklayers},
+};
 
 #[cfg(test)]
 mod tests {
@@ -53,7 +54,6 @@ pub extern "C" fn FRAME_FACTORY_initialize(hwnd: HWND) -> *const c_void {
 struct Scene {
     shader: Shader,
     model: cgmath::Matrix4<f32>,
-    render_target: RenderTarget,
     vertex_buffer: VertexBuffer,
 }
 
@@ -63,9 +63,6 @@ impl Scene {
         self.shader
             .vs_constant_buffer
             .update(&renderer.d3d_context, 0, self.model.as_ptr());
-
-        // frame
-        self.render_target.prepare(&renderer.d3d_context);
 
         // model
         self.shader.set(&renderer.d3d_context);
@@ -83,9 +80,6 @@ pub extern "C" fn FRAME_FACTORY_sample_scene(
     ps_main: *const u8,
 ) -> bool {
     if let Some(renderer) = unsafe { &G_RENDERER } {
-        let render_target =
-            RenderTarget::from_swapchain(&renderer.d3d_device, &renderer.dxgi_swapchain).unwrap();
-
         if let Ok((vs, input_layout, vs_constant_buffer)) =
             Shader::compile_vertex_shader(&renderer.d3d_device, source, source_size, "vsMain\0")
         {
@@ -108,7 +102,6 @@ pub extern "C" fn FRAME_FACTORY_sample_scene(
                     let scene = Scene {
                         shader,
                         model,
-                        render_target,
                         vertex_buffer,
                     };
 
@@ -117,6 +110,41 @@ pub extern "C" fn FRAME_FACTORY_sample_scene(
                     return true;
                 }
             }
+        }
+    }
+
+    false
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_new_frame(width: u32, height: u32) -> bool {
+    if let Some(renderer) = unsafe { &mut G_RENDERER } {
+        if let Ok(rtv) = renderer.get_or_create_backbuffer(width, height) {
+            // render_target.prepare(&renderer.d3d_context);
+
+            unsafe {
+                // clear
+                renderer
+                    .d3d_context
+                    .ClearRenderTargetView(rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
+
+                // set render target
+                renderer.d3d_context.OMSetRenderTargets(
+                    1,
+                    [rtv.as_ptr()].as_ptr(),
+                    ptr::null_mut(),
+                );
+
+                // viewport
+                let viewport = d3d11::D3D11_VIEWPORT {
+                    Width: width as f32,
+                    Height: height as f32,
+                    ..Default::default()
+                };
+                renderer.d3d_context.RSSetViewports(1, &viewport);
+            }
+
+            return true;
         }
     }
 

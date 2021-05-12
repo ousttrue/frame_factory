@@ -64,7 +64,7 @@ impl VertexBuffer {
         })
     }
 
-    pub fn draw(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
+    pub fn draw(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
         let buffers = [self.vertex_buffer.as_ptr()];
         let strides = [self.stride as UINT];
         let offsets = [0 as UINT];

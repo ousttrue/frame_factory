@@ -206,7 +206,7 @@ impl ConstantBufferShader {
 
     pub fn update<T>(
         &self,
-        d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>,
+        d3d_context: &d3d11::ID3D11DeviceContext,
         slot_index: usize,
         data: *const T,
     ) {
@@ -226,7 +226,7 @@ impl ConstantBufferShader {
         }
     }
 
-    pub fn set_vs(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
+    pub fn set_vs(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
         for (i, slot) in self.slots.iter().enumerate() {
             unsafe {
                 d3d_context.VSSetConstantBuffers(i as u32, 1, &mut slot.buffer.as_ptr());
@@ -308,7 +308,7 @@ impl Shader {
         unsafe { Ok(ComPtr::from_raw(shader)) }
     }
 
-    pub fn set(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
+    pub fn set(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
         unsafe {
             // VS
             d3d_context.VSSetShader(self.vs.as_ptr(), ptr::null(), 0);

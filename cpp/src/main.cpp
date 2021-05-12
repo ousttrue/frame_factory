@@ -59,7 +59,7 @@ public:
         swapChainDesc.SampleDesc.Count = 1;
 
         UINT createDeviceFlags = 0;
-#if _DEBUG
+#if DEBUG
         createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
@@ -276,39 +276,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 1;
     }
 
-    auto d3d = DX11::create(window->handle());
-    if (!d3d)
     {
-        return 2;
-    }
-
-    auto source = ReadAllBytes("../shaders/mvp.hlsl");
-    if (source.empty())
-    {
-        return 3;
-    }
-
-    float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
-    {
-        RustRenderer rust(d3d->device().Get(), source.data(), source.size());
-        ImGuiApp gui(window->handle(), d3d->device().Get(),
-                     d3d->context().Get());
-        for (WindowState state = {}; !state.closed; state = window->main_loop())
+        auto d3d = DX11::create(window->handle());
+        if (!d3d)
         {
-            // update imgui
-            auto func = [&rust, &d3d](int x, int y, int w, int h) {
-                return rust.render(d3d->device().Get(), d3d->context().Get(), w,
-                                   h);
-            };
-            gui.update(func);
+            return 2;
+        }
 
-            // render d3d
-            if (!d3d->new_frame(state.width, state.height, clearColor))
+        auto source = ReadAllBytes("../shaders/mvp.hlsl");
+        if (source.empty())
+        {
+            return 3;
+        }
+
+        float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
+        {
+            RustRenderer rust(d3d->device().Get(), source.data(),
+                              source.size());
+            ImGuiApp gui(window->handle(), d3d->device().Get(),
+                         d3d->context().Get());
+            for (WindowState state = {}; !state.closed;
+                 state = window->main_loop())
             {
-                return 4;
+                // update imgui
+                auto func = [&rust, &d3d](int x, int y, int w, int h) {
+                    return rust.render(d3d->device().Get(),
+                                       d3d->context().Get(), w, h);
+                };
+                gui.update(func);
+
+                // render d3d
+                if (!d3d->new_frame(state.width, state.height, clearColor))
+                {
+                    return 4;
+                }
+                gui.render();
+                d3d->flush();
             }
-            gui.render();
-            d3d->flush();
         }
     }
 

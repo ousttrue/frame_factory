@@ -5,13 +5,17 @@ mod vertex_buffer;
 
 use cgmath::{Matrix, One};
 use com_ptr::ComPtr;
+use com_util::{ComCreate, ComError};
 use renderer::Renderer;
 use shader::Shader;
 use std::{ffi::c_void, ptr};
 use vertex_buffer::VertexBuffer;
 use winapi::{
-    shared::windef::HWND,
-    um::{d3d11, d3d11sdklayers},
+    shared::{dxgi, dxgiformat, dxgitype, windef::HWND},
+    um::{
+        d3d11::{self, ID3D11Resource},
+        d3d11sdklayers,
+    },
 };
 
 #[cfg(test)]
@@ -22,22 +26,130 @@ mod tests {
     }
 }
 
+struct RenderTarget {
+    width: u32,
+    height: u32,
+    texture: ComPtr<d3d11::ID3D11Texture2D>,
+    rtv: ComPtr<d3d11::ID3D11RenderTargetView>,
+    srv: ComPtr<d3d11::ID3D11ShaderResourceView>,
+}
+
+impl RenderTarget {
+    fn create(
+        d3d_device: &d3d11::ID3D11Device,
+        width: u32,
+        height: u32,
+    ) -> Result<RenderTarget, ComError> {
+        // create width x height texture
+        let desc = d3d11::D3D11_TEXTURE2D_DESC {
+            Width: width,
+            Height: height,
+            MipLevels: 1,
+            ArraySize: 1,
+            Format: dxgiformat::DXGI_FORMAT_B8G8R8X8_UNORM,
+            SampleDesc: dxgitype::DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            Usage: d3d11::D3D11_USAGE_DEFAULT,
+            BindFlags: d3d11::D3D11_BIND_SHADER_RESOURCE | d3d11::D3D11_BIND_RENDER_TARGET,
+            ..Default::default()
+        };
+        let texture = ComPtr::create_if_success(|pp| unsafe {
+            d3d_device.CreateTexture2D(&desc, ptr::null(), pp)
+        })?;
+
+        // rtv
+        let rtv = ComPtr::create_if_success(|pp| unsafe {
+            d3d_device.CreateRenderTargetView(
+                texture.as_ptr() as *mut ID3D11Resource,
+                ptr::null(),
+                pp,
+            )
+        })?;
+
+        // srv
+        let srv = ComPtr::create_if_success(|pp| unsafe {
+            d3d_device.CreateShaderResourceView(
+                texture.as_ptr() as *mut ID3D11Resource,
+                ptr::null(),
+                pp,
+            )
+        })?;
+
+        Ok(RenderTarget {
+            width,
+            height,
+            texture,
+            rtv,
+            srv,
+        })
+    }
+
+    fn set_and_clear(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
+        // clear
+        unsafe {
+            d3d_context.ClearRenderTargetView(self.rtv.as_ptr(), &[0.2f32, 0.2f32, 0.2f32, 1.0f32])
+        };
+
+        // set backbuffer
+        let rtv_list = [self.rtv.as_ptr()];
+        unsafe { d3d_context.OMSetRenderTargets(1, rtv_list.as_ptr(), ptr::null_mut()) };
+
+        let viewports = d3d11::D3D11_VIEWPORT {
+            TopLeftX: 0.0f32,
+            TopLeftY: 0.0f32,
+            Width: self.width as f32,
+            Height: self.height as f32,
+            MinDepth: 0.0f32,
+            MaxDepth: 1.0f32,
+        };
+        unsafe { d3d_context.RSSetViewports(1, &viewports) };
+    }
+}
+
 struct Scene {
     shader: Shader,
     model: cgmath::Matrix4<f32>,
     vertex_buffer: VertexBuffer,
+    render_target: Option<RenderTarget>,
 }
 
 impl Scene {
-    fn render(&self, d3d_device: &d3d11::ID3D11Device, d3d_context: &d3d11::ID3D11DeviceContext) {
-        // update constant buffer
-        self.shader
-            .vs_constant_buffer
-            .update(d3d_context, 0, self.model.as_ptr());
+    fn get_or_create_rtv(&mut self, d3d_device: &d3d11::ID3D11Device, width: u32, height: u32) {
+        if let Some(render_target) = &self.render_target {
+            if render_target.width == width && render_target.height == height {
+                return;
+            }
+        }
 
-        // model
-        self.shader.set(d3d_context);
-        self.vertex_buffer.draw(d3d_context);
+        self.render_target = RenderTarget::create(d3d_device, width, height).ok();
+    }
+
+    fn render(
+        &mut self,
+        d3d_device: &d3d11::ID3D11Device,
+        d3d_context: &d3d11::ID3D11DeviceContext,
+        width: u32,
+        height: u32,
+    ) -> *const d3d11::ID3D11ShaderResourceView {
+        self.get_or_create_rtv(d3d_device, width, height);
+        if let Some(render_target) = &self.render_target {
+            render_target.set_and_clear(d3d_context);
+
+            // update constant buffer
+            self.shader
+                .vs_constant_buffer
+                .update(d3d_context, 0, self.model.as_ptr());
+
+            // model
+            self.shader.set(d3d_context);
+            self.vertex_buffer.draw(d3d_context);
+
+            render_target.srv.as_ptr()
+        } else {
+            ptr::null()
+        }
     }
 }
 
@@ -80,6 +192,7 @@ pub extern "C" fn FRAME_FACTORY_sample_create(
                     shader,
                     model,
                     vertex_buffer,
+                    render_target: None,
                 };
 
                 unsafe { G_SCENE = Some(scene) };
@@ -97,10 +210,19 @@ pub extern "C" fn FRAME_FACTORY_sample_create(
 pub extern "C" fn FRAME_FACTORY_sample_render(
     device: *mut d3d11::ID3D11Device,
     context: *mut d3d11::ID3D11DeviceContext,
-) {
-    if let Some(scene) = unsafe { &G_SCENE } {
+    width: u32,
+    height: u32,
+) -> *const d3d11::ID3D11ShaderResourceView {
+    if let Some(scene) = unsafe { &mut G_SCENE } {
         unsafe {
-            scene.render(device.as_ref().unwrap(), context.as_ref().unwrap());
+            return scene.render(
+                device.as_ref().unwrap(),
+                context.as_ref().unwrap(),
+                width,
+                height,
+            );
         }
     }
+
+    ptr::null()
 }

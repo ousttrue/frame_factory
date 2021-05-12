@@ -21,7 +21,8 @@ rust 練習
 * [x] MVP Matrix, ConstantBuffer
 * [x] WinMain
 * [x] WindowResize
-* [ ] docking, RenderTarget
+* [x] RenderTarget
+* [ ] docking
 * [ ] save window state
 * [ ] Camera, Mouse
 * [ ] Cube, RightHanded Y-UP

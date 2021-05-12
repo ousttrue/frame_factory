@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <vector>
 #include <fstream>
+#include <functional>
 #include <wrl/client.h>
 #include <imgui.h>
 #include <wrl/client.h>
@@ -155,6 +156,8 @@ public:
     }
 };
 
+using ViewFunc = std::function<ID3D11ShaderResourceView *(int, int, int, int)>;
+
 class ImGuiApp
 {
     bool show_demo_window = true;
@@ -180,6 +183,7 @@ public:
         ImGui_ImplWin32_Init(hwnd);
         ImGui_ImplDX11_Init(device, context);
     }
+
     ~ImGuiApp()
     {
         // Cleanup
@@ -187,16 +191,53 @@ public:
         ImGui_ImplWin32_Shutdown();
         ImGui::DestroyContext();
     }
-    void update()
+
+    void update(const ViewFunc &render)
     {
         // Start the Dear ImGui frame
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
-        ImGui::ShowDemoWindow(&show_demo_window);
-        // Rendering
+
+        gui(render);
+
+        // end
         ImGui::Render();
     }
+
+    void gui(const ViewFunc &render)
+    {
+        // demo
+        if (show_demo_window)
+        {
+            ImGui::ShowDemoWindow(&show_demo_window);
+        }
+
+        // 3d view
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        if (ImGui::Begin("render target", nullptr,
+                         ImGuiWindowFlags_NoScrollbar |
+                             ImGuiWindowFlags_NoScrollWithMouse))
+        {
+            auto size = ImGui::GetContentRegionAvail();
+            auto pos = ImGui::GetWindowPos();
+            auto frameHeight = ImGui::GetFrameHeight();
+            auto mouseXY = ImGui::GetMousePos();
+
+            // render
+            auto x = mouseXY.x - pos.x;
+            auto y = mouseXY.y - pos.y - frameHeight;
+
+            auto renderTarget =
+                render((int)x, (int)y, (int)size.x, (int)size.y);
+
+            ImGui::ImageButton((ImTextureID)renderTarget, size,
+                               ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), 0);
+        }
+        ImGui::End();
+        ImGui::PopStyleVar();
+    }
+
     void render()
     {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -218,10 +259,11 @@ public:
     {
         FRAME_FACTORY_sample_destroy();
     }
-    
-    void render(ID3D11Device *device, ID3D11DeviceContext *context)
+
+    ID3D11ShaderResourceView *render(ID3D11Device *device,
+                                     ID3D11DeviceContext *context, int w, int h)
     {
-        FRAME_FACTORY_sample_render(device, context);
+        return FRAME_FACTORY_sample_render(device, context, w, h);
     }
 };
 
@@ -246,6 +288,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 3;
     }
 
+    float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
     {
         RustRenderer rust(d3d->device().Get(), source.data(), source.size());
         ImGuiApp gui(window->handle(), d3d->device().Get(),
@@ -253,15 +296,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         for (WindowState state = {}; !state.closed; state = window->main_loop())
         {
             // update imgui
-            gui.update();
+            auto func = [&rust, &d3d](int x, int y, int w, int h) {
+                return rust.render(d3d->device().Get(), d3d->context().Get(), w,
+                                   h);
+            };
+            gui.update(func);
 
             // render d3d
-            float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
-            if(!d3d->new_frame(state.width, state.height, clearColor))
+            if (!d3d->new_frame(state.width, state.height, clearColor))
             {
                 return 4;
             }
-            rust.render(d3d->device().Get(), d3d->context().Get());
             gui.render();
             d3d->flush();
         }

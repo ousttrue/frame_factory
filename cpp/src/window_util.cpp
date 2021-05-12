@@ -8,7 +8,7 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,
                                                              LPARAM lParam);
 
 // Win32 message handler
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         return true;
@@ -36,8 +36,20 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
-auto create_window(const wchar_t *class_name, const wchar_t *window_name)
-    -> HWND
+SampleWindow::SampleWindow(ATOM window_register, HWND hwnd)
+    : m_window_register(window_register), m_hwnd(hwnd)
+{
+}
+
+SampleWindow::~SampleWindow()
+{
+    DestroyWindow(m_hwnd);
+    UnregisterClassW((const wchar_t *)m_window_register,
+                     GetModuleHandle(nullptr));
+}
+
+std::shared_ptr<SampleWindow>
+SampleWindow::create(const wchar_t *class_name, const wchar_t *window_name)
 {
     WNDCLASSEXW wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXW);
@@ -52,7 +64,8 @@ auto create_window(const wchar_t *class_name, const wchar_t *window_name)
     wcex.hCursor = nullptr;
     wcex.lpszClassName = class_name;
     wcex.hIconSm = nullptr;
-    if (RegisterClassExW(&wcex) == 0)
+    auto window_register = RegisterClassExW(&wcex);
+    if (window_register == 0)
     {
         return nullptr;
     }
@@ -68,10 +81,15 @@ auto create_window(const wchar_t *class_name, const wchar_t *window_name)
 
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
-    return hwnd;
+    if (!hwnd)
+    {
+        return nullptr;
+    }
+
+    return std::shared_ptr<SampleWindow>(new SampleWindow(window_register, hwnd));
 }
 
-auto main_loop(HWND hwnd) -> WindowState
+auto SampleWindow::main_loop() -> WindowState
 {
     WindowState state{};
     MSG msg;
@@ -87,8 +105,8 @@ auto main_loop(HWND hwnd) -> WindowState
     }
 
     RECT rect;
-    GetClientRect(hwnd, &rect);
-    state.width = rect.right;
-    state.height = rect.bottom;
+    GetClientRect(m_hwnd, &rect);
+    state.width = (uint16_t)rect.right;
+    state.height = (uint16_t)rect.bottom;
     return state;
 }

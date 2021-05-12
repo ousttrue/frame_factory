@@ -28,13 +28,13 @@ static std::vector<char> ReadAllBytes(char const *filename)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 {
-    auto hwnd = create_window(CLASS_NAME, L"CPP_SAMPLE");
-    if (!hwnd)
+    auto window = SampleWindow::create(CLASS_NAME, L"CPP_SAMPLE");
+    if (!window)
     {
         return 1;
     }
 
-    auto d3d = FRAME_FACTORY_initialize(hwnd);
+    auto d3d = FRAME_FACTORY_initialize(window->handle());
     if (!d3d)
     {
         return 2;
@@ -66,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     // ImGui::StyleColorsClassic();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(hwnd);
+    ImGui_ImplWin32_Init(window->handle());
 
     {
         Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
@@ -76,7 +76,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         bool show_demo_window = true;
 
-        for(WindowState state={}; !state.closed; state=main_loop(hwnd))
+        for(WindowState state={}; !state.closed; state=window->main_loop())
         {
             {
                 // Start the Dear ImGui frame
@@ -104,9 +104,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
     FRAME_FACTORY_destory();
-
-    DestroyWindow(hwnd);
-    UnregisterClassW(CLASS_NAME, GetModuleHandle(nullptr));
 
     return 0;
 }

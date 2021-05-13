@@ -26,7 +26,6 @@ static std::vector<char> ReadAllBytes(char const *filename)
     return buffer;
 }
 
-
 using ViewFunc = std::function<ID3D11ShaderResourceView *(int, int, int, int)>;
 
 class ImGuiApp
@@ -131,7 +130,7 @@ public:
         FRAME_FACTORY_sample_destroy();
     }
 
-    ID3D11ShaderResourceView *render(ID3D11Device *device,
+    bool render(ID3D11Device *device,
                                      ID3D11DeviceContext *context, int w, int h)
     {
         return FRAME_FACTORY_sample_render(device, context, w, h);
@@ -171,8 +170,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             {
                 // update imgui
                 auto func = [&rust, &d3d](int x, int y, int w, int h) {
-                    return rust.render(d3d->device().Get(),
-                                       d3d->context().Get(), w, h);
+                    auto srv =
+                        d3d->setup_render_target(w, h);
+                    if (!rust.render(d3d->device().Get(), d3d->context().Get(),
+                                     w, h))
+                    {
+                        return (ID3D11ShaderResourceView*)nullptr;
+                    }
+                    return srv;
                 };
                 gui.update(func);
 

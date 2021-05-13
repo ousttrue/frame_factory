@@ -112,19 +112,19 @@ struct Scene {
     shader: Shader,
     model: cgmath::Matrix4<f32>,
     vertex_buffer: VertexBuffer,
-    render_target: Option<RenderTarget>,
+    // render_target: Option<RenderTarget>,
 }
 
 impl Scene {
-    fn get_or_create_rtv(&mut self, d3d_device: &d3d11::ID3D11Device, width: u32, height: u32) {
-        if let Some(render_target) = &self.render_target {
-            if render_target.width == width && render_target.height == height {
-                return;
-            }
-        }
+    // fn get_or_create_rtv(&mut self, d3d_device: &d3d11::ID3D11Device, width: u32, height: u32) {
+    //     if let Some(render_target) = &self.render_target {
+    //         if render_target.width == width && render_target.height == height {
+    //             return;
+    //         }
+    //     }
 
-        self.render_target = RenderTarget::create(d3d_device, width, height).ok();
-    }
+    //     self.render_target = RenderTarget::create(d3d_device, width, height).ok();
+    // }
 
     fn render(
         &mut self,
@@ -132,10 +132,10 @@ impl Scene {
         d3d_context: &d3d11::ID3D11DeviceContext,
         width: u32,
         height: u32,
-    ) -> *const d3d11::ID3D11ShaderResourceView {
-        self.get_or_create_rtv(d3d_device, width, height);
-        if let Some(render_target) = &self.render_target {
-            render_target.set_and_clear(d3d_context);
+    ) {
+        // self.get_or_create_rtv(d3d_device, width, height);
+        // if let Some(render_target) = &self.render_target {
+            // render_target.set_and_clear(d3d_context);
 
             // update constant buffer
             self.shader
@@ -146,10 +146,10 @@ impl Scene {
             self.shader.set(d3d_context);
             self.vertex_buffer.draw(d3d_context);
 
-            render_target.srv.as_ptr()
-        } else {
-            ptr::null()
-        }
+            // render_target.srv.as_ptr()
+        // } else {
+        //     ptr::null()
+        // }
     }
 }
 
@@ -192,7 +192,6 @@ pub extern "C" fn FRAME_FACTORY_sample_create(
                     shader,
                     model,
                     vertex_buffer,
-                    render_target: None,
                 };
 
                 unsafe { G_SCENE = Some(scene) };
@@ -212,17 +211,18 @@ pub extern "C" fn FRAME_FACTORY_sample_render(
     context: *mut d3d11::ID3D11DeviceContext,
     width: u32,
     height: u32,
-) -> *const d3d11::ID3D11ShaderResourceView {
+) -> bool {
     if let Some(scene) = unsafe { &mut G_SCENE } {
         unsafe {
-            return scene.render(
+            scene.render(
                 device.as_ref().unwrap(),
                 context.as_ref().unwrap(),
                 width,
                 height,
             );
+            return true;
         }
     }
 
-    ptr::null()
+    false
 }

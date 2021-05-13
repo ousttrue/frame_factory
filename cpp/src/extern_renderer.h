@@ -9,6 +9,6 @@ extern "C"
                                      const char *ps_main) -> bool;
     auto FRAME_FACTORY_sample_render(ID3D11Device *device,
                                      ID3D11DeviceContext *context, int w, int h)
-        -> ID3D11ShaderResourceView *;
+        -> bool;
     auto FRAME_FACTORY_sample_destroy() -> void;
 }

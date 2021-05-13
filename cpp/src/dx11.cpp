@@ -101,3 +101,102 @@ void DX11::flush()
 {
     m_swapchain->Present(0, 0);
 }
+
+struct RenderTarget
+{
+    int width;
+    int height;
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+    Microsoft::WRL::ComPtr<ID3D11RenderTargetView> rtv;
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+
+    static std::shared_ptr<RenderTarget> create(ID3D11Device *device, int w,
+                                                int h)
+    {
+        if (w <= 0 || h <= 0)
+        {
+            return nullptr;
+        }
+
+        auto p = std::make_shared<RenderTarget>();
+        p->width = w;
+        p->height = h;
+
+        D3D11_TEXTURE2D_DESC desc = {0};
+        desc.Width = w;
+        desc.Height = h;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+        desc.SampleDesc.Count = 1;
+        desc.SampleDesc.Quality = 0;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+        if (FAILED(device->CreateTexture2D(&desc, nullptr, &p->texture)))
+        {
+            return nullptr;
+        }
+
+        // create RTV
+        if (FAILED(device->CreateRenderTargetView(p->texture.Get(), nullptr,
+                                                  &p->rtv)))
+        {
+            return nullptr;
+        }
+
+        // create SRV
+        if (FAILED(device->CreateShaderResourceView(p->texture.Get(), nullptr,
+                                                    &p->srv)))
+        {
+            return nullptr;
+        }
+
+        return p;
+    }
+
+    void set_and_clear_rtv(ID3D11DeviceContext *context)
+    {
+        if (rtv)
+        {
+            float clear[] = {0.2f, 0.2f, 0.2f, 1.0f};
+            context->ClearRenderTargetView(rtv.Get(), clear);
+        }
+
+        // set backbuffer & depthbuffer
+        ID3D11RenderTargetView *rtv_list[] = {rtv.Get()};
+        context->OMSetRenderTargets(1, rtv_list, nullptr);
+        D3D11_VIEWPORT viewports[] = {
+            {
+                .TopLeftX = 0,
+                .TopLeftY = 0,
+                .Width = (float)width,
+                .Height = (float)height,
+                .MinDepth = 0,
+                .MaxDepth = 1.0f,
+            },
+        };
+        context->RSSetViewports(_countof(viewports), viewports);
+    }
+};
+
+ID3D11ShaderResourceView *DX11::setup_render_target(int w, int h)
+{
+    if (m_render_target &&
+        (m_render_target->width != w || m_render_target->height != h))
+    {
+        // clear
+        m_render_target = nullptr;
+    }
+
+    if (!m_render_target)
+    {
+        m_render_target = RenderTarget::create(m_device.Get(), w, h);
+        if (!m_render_target)
+        {
+            return nullptr;
+        }
+    }
+
+    m_render_target->set_and_clear_rtv(m_context.Get());
+    return m_render_target->srv.Get();
+}

@@ -24,7 +24,7 @@ struct PS_IN
 PS_IN vsMain(VS_IN input)
 {
     PS_IN output;
-	output.Position = mul(float4(input.Position, 1), ModelMatrix);
+	output.Position = mul(float4(input.Position, 1), mul(ModelMatrix, mul(ViewMatrix, ProjectionMatrix)));
     return output;    
 }
 

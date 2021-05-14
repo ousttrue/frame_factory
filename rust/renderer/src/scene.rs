@@ -1,8 +1,34 @@
 use cgmath::{Matrix, One};
-use winapi::um::d3d11;
+use winapi::um::{d3d11, winuser::DefMDIChildProcW};
 
 use super::rendertarget::RenderTarget;
 use crate::{com_util::ComError, shader::Shader, vertex_buffer::VertexBuffer};
+
+#[repr(C)]
+struct c0 {
+    view: [f32; 16],
+    projection: [f32; 16],
+}
+
+#[repr(C)]
+struct c1 {
+    model: [f32; 16],
+}
+
+struct Camera {
+    view: cgmath::Matrix4<f32>,
+    projection: cgmath::Matrix4<f32>,
+}
+
+impl Camera {
+    fn persepective(fovy: cgmath::Deg<f32>, aspect: f32, near: f32, far: f32) -> Camera {
+        let fovy = cgmath::Rad::from(fovy);
+        let projection: cgmath::Matrix4<f32> = cgmath::perspective(fovy, aspect, near, far);
+        let view: cgmath::Matrix4<f32> =
+            cgmath::Matrix4::from_translation(cgmath::Vector3::new(0f32, 0f32, -1.0f32));
+        Camera { view, projection }
+    }
+}
 
 pub struct Scene {
     shader: Shader,
@@ -10,6 +36,7 @@ pub struct Scene {
     vertex_buffer: VertexBuffer,
 
     render_target: Option<RenderTarget>,
+    camera: Camera,
 }
 
 impl Scene {
@@ -31,9 +58,6 @@ impl Scene {
         };
         let vertex_buffer = VertexBuffer::create_triangle(d3d_device)?;
 
-        let fovy = cgmath::Rad::from(cgmath::Deg(60.0));
-        let projection: cgmath::Matrix4<f32> = cgmath::perspective(fovy, 1.0, 0.1, 2.0);
-        let view: cgmath::Matrix4<f32> = cgmath::Matrix4::one();
         let model: cgmath::Matrix4<f32> = cgmath::Matrix4::one();
 
         Ok(Scene {
@@ -41,6 +65,7 @@ impl Scene {
             model,
             vertex_buffer,
             render_target: None,
+            camera: Camera::persepective(cgmath::Deg(60f32), 1.0f32, 0.1f32, 100f32),
         })
     }
 
@@ -69,9 +94,29 @@ impl Scene {
             render_target.set_and_clear(d3d_context);
 
             // update constant buffer
+            let frame = c0 {
+                view: Default::default(),
+                projection: Default::default(),
+            };
+            unsafe {
+                std::ptr::copy_nonoverlapping(
+                    self.camera.view.as_ptr() as *const u8,
+                    frame.view.as_ptr() as *mut u8,
+                    64,
+                );
+                std::ptr::copy_nonoverlapping(
+                    self.camera.projection.as_ptr() as *const u8,
+                    frame.projection.as_ptr() as *mut u8,
+                    64,
+                );
+            }
             self.shader
                 .vs_constant_buffer
-                .update(d3d_context, 0, self.model.as_ptr());
+                .update(d3d_context, 0, &frame);
+
+            self.shader
+                .vs_constant_buffer
+                .update(d3d_context, 1, &self.model);
 
             // model
             self.shader.set(d3d_context);

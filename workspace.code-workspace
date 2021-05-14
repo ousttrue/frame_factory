@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "cpp"
+		},
+		{
+			"path": "shaders"
 		}
 	],
     "settings": {

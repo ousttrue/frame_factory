@@ -1,5 +1,8 @@
 #include "window_util.h"
 #include <imgui.h>
+#include "save_windowplacement.h"
+
+const auto JSON_FILE = L"cpp_sample.json";
 
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd,
@@ -30,6 +33,7 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         break;
     case WM_DESTROY:
+        windowplacement::Save(hWnd, JSON_FILE);
         ::PostQuitMessage(0);
         return 0;
     }
@@ -48,8 +52,8 @@ SampleWindow::~SampleWindow()
                      GetModuleHandle(nullptr));
 }
 
-std::shared_ptr<SampleWindow>
-SampleWindow::create(const wchar_t *class_name, const wchar_t *window_name)
+std::shared_ptr<SampleWindow> SampleWindow::create(const wchar_t *class_name,
+                                                   const wchar_t *window_name)
 {
     WNDCLASSEXW wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXW);
@@ -78,15 +82,16 @@ SampleWindow::create(const wchar_t *class_name, const wchar_t *window_name)
     {
         return nullptr;
     }
-
-    ShowWindow(hwnd, SW_SHOW);
+    // ShowWindow(hwnd, SW_SHOW);
+    windowplacement::Restore(hwnd, SW_SHOW, JSON_FILE);
     UpdateWindow(hwnd);
     if (!hwnd)
     {
         return nullptr;
     }
 
-    return std::shared_ptr<SampleWindow>(new SampleWindow(window_register, hwnd));
+    return std::shared_ptr<SampleWindow>(
+        new SampleWindow(window_register, hwnd));
 }
 
 auto SampleWindow::main_loop() -> WindowState

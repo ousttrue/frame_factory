@@ -23,7 +23,7 @@ rust 練習
 * [x] WindowResize
 * [x] RenderTarget
 * [x] FPS
-* [ ] save window state
+* [x] save window state
 * [ ] docking
 * [ ] Camera, Mouse
 * [ ] Cube, RightHanded Y-UP

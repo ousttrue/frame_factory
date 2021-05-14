@@ -1,0 +1,21 @@
+{
+    "window": {
+        "flags": 2,
+        "length": 44,
+        "ptMaxPosition": {
+            "x": -1,
+            "y": -1
+        },
+        "ptMinPosition": {
+            "x": -1,
+            "y": -1
+        },
+        "rcNormalPosition": {
+            "bottom": 928,
+            "left": 208,
+            "right": 1488,
+            "top": 208
+        },
+        "showCmd": 3
+    }
+}

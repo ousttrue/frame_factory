@@ -11,7 +11,10 @@ TARGET_LINK_DIRECTORIES(${TARGET_NAME} PRIVATE
 
 TARGET_LINK_LIBRARIES(${TARGET_NAME} PRIVATE
     renderer.dll.lib
+    #
     imgui
+    json
+    #
     d3d11
     winmm
 )

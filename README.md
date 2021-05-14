@@ -16,20 +16,25 @@ rust 練習
 
 ## ToDo
 
-* [x] Window と Renderer を dll 分離
-* [x] c++ frontend + imgui
+## Scene
 * [x] MVP Matrix, ConstantBuffer
-* [x] WinMain
-* [x] WindowResize
-* [x] RenderTarget
-* [x] FPS
-* [x] save window state
-* [ ] docking
 * [ ] Camera, Mouse
+* [ ] Teapot
 * [ ] Cube, RightHanded Y-UP
 * [ ] SubMesh Material
 * [ ] Texture
 * [ ] glTF2
+
+## GUI
+* [x] Window と Renderer を dll 分離
+* [x] c++ frontend + imgui
+* [x] WinMain
+* [x] RenderTarget
+* [x] WindowResize
+* [x] FPS
+* [x] save window state
+* [x] docking
+* [ ] font
 
 ## Gizmo
 ## Animation, Timeline

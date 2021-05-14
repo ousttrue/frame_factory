@@ -133,6 +133,9 @@ public:
             m_scene.reset(
                 new RustRenderer(device, source.data(), source.size()));
         }
+
+        // docking
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     }
 
     ~ImGuiApp()
@@ -158,6 +161,31 @@ public:
 
     void gui(ID3D11Device *device, ID3D11DeviceContext *context)
     {
+        ImGuiWindowFlags window_flags =
+            ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        {
+            const ImGuiViewport *viewport = ImGui::GetMainViewport();
+            ImGui::SetNextWindowPos(viewport->WorkPos);
+            ImGui::SetNextWindowSize(viewport->WorkSize);
+            ImGui::SetNextWindowViewport(viewport->ID);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+            window_flags |= ImGuiWindowFlags_NoTitleBar |
+                            ImGuiWindowFlags_NoCollapse |
+                            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus |
+                            ImGuiWindowFlags_NoNavFocus;
+        }
+        if (ImGui::Begin("Master Window", nullptr, window_flags))
+        {
+            // Declare Central dockspace
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f),
+                             ImGuiDockNodeFlags_None);
+        }
+        ImGui::End();
+        ImGui::PopStyleVar(2);
+
         // demo
         if (m_show_demo_window)
         {

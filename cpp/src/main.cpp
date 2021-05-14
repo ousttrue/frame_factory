@@ -29,7 +29,7 @@ static std::vector<char> ReadAllBytes(char const *filename)
 
 class RustRenderer
 {
-    bool m_initialized;
+    uint32_t m_scene = 0;
 
     int m_width = 0;
     int m_height = 0;
@@ -39,7 +39,7 @@ class RustRenderer
 public:
     RustRenderer(ID3D11Device *device, const char *data, size_t len)
     {
-        m_initialized =
+        m_scene =
             FRAME_FACTORY_sample_create(device, data, len, "vsMain", "psMain");
     }
 
@@ -90,7 +90,8 @@ public:
             }
         }
 
-        if (!FRAME_FACTORY_sample_render(device, context, m_texture.Get()))
+        if (!FRAME_FACTORY_sample_render(m_scene, device, context,
+                                         m_texture.Get()))
         {
             return nullptr;
         }

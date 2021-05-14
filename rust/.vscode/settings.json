@@ -3,6 +3,7 @@
         "HRESULT",
         "dxgi",
         "dxgiformat",
-        "hwnd"
+        "hwnd",
+        "winapi"
     ],
 }

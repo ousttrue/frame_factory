@@ -5,6 +5,8 @@ mod scene;
 mod shader;
 mod vertex_buffer;
 
+use std::{collections::HashMap, ffi::c_void};
+
 use scene::Scene;
 
 use winapi::um::d3d11::{self};
@@ -17,7 +19,32 @@ mod tests {
     }
 }
 
-static mut G_SCENE: Option<Scene> = None;
+struct SceneManager {
+    next_id: u32,
+    scenes: HashMap<u32, Scene>,
+}
+
+impl SceneManager {
+    fn add(&mut self, scene: Scene) -> u32 {
+        let id = self.next_id;
+        self.next_id += 1;
+        self.scenes.insert(id, scene);
+        id
+    }
+}
+
+static mut G_SCENE: Option<Box<SceneManager>> = None;
+
+fn or_create() {
+    unsafe {
+        if G_SCENE.is_none() {
+            G_SCENE = Some(Box::new(SceneManager {
+                next_id: 1,
+                scenes: HashMap::new(),
+            }))
+        }
+    }
+}
 
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_sample_destroy() {
@@ -31,27 +58,33 @@ pub extern "C" fn FRAME_FACTORY_sample_create(
     source_size: usize,
     vs_main: *const u8,
     ps_main: *const u8,
-) -> bool {
+) -> u32 {
     let d3d_device = unsafe { device.as_ref().unwrap() };
 
-    if let Ok(scene) = Scene::create(d3d_device, source, source_size, vs_main, ps_main) {
-        unsafe { G_SCENE = Some(scene) };
-        true
-    } else {
-        false
+    or_create();
+
+    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+        if let Ok(scene) = Scene::create(d3d_device, source, source_size, vs_main, ps_main) {
+            return scene_manager.add(scene);
+        }
     }
+
+    0
 }
 
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_sample_render(
+    scene: u32,
     device: *mut d3d11::ID3D11Device,
     context: *mut d3d11::ID3D11DeviceContext,
     texture: *mut d3d11::ID3D11Texture2D,
 ) -> bool {
-    if let Some(scene) = unsafe { &mut G_SCENE } {
-        unsafe {
-            scene.render(device.as_ref().unwrap(), context.as_ref().unwrap(), texture);
-            return true;
+    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+        if let Some(scene) = scene_manager.scenes.get_mut(&scene) {
+            unsafe {
+                scene.render(device.as_ref().unwrap(), context.as_ref().unwrap(), texture);
+                return true;
+            }
         }
     }
 

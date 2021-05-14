@@ -20,7 +20,7 @@ unsafe fn compile_shader_from_source(
     filename: &str,
     source: *const u8,
     source_size: usize,
-    entry_point: &str,
+    entry_point: *const u8,
     shader_model: &str,
 ) -> Result<*mut d3dcommon::ID3DBlob, ComError> {
     let shader_flags = d3dcompiler::D3DCOMPILE_ENABLE_STRICTNESS;
@@ -41,7 +41,7 @@ unsafe fn compile_shader_from_source(
         filename.as_ptr() as LPCSTR,
         ptr::null(),
         d3dcompiler::D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        entry_point.as_ptr() as LPCSTR,
+        entry_point as LPCSTR,
         shader_model.as_ptr() as LPCSTR,
         shader_flags,
         0,
@@ -89,7 +89,7 @@ unsafe fn create_reflection(
 }
 
 unsafe fn create_input_layout(
-    d3d_device: &ComPtr<d3d11::ID3D11Device>,
+    d3d_device: &d3d11::ID3D11Device,
     compiled_vertex_shader: &ComPtr<d3dcommon::ID3DBlob>,
     reflection: &ComPtr<d3d11shader::ID3D11ShaderReflection>,
     input_layout: *mut *mut d3d11::ID3D11InputLayout,
@@ -135,7 +135,7 @@ pub struct ConstantBufferSlot {
 
 impl ConstantBufferSlot {
     pub fn new(
-        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        d3d_device: &d3d11::ID3D11Device,
         shader_desc: d3d11shader::D3D11_SHADER_BUFFER_DESC,
     ) -> Result<ConstantBufferSlot, ComError> {
         let desc = d3d11::D3D11_BUFFER_DESC {
@@ -162,7 +162,7 @@ pub struct ConstantBufferShader {
 
 impl ConstantBufferShader {
     unsafe fn new(
-        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        d3d_device: &d3d11::ID3D11Device,
         reflection: &ComPtr<d3d11shader::ID3D11ShaderReflection>,
     ) -> Result<ConstantBufferShader, ComError> {
         let mut shader_desc = d3d11shader::D3D11_SHADER_DESC::default();
@@ -244,10 +244,10 @@ pub struct Shader {
 
 impl Shader {
     pub fn compile_vertex_shader(
-        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        d3d_device: &d3d11::ID3D11Device,
         source: *const u8,
         source_size: usize,
-        entry_point: &str,
+        entry_point: *const u8,
     ) -> Result<
         (
             ComPtr<d3d11::ID3D11VertexShader>,
@@ -283,10 +283,10 @@ impl Shader {
     }
 
     pub fn compile_pixel_shader(
-        d3d_device: &ComPtr<d3d11::ID3D11Device>,
+        d3d_device: &d3d11::ID3D11Device,
         source: *const u8,
         source_size: usize,
-        entry_point: &str,
+        entry_point: *const u8,
     ) -> Result<ComPtr<d3d11::ID3D11PixelShader>, ComError> {
         let compiled = ComPtr::new(|| unsafe {
             compile_shader_from_source("ps\0", source, source_size, entry_point, "ps_4_0\0")

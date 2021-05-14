@@ -16,7 +16,7 @@ std::shared_ptr<DX11> DX11::create(HWND hwnd)
     swapChainDesc.SampleDesc.Count = 1;
 
     UINT createDeviceFlags = 0;
-#if DEBUG
+#if _DEBUG
     createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
@@ -179,24 +179,24 @@ struct RenderTarget
     }
 };
 
-ID3D11ShaderResourceView *DX11::setup_render_target(int w, int h)
-{
-    if (m_render_target &&
-        (m_render_target->width != w || m_render_target->height != h))
-    {
-        // clear
-        m_render_target = nullptr;
-    }
+// ID3D11ShaderResourceView *DX11::setup_render_target(int w, int h)
+// {
+//     if (m_render_target &&
+//         (m_render_target->width != w || m_render_target->height != h))
+//     {
+//         // clear
+//         m_render_target = nullptr;
+//     }
 
-    if (!m_render_target)
-    {
-        m_render_target = RenderTarget::create(m_device.Get(), w, h);
-        if (!m_render_target)
-        {
-            return nullptr;
-        }
-    }
+//     if (!m_render_target)
+//     {
+//         m_render_target = RenderTarget::create(m_device.Get(), w, h);
+//         if (!m_render_target)
+//         {
+//             return nullptr;
+//         }
+//     }
 
-    m_render_target->set_and_clear_rtv(m_context.Get());
-    return m_render_target->srv.Get();
-}
+//     m_render_target->set_and_clear_rtv(m_context.Get());
+//     return m_render_target->srv.Get();
+// }

@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <vector>
 #include <fstream>
+#include <memory>
 #include <functional>
 #include <wrl/client.h>
 #include <imgui.h>
@@ -26,11 +27,83 @@ static std::vector<char> ReadAllBytes(char const *filename)
     return buffer;
 }
 
-using ViewFunc = std::function<ID3D11ShaderResourceView *(int, int, int, int)>;
+class RustRenderer
+{
+    bool m_initialized;
+
+    int m_width = 0;
+    int m_height = 0;
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> m_texture;
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv;
+
+public:
+    RustRenderer(ID3D11Device *device, const char *data, size_t len)
+    {
+        m_initialized =
+            FRAME_FACTORY_sample_create(device, data, len, "vsMain", "psMain");
+    }
+
+    ~RustRenderer()
+    {
+        FRAME_FACTORY_sample_destroy();
+    }
+
+    ID3D11ShaderResourceView *render(ID3D11Device *device,
+                                     ID3D11DeviceContext *context, int w, int h)
+    {
+        if (m_width != w || m_height != h)
+        {
+            m_texture = nullptr;
+            m_srv = nullptr;
+        }
+
+        if (!m_texture)
+        {
+            if (w == 0 || h == 0)
+            {
+                return nullptr;
+            }
+            m_width = w;
+            m_height = h;
+
+            D3D11_TEXTURE2D_DESC desc = {0};
+            desc.Width = w;
+            desc.Height = h;
+            desc.MipLevels = 1;
+            desc.ArraySize = 1;
+            desc.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+            desc.Usage = D3D11_USAGE_DEFAULT;
+            desc.BindFlags =
+                D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+            if (FAILED(device->CreateTexture2D(&desc, nullptr, &m_texture)))
+            {
+                return nullptr;
+            }
+
+            // create SRV
+            if (FAILED(device->CreateShaderResourceView(m_texture.Get(),
+                                                        nullptr, &m_srv)))
+            {
+                return nullptr;
+            }
+        }
+
+        if (!FRAME_FACTORY_sample_render(device, context, m_texture.Get()))
+        {
+            return nullptr;
+        }
+
+        return m_srv.Get();
+    }
+};
 
 class ImGuiApp
 {
-    bool show_demo_window = true;
+    bool m_show_demo_window = true;
+    // 3D View
+    std::unique_ptr<RustRenderer> m_scene;
 
 public:
     ImGuiApp(HWND hwnd, ID3D11Device *device, ID3D11DeviceContext *context)
@@ -52,6 +125,13 @@ public:
 
         ImGui_ImplWin32_Init(hwnd);
         ImGui_ImplDX11_Init(device, context);
+
+        auto source = ReadAllBytes("../shaders/mvp.hlsl");
+        if (!source.empty())
+        {
+            m_scene.reset(
+                new RustRenderer(device, source.data(), source.size()));
+        }
     }
 
     ~ImGuiApp()
@@ -62,78 +142,59 @@ public:
         ImGui::DestroyContext();
     }
 
-    void update(const ViewFunc &render)
+    void update(ID3D11Device *device, ID3D11DeviceContext *context)
     {
         // Start the Dear ImGui frame
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        gui(render);
+        gui(device, context);
 
         // end
         ImGui::Render();
     }
 
-    void gui(const ViewFunc &render)
+    void gui(ID3D11Device *device, ID3D11DeviceContext *context)
     {
         // demo
-        if (show_demo_window)
+        if (m_show_demo_window)
         {
-            ImGui::ShowDemoWindow(&show_demo_window);
+            ImGui::ShowDemoWindow(&m_show_demo_window);
         }
 
         // 3d view
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-        if (ImGui::Begin("render target", nullptr,
-                         ImGuiWindowFlags_NoScrollbar |
-                             ImGuiWindowFlags_NoScrollWithMouse))
         {
-            auto size = ImGui::GetContentRegionAvail();
-            auto pos = ImGui::GetWindowPos();
-            auto frameHeight = ImGui::GetFrameHeight();
-            auto mouseXY = ImGui::GetMousePos();
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+            if (ImGui::Begin("render target", nullptr,
+                             ImGuiWindowFlags_NoScrollbar |
+                                 ImGuiWindowFlags_NoScrollWithMouse))
+            {
+                auto size = ImGui::GetContentRegionAvail();
+                auto pos = ImGui::GetWindowPos();
+                auto frameHeight = ImGui::GetFrameHeight();
+                auto mouseXY = ImGui::GetMousePos();
 
-            // render
-            auto x = mouseXY.x - pos.x;
-            auto y = mouseXY.y - pos.y - frameHeight;
+                // render
+                auto x = mouseXY.x - pos.x;
+                auto y = mouseXY.y - pos.y - frameHeight;
 
-            auto renderTarget =
-                render((int)x, (int)y, (int)size.x, (int)size.y);
-
-            ImGui::ImageButton((ImTextureID)renderTarget, size,
-                               ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), 0);
+                auto srv = m_scene->render(device, context, size.x, size.y);
+                if (srv)
+                {
+                    ImGui::ImageButton((ImTextureID)srv, size,
+                                       ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f),
+                                       0);
+                }
+            }
+            ImGui::End();
+            ImGui::PopStyleVar();
         }
-        ImGui::End();
-        ImGui::PopStyleVar();
     }
 
     void render()
     {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-    }
-};
-
-class RustRenderer
-{
-    bool m_initialized;
-
-public:
-    RustRenderer(ID3D11Device *device, const char *data, size_t len)
-    {
-        m_initialized =
-            FRAME_FACTORY_sample_create(device, data, len, "vsMain", "psMain");
-    }
-
-    ~RustRenderer()
-    {
-        FRAME_FACTORY_sample_destroy();
-    }
-
-    bool render(ID3D11Device *device,
-                                     ID3D11DeviceContext *context, int w, int h)
-    {
-        return FRAME_FACTORY_sample_render(device, context, w, h);
     }
 };
 
@@ -153,33 +214,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return 2;
         }
 
-        auto source = ReadAllBytes("../shaders/mvp.hlsl");
-        if (source.empty())
-        {
-            return 3;
-        }
-
         float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
         {
-            RustRenderer rust(d3d->device().Get(), source.data(),
-                              source.size());
             ImGuiApp gui(window->handle(), d3d->device().Get(),
                          d3d->context().Get());
             for (WindowState state = {}; !state.closed;
                  state = window->main_loop())
             {
                 // update imgui
-                auto func = [&rust, &d3d](int x, int y, int w, int h) {
-                    auto srv =
-                        d3d->setup_render_target(w, h);
-                    if (!rust.render(d3d->device().Get(), d3d->context().Get(),
-                                     w, h))
-                    {
-                        return (ID3D11ShaderResourceView*)nullptr;
-                    }
-                    return srv;
-                };
-                gui.update(func);
+                gui.update(d3d->device().Get(), d3d->context().Get());
 
                 // render d3d
                 if (!d3d->new_frame(state.width, state.height, clearColor))

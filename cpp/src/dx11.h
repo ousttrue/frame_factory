@@ -11,8 +11,6 @@ class DX11
     UINT m_width = 0;
     UINT m_height = 0;
 
-    std::shared_ptr<struct RenderTarget> m_render_target;
-
     DX11()
     {
     }
@@ -37,6 +35,4 @@ public:
     auto new_frame(UINT width, UINT height, const float clearColor[4]) -> bool;
 
     void flush();
-
-    struct ID3D11ShaderResourceView *setup_render_target(int w, int h);
 };

@@ -7,6 +7,8 @@ use winapi::{
     um::{d3d11, d3dcommon},
 };
 
+use crate::com_util::ComError;
+
 pub struct VertexBuffer {
     vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
     stride: i32,
@@ -19,8 +21,8 @@ impl VertexBuffer {
     ///    2
     ///   1 0
     pub fn create_triangle(
-        d3d_device: &ComPtr<d3d11::ID3D11Device>,
-    ) -> Result<VertexBuffer, String> {
+        d3d_device: &d3d11::ID3D11Device,
+    ) -> Result<VertexBuffer, ComError> {
         // vertices
         let size = 0.5f32;
         let positions = [
@@ -36,7 +38,7 @@ impl VertexBuffer {
         let mut vertex_buffer: *mut d3d11::ID3D11Buffer = ptr::null_mut();
         let hr = unsafe { d3d_device.CreateBuffer(&desc, &data, &mut vertex_buffer) };
         if hr != 0 {
-            return Err(String::from("CreateBuffer vertex_buffer"));
+            return Err(ComError::StaticMessage("CreateBuffer vertex_buffer"));
         }
         let vertex_buffer = unsafe { ComPtr::from_raw(vertex_buffer) };
 
@@ -52,7 +54,7 @@ impl VertexBuffer {
         let mut index_buffer: *mut d3d11::ID3D11Buffer = ptr::null_mut();
         let hr = unsafe { d3d_device.CreateBuffer(&desc, &data, &mut index_buffer) };
         if hr != 0 {
-            return Err(String::from("CreateBuffer index_buffer"));
+            return Err(ComError::StaticMessage("CreateBuffer index_buffer"));
         }
         let index_buffer = unsafe { ComPtr::from_raw(index_buffer) };
 
@@ -64,7 +66,7 @@ impl VertexBuffer {
         })
     }
 
-    pub fn draw(&self, d3d_context: &ComPtr<d3d11::ID3D11DeviceContext>) {
+    pub fn draw(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
         let buffers = [self.vertex_buffer.as_ptr()];
         let strides = [self.stride as UINT];
         let offsets = [0 as UINT];

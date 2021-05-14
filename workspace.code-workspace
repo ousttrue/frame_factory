@@ -7,5 +7,9 @@
 			"path": "cpp"
 		}
 	],
-    "settings": {}
+    "settings": {
+        "files.associations": {
+            "memory": "cpp"
+        }
+    }
 }

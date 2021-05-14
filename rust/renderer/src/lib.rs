@@ -1,17 +1,15 @@
 mod com_util;
 mod renderer;
+mod rendertarget;
+mod scene;
 mod shader;
 mod vertex_buffer;
 
-use cgmath::{Matrix, One};
-use renderer::Renderer;
-use shader::Shader;
-use std::{ffi::c_void, ptr};
-use vertex_buffer::VertexBuffer;
-use winapi::{
-    shared::windef::HWND,
-    um::{d3d11, d3d11sdklayers},
-};
+use std::{collections::HashMap, ffi::c_void};
+
+use scene::Scene;
+
+use winapi::um::d3d11::{self};
 
 #[cfg(test)]
 mod tests {
@@ -21,148 +19,74 @@ mod tests {
     }
 }
 
-static mut G_RENDERER: Option<Renderer> = None;
+struct SceneManager {
+    next_id: u32,
+    scenes: HashMap<u32, Scene>,
+}
 
-#[no_mangle]
-pub extern "C" fn FRAME_FACTORY_initialize(hwnd: HWND) -> *const c_void {
-    if !hwnd.is_null() {
-        if let Ok(renderer) = renderer::Renderer::new(hwnd) {
-            unsafe {
-                G_RENDERER = Some(renderer);
-                if let Some(renderer) = &G_RENDERER {
-                    return renderer.d3d_device.as_ptr() as *const c_void;
-                }
-            }
+impl SceneManager {
+    fn add(&mut self, scene: Scene) -> u32 {
+        let id = self.next_id;
+        self.next_id += 1;
+        self.scenes.insert(id, scene);
+        id
+    }
+}
+
+static mut G_SCENE: Option<Box<SceneManager>> = None;
+
+fn or_create() {
+    unsafe {
+        if G_SCENE.is_none() {
+            G_SCENE = Some(Box::new(SceneManager {
+                next_id: 1,
+                scenes: HashMap::new(),
+            }))
         }
     }
-
-    unsafe {
-        G_SCENE = None;
-        // if let Some(renderer) = &G_RENDERER {
-        //     if let Ok(debug) = renderer
-        //         .d3d_device
-        //         .query_interface::<d3d11sdklayers::ID3D11Debug>()
-        //     {
-        //         debug.ReportLiveDeviceObjects(d3d11sdklayers::D3D11_RLDO_DETAIL);
-        //     }
-        // }
-        G_RENDERER = None;
-    }
-    ptr::null()
 }
-
-struct Scene {
-    shader: Shader,
-    model: cgmath::Matrix4<f32>,
-    vertex_buffer: VertexBuffer,
-}
-
-impl Scene {
-    fn render(&self, renderer: &Renderer) {
-        // update constant buffer
-        self.shader
-            .vs_constant_buffer
-            .update(&renderer.d3d_context, 0, self.model.as_ptr());
-
-        // model
-        self.shader.set(&renderer.d3d_context);
-        self.vertex_buffer.draw(&renderer.d3d_context);
-    }
-}
-
-static mut G_SCENE: Option<Scene> = None;
 
 #[no_mangle]
-pub extern "C" fn FRAME_FACTORY_sample_scene(
+pub extern "C" fn FRAME_FACTORY_sample_destroy() {
+    unsafe { G_SCENE = None };
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_sample_create(
+    device: *mut d3d11::ID3D11Device,
     source: *const u8,
     source_size: usize,
     vs_main: *const u8,
     ps_main: *const u8,
+) -> u32 {
+    let d3d_device = unsafe { device.as_ref().unwrap() };
+
+    or_create();
+
+    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+        if let Ok(scene) = Scene::create(d3d_device, source, source_size, vs_main, ps_main) {
+            return scene_manager.add(scene);
+        }
+    }
+
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_sample_render(
+    scene: u32,
+    device: *mut d3d11::ID3D11Device,
+    context: *mut d3d11::ID3D11DeviceContext,
+    texture: *mut d3d11::ID3D11Texture2D,
 ) -> bool {
-    if let Some(renderer) = unsafe { &G_RENDERER } {
-        if let Ok((vs, input_layout, vs_constant_buffer)) =
-            Shader::compile_vertex_shader(&renderer.d3d_device, source, source_size, "vsMain\0")
-        {
-            if let Ok(ps) =
-                Shader::compile_pixel_shader(&renderer.d3d_device, source, source_size, "psMain\0")
-            {
-                let shader = Shader {
-                    vs,
-                    ps,
-                    input_layout,
-                    vs_constant_buffer,
-                };
-
-                if let Ok(vertex_buffer) = VertexBuffer::create_triangle(&renderer.d3d_device) {
-                    let fovy = cgmath::Rad::from(cgmath::Deg(60.0));
-                    let projection: cgmath::Matrix4<f32> = cgmath::perspective(fovy, 1.0, 0.1, 2.0);
-                    let view: cgmath::Matrix4<f32> = cgmath::Matrix4::one();
-                    let model: cgmath::Matrix4<f32> = cgmath::Matrix4::one();
-
-                    let scene = Scene {
-                        shader,
-                        model,
-                        vertex_buffer,
-                    };
-
-                    unsafe { G_SCENE = Some(scene) };
-
-                    return true;
-                }
-            }
-        }
-    }
-
-    false
-}
-
-#[no_mangle]
-pub extern "C" fn FRAME_FACTORY_new_frame(width: u32, height: u32) -> bool {
-    if let Some(renderer) = unsafe { &mut G_RENDERER } {
-        if let Ok(rtv) = renderer.get_or_create_backbuffer(width, height) {
-            // render_target.prepare(&renderer.d3d_context);
-
+    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+        if let Some(scene) = scene_manager.scenes.get_mut(&scene) {
             unsafe {
-                // clear
-                renderer
-                    .d3d_context
-                    .ClearRenderTargetView(rtv.as_ptr(), &[0.0, 0.2, 0.4, 1.0]);
-
-                // set render target
-                renderer.d3d_context.OMSetRenderTargets(
-                    1,
-                    [rtv.as_ptr()].as_ptr(),
-                    ptr::null_mut(),
-                );
-
-                // viewport
-                let viewport = d3d11::D3D11_VIEWPORT {
-                    Width: width as f32,
-                    Height: height as f32,
-                    ..Default::default()
-                };
-                renderer.d3d_context.RSSetViewports(1, &viewport);
+                scene.render(device.as_ref().unwrap(), context.as_ref().unwrap(), texture);
+                return true;
             }
-
-            return true;
         }
     }
 
     false
-}
-
-#[no_mangle]
-pub extern "C" fn FRAME_FACTORY_sample_render() {
-    if let Some(renderer) = unsafe { &G_RENDERER } {
-        if let Some(scene) = unsafe { &G_SCENE } {
-            scene.render(&renderer);
-        }
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn FRAME_FACTORY_flush() {
-    if let Some(renderer) = unsafe { &G_RENDERER } {
-        renderer.present();
-    }
 }

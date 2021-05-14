@@ -13,4 +13,5 @@ TARGET_LINK_LIBRARIES(${TARGET_NAME} PRIVATE
     renderer.dll.lib
     imgui
     d3d11
+    winmm
 )

@@ -178,25 +178,3 @@ struct RenderTarget
         context->RSSetViewports(_countof(viewports), viewports);
     }
 };
-
-// ID3D11ShaderResourceView *DX11::setup_render_target(int w, int h)
-// {
-//     if (m_render_target &&
-//         (m_render_target->width != w || m_render_target->height != h))
-//     {
-//         // clear
-//         m_render_target = nullptr;
-//     }
-
-//     if (!m_render_target)
-//     {
-//         m_render_target = RenderTarget::create(m_device.Get(), w, h);
-//         if (!m_render_target)
-//         {
-//             return nullptr;
-//         }
-//     }
-
-//     m_render_target->set_and_clear_rtv(m_context.Get());
-//     return m_render_target->srv.Get();
-// }

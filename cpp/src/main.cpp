@@ -180,7 +180,8 @@ public:
                 auto x = mouseXY.x - pos.x;
                 auto y = mouseXY.y - pos.y - frameHeight;
 
-                auto srv = m_scene->render(device, context, size.x, size.y);
+                auto srv =
+                    m_scene->render(device, context, (int)size.x, (int)size.y);
                 if (srv)
                 {
                     ImGui::ImageButton((ImTextureID)srv, size,
@@ -196,6 +197,32 @@ public:
     void render()
     {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+    }
+};
+
+class FPS
+{
+    UINT m_lastTime = 0;
+    UINT m_frameTime = 0;
+
+public:
+    FPS(int frame_rate)
+    {
+        m_frameTime = 1000 / frame_rate;
+    }
+
+    void wait()
+    {
+        auto now = timeGetTime();
+        if (m_lastTime)
+        {
+            auto delta = now - m_lastTime;
+            if (delta < m_frameTime)
+            {
+                Sleep(m_frameTime - delta);
+            }
+        }
+        m_lastTime = now;
     }
 };
 
@@ -215,6 +242,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return 2;
         }
 
+        FPS fps(60);
+
         float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
         {
             ImGuiApp gui(window->handle(), d3d->device().Get(),
@@ -231,6 +260,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     return 4;
                 }
                 gui.render();
+
+                fps.wait();
+
                 d3d->flush();
             }
         }

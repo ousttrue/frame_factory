@@ -2,13 +2,7 @@
 #include <Windows.h>
 #include <stdint.h>
 #include <memory>
-
-struct WindowState
-{
-    bool closed;
-    uint16_t width;
-    uint16_t height;
-};
+#include "ScreenState.h"
 
 class SampleWindow
 {
@@ -26,6 +20,6 @@ public:
     }
 
     static std::shared_ptr<SampleWindow> create(const wchar_t *class_name,
-                                               const wchar_t *window_name);
-    auto main_loop() -> WindowState;
+                                                const wchar_t *window_name);
+    auto main_loop(screenstate::ScreenState *state) -> bool;
 };

@@ -49,9 +49,9 @@ public:
     }
 
     ID3D11ShaderResourceView *render(ID3D11Device *device,
-                                     ID3D11DeviceContext *context, int w, int h)
+                                     ID3D11DeviceContext *context, const screenstate::ScreenState &state)
     {
-        if (m_width != w || m_height != h)
+        if (m_width != state.Width || m_height != state.Height)
         {
             m_texture = nullptr;
             m_srv = nullptr;
@@ -59,16 +59,16 @@ public:
 
         if (!m_texture)
         {
-            if (w == 0 || h == 0)
+            if (state.Width == 0 || state.Height == 0)
             {
                 return nullptr;
             }
-            m_width = w;
-            m_height = h;
+            m_width = state.Width;
+            m_height = state.Height;
 
             D3D11_TEXTURE2D_DESC desc = {0};
-            desc.Width = w;
-            desc.Height = h;
+            desc.Width = state.Width;
+            desc.Height = state.Height;
             desc.MipLevels = 1;
             desc.ArraySize = 1;
             desc.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
@@ -91,7 +91,7 @@ public:
         }
 
         if (!FRAME_FACTORY_sample_render(m_scene, device, context,
-                                         m_texture.Get()))
+                                         m_texture.Get(), &state))
         {
             return nullptr;
         }
@@ -152,20 +152,20 @@ public:
         ImGui::DestroyContext();
     }
 
-    void update(ID3D11Device *device, ID3D11DeviceContext *context)
+    void update(ID3D11Device *device, ID3D11DeviceContext *context, const screenstate::ScreenState &state)
     {
         // Start the Dear ImGui frame
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        gui(device, context);
+        gui(device, context, state);
 
         // end
         ImGui::Render();
     }
 
-    void gui(ID3D11Device *device, ID3D11DeviceContext *context)
+    void gui(ID3D11Device *device, ID3D11DeviceContext *context, const screenstate::ScreenState &state)
     {
         ImGuiWindowFlags window_flags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
@@ -214,8 +214,10 @@ public:
                 auto x = mouseXY.x - pos.x;
                 auto y = mouseXY.y - pos.y - frameHeight;
 
+                auto crop = state.Crop((int)x, (int)y, (int)size.x, (int)size.y);
+
                 auto srv =
-                    m_scene->render(device, context, (int)size.x, (int)size.y);
+                    m_scene->render(device, context, crop);
                 if (srv)
                 {
                     ImGui::ImageButton((ImTextureID)srv, size,
@@ -282,14 +284,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         {
             ImGuiApp gui(window->handle(), d3d->device().Get(),
                          d3d->context().Get());
-            for (WindowState state = {}; !state.closed;
-                 state = window->main_loop())
+
+            screenstate::ScreenState state;
+            while(window->main_loop(&state))
             {
                 // update imgui
-                gui.update(d3d->device().Get(), d3d->context().Get());
+                gui.update(d3d->device().Get(), d3d->context().Get(), state);
 
                 // render d3d
-                if (!d3d->new_frame(state.width, state.height, clearColor))
+                if (!d3d->new_frame(state.Width, state.Height, clearColor))
                 {
                     return 4;
                 }

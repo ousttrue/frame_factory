@@ -5,6 +5,18 @@ use super::rendertarget::RenderTarget;
 use crate::{com_util::ComError, shader::Shader, vertex_buffer::VertexBuffer};
 
 #[repr(C)]
+pub struct ScreenState {
+    Width: u16,
+    Height: u16,
+    // uint32_t Time,
+    ElapsedSeconds: f32,
+    DeltaSeconds: f32,
+    MouseX: u16,
+    MouseY: u16,
+    MouseFlag: u32,
+}
+
+#[repr(C)]
 struct c0 {
     view: [f32; 16],
     projection: [f32; 16],
@@ -88,7 +100,11 @@ impl Scene {
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
         texture: *mut d3d11::ID3D11Texture2D,
+        state: &ScreenState,
     ) {
+        // update camera
+
+        // render
         self.get_or_create_rtv(d3d_device, texture);
         if let Some(render_target) = &self.render_target {
             render_target.set_and_clear(d3d_context);

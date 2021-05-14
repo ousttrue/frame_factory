@@ -7,7 +7,7 @@ mod vertex_buffer;
 
 use std::{collections::HashMap, ffi::c_void};
 
-use scene::Scene;
+use scene::{Scene, ScreenState};
 
 use winapi::um::d3d11::{self};
 
@@ -72,17 +72,29 @@ pub extern "C" fn FRAME_FACTORY_sample_create(
     0
 }
 
+enum MouseButtonFlags {
+    None = 0,
+    LeftDown = 0x01,
+    RightDown = 0x02,
+    MiddleDown = 0x04,
+    WheelPlus = 0x08,
+    WheelMinus = 0x10,
+    CursorUpdate = 0x20,
+}
+
+
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_sample_render(
     scene: u32,
     device: *mut d3d11::ID3D11Device,
     context: *mut d3d11::ID3D11DeviceContext,
     texture: *mut d3d11::ID3D11Texture2D,
+    state: *const ScreenState,
 ) -> bool {
     if let Some(scene_manager) = unsafe { &mut G_SCENE } {
         if let Some(scene) = scene_manager.scenes.get_mut(&scene) {
             unsafe {
-                scene.render(device.as_ref().unwrap(), context.as_ref().unwrap(), texture);
+                scene.render(device.as_ref().unwrap(), context.as_ref().unwrap(), texture, state.as_ref().unwrap());
                 return true;
             }
         }

@@ -123,6 +123,12 @@ public:
         // ImGui::StyleColorsClassic();
 
         // Setup Platform/Renderer backends
+        // Check japanese (meiryo UI) font is exist on system.
+        {
+            // Create glyphs.
+            io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\meiryo.ttc", 18.0f, nullptr,
+                                         io.Fonts->GetGlyphRangesJapanese());
+        }
 
         ImGui_ImplWin32_Init(hwnd);
         ImGui_ImplDX11_Init(device, context);

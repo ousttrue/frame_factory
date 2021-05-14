@@ -34,7 +34,7 @@ rust 練習
 * [x] FPS
 * [x] save window state
 * [x] docking
-* [ ] font
+* [x] font
 
 ## Gizmo
 ## Animation, Timeline

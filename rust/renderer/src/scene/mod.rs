@@ -1,8 +1,12 @@
 use cgmath::{Matrix, One};
 use winapi::um::{d3d11, winuser::DefMDIChildProcW};
 
+
 use super::rendertarget::RenderTarget;
 use crate::{com_util::ComError, shader::Shader, vertex_buffer::VertexBuffer};
+
+pub mod camera;
+use self::camera::Camera;
 
 #[repr(C)]
 pub struct ScreenState {
@@ -25,21 +29,6 @@ struct c0 {
 #[repr(C)]
 struct c1 {
     model: [f32; 16],
-}
-
-struct Camera {
-    view: cgmath::Matrix4<f32>,
-    projection: cgmath::Matrix4<f32>,
-}
-
-impl Camera {
-    fn persepective(fovy: cgmath::Deg<f32>, aspect: f32, near: f32, far: f32) -> Camera {
-        let fovy = cgmath::Rad::from(fovy);
-        let projection: cgmath::Matrix4<f32> = cgmath::perspective(fovy, aspect, near, far);
-        let view: cgmath::Matrix4<f32> =
-            cgmath::Matrix4::from_translation(cgmath::Vector3::new(0f32, 0f32, -1.0f32));
-        Camera { view, projection }
-    }
 }
 
 pub struct Scene {

@@ -40,6 +40,7 @@ Texture2DRenderTarget
 * [ ] Texture
 
 ## glTF loader
+* [ ] generate rust struct from JsonSchema
 * [ ] glTF2
 
 ## Gizmo

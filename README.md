@@ -14,21 +14,7 @@ rust 練習
 +--------+
 ```
 
-## ToDo
-
-## Scene
-* [x] MVP Matrix, ConstantBuffer
-* [x] Camera, Mouse
-* [ ] Teapot
-* [ ] glTF2
-* [ ] SubMesh Material
-* [ ] Texture
-* [ ] grid
-
-## Gizmo
-* [ ] Translate
-* [ ] Rotate
-
+# ToDo
 ## GUI
 * [x] Window と Renderer を dll 分離
 * [x] c++ frontend + imgui
@@ -39,11 +25,19 @@ rust 練習
 * [x] save window state
 * [x] docking
 * [x] font
+* [ ] SDL2
+
+## Scene
+* [x] MVP Matrix, ConstantBuffer
+* [x] Camera, Mouse
+* [ ] Teapot
+* [ ] SubMesh Material
+* [ ] Texture
+
+## glTF loader
+* [ ] glTF2
 
 ## Gizmo
-## Animation, Timeline
-
-## Windows API
-
-* https://crates.io/crates/winapi
-* [winapi-rsのあれこれ](https://qiita.com/LNSEAB/items/88056dfd74a50676dec0)
+* [ ] grid
+* [ ] Translate
+* [ ] Rotate

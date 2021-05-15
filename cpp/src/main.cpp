@@ -11,7 +11,6 @@
 #include <backends/imgui_impl_win32.h>
 #include <backends/imgui_impl_dx11.h>
 
-
 const auto CLASS_NAME = L"CPP_SAMPLE_CLASS";
 
 static std::vector<char> ReadAllBytes(char const *filename)
@@ -102,11 +101,12 @@ public:
     }
 };
 
-class ImGuiApp
+struct ImGuiApp
 {
     bool m_show_demo_window = true;
     // 3D View
     std::unique_ptr<RustRenderer> m_scene;
+    float m_clearColor[4] = {0.0f, 0.2f, 0.4f, 1.0f};
 
 public:
     ImGuiApp(HWND hwnd, ID3D11Device *device, ID3D11DeviceContext *context)
@@ -241,7 +241,7 @@ public:
 
 class FPS
 {
-    UINT m_lastTime = 0;
+    UINT m_beginTime = 0;
     UINT m_frameTime = 0;
 
 public:
@@ -250,24 +250,30 @@ public:
         m_frameTime = 1000 / frame_rate;
     }
 
+    void begin()
+    {
+        m_beginTime = timeGetTime();
+    }
+
     void wait()
     {
         auto now = timeGetTime();
-        if (m_lastTime)
+        auto delta = now - m_beginTime;
+        if (delta < m_frameTime)
         {
-            auto delta = now - m_lastTime;
-            if (delta < m_frameTime)
-            {
-                Sleep(m_frameTime - delta);
-            }
+            Sleep(m_frameTime - delta);
         }
-        m_lastTime = now;
     }
 };
 
-// int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-//                    LPSTR lpCmdLine, int nCmdShow)
+#if 0
 int main(int argc, char **argv)
+#else
+auto argc = __argc;
+auto argv = __argv;
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine, int nCmdShow)
+#endif
 {
     auto window = SampleWindow::create(CLASS_NAME, L"CPP_SAMPLE");
     if (!window)
@@ -275,38 +281,38 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    auto d3d = DX11::create(window->handle());
+    if (!d3d)
     {
-        auto d3d = DX11::create(window->handle());
-        if (!d3d)
+        return 2;
+    }
+
+    ImGuiApp gui(window->handle(), d3d->device().Get(), d3d->context().Get());
+
+    FPS fps(30);
+    while (true)
+    {
+        fps.begin();
+
+        screenstate::ScreenState state;
+        if(!window->main_loop(&state))
         {
-            return 2;
+            break;
         }
 
-        FPS fps(30);
+        // update imgui
+        gui.update(d3d->device().Get(), d3d->context().Get(), state);
 
-        float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
+        // render d3d
+        if (!d3d->new_frame(state.Width, state.Height, gui.m_clearColor))
         {
-            ImGuiApp gui(window->handle(), d3d->device().Get(),
-                         d3d->context().Get());
-
-            screenstate::ScreenState state;
-            while (window->main_loop(&state))
-            {
-                // update imgui
-                gui.update(d3d->device().Get(), d3d->context().Get(), state);
-
-                // render d3d
-                if (!d3d->new_frame(state.Width, state.Height, clearColor))
-                {
-                    return 4;
-                }
-                gui.render();
-
-                fps.wait();
-
-                d3d->flush();
-            }
+            return 4;
         }
+        gui.render();
+
+        // flush
+        fps.wait();
+        d3d->flush();
     }
 
     return 0;

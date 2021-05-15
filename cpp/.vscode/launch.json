@@ -9,13 +9,15 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/src/Debug/cpp_sample.exe",
-            "args": [],
+            "args": [
+                "${env:GLTF_SAMPLE_MODELS}/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "${env:PATH};${workspaceFolder}\\..\\rust\\target\\debug"
+                    "value": "${env:PATH};${workspaceFolder}//..//rust//target//debug"
                 }
             ],
             "console": "integratedTerminal"

@@ -1,3 +1,5 @@
+use std::{fs::File, io::Read};
+
 use cgmath::{Matrix, One};
 use winapi::um::{d3d11, winuser::DefMDIChildProcW};
 
@@ -58,8 +60,32 @@ impl Scene {
         })
     }
 
-    pub fn load(d3d_device: &d3d11::ID3D11Device, path: *const u8) -> Result<Scene, ComError> {
+    pub fn load(
+        d3d_device: &d3d11::ID3D11Device,
+        path: &std::path::Path,
+    ) -> Result<Scene, ComError> {
+        if let Some(ext) = path.extension() {
+            if let ext = ext.to_string_lossy() {
+                match ext.to_lowercase().as_str() {
+                    "glb" => return Self::load_glb(d3d_device, path),
+                    _ => (),
+                }
+            }
+        }
+
         Err(ComError::StaticMessage("not impl"))
+    }
+
+    pub fn load_glb(
+        d3d_device: &d3d11::ID3D11Device,
+        path: &std::path::Path,
+    ) -> Result<Scene, ComError> {
+        let mut f = File::open(path).map_err(|_| ComError::StaticMessage("fail to open"))?;
+        let mut buffer = Vec::new();
+        f.read_to_end(&mut buffer)
+            .map_err(|_| ComError::StaticMessage("fail to read"))?;
+
+        Err(ComError::StaticMessage("fail to open"))
     }
 
     pub fn get_or_create_rtv(

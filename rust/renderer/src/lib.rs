@@ -5,7 +5,11 @@ mod scene;
 mod shader;
 mod vertex_buffer;
 use scene::{screenstate::ScreenState, Scene};
-use std::{collections::HashMap, ffi::c_void};
+use std::{
+    collections::HashMap,
+    ffi::{c_void, CStr},
+    path::Path,
+};
 
 use winapi::um::d3d11::{self};
 
@@ -79,14 +83,18 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_scene_load(
     device: *mut d3d11::ID3D11Device,
-    path: *const u8,
+    path: *const i8,
 ) -> u32 {
     let d3d_device = unsafe { device.as_ref().unwrap() };
     or_create();
 
     if let Some(scene_manager) = unsafe { &mut G_SCENE } {
-        if let Ok(scene) = Scene::load(d3d_device, path) {
-            return scene_manager.add(scene);
+        let path = unsafe { CStr::from_ptr(path) };
+        if let Ok(path) = path.to_str() {
+            let path = Path::new(path);
+            if let Ok(scene) = Scene::load(d3d_device, path) {
+                return scene_manager.add(scene);
+            }
         }
     }
 

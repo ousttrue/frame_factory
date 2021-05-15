@@ -18,12 +18,16 @@ rust 練習
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer
-* [ ] Camera, Mouse
+* [x] Camera, Mouse
 * [ ] Teapot
-* [ ] Cube, RightHanded Y-UP
+* [ ] glTF2
 * [ ] SubMesh Material
 * [ ] Texture
-* [ ] glTF2
+* [ ] grid
+
+## Gizmo
+* [ ] Translate
+* [ ] Rotate
 
 ## GUI
 * [x] Window と Renderer を dll 分離

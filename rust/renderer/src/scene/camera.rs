@@ -1,4 +1,4 @@
-use cgmath::{Matrix4, Vector3, One};
+use cgmath::{Angle, Matrix4, One, Vector3};
 
 use super::screenstate::{MouseButtonFlags, ScreenState};
 
@@ -13,11 +13,11 @@ pub struct Camera {
     pub far: f32,
 
     // view param
-    pub lastMouseX: i16,
-    pub lastMouseY: i16,
+    pub last_mouse_x: i16,
+    pub last_mouse_y: i16,
     pub shift: cgmath::Vector3<f32>,
-    pub yaw: f32,
-    pub pitch: f32,
+    pub yaw: cgmath::Deg<f32>,
+    pub pitch: cgmath::Deg<f32>,
 }
 
 impl Camera {
@@ -31,29 +31,38 @@ impl Camera {
             near: 0.1f32,
             far: 100f32,
             //
-            lastMouseX: 0,
-            lastMouseY: 0,
+            last_mouse_x: 0,
+            last_mouse_y: 0,
             shift: Vector3::new(0f32, 0f32, 1f32),
-            yaw: 0f32,
-            pitch: 0f32,
+            yaw: cgmath::Deg(0f32),
+            pitch: cgmath::Deg(0f32),
         };
         camera.calc_projection();
         camera.calc_view();
         camera
     }
 
-    fn calc_projection(&mut self)
-    {
+    fn calc_projection(&mut self) {
         self.projection = cgmath::perspective(self.fovy, self.aspect, self.near, self.far);
     }
 
     fn calc_view(&mut self) {
-        self.view = cgmath::Matrix4::from_translation(-self.shift);
+        self.view = cgmath::Matrix4::from_translation(-self.shift)
+            * cgmath::Matrix4::from_angle_y(self.yaw)
+            * cgmath::Matrix4::from_angle_x(self.pitch)
+            ;
     }
 
-    fn shift(&mut self, dx: i16, dy: i16) {}
+    fn shift(&mut self, dx: f32, dy: f32) {
+        let half_fovy = self.fovy / 2 as f32;
+        self.shift.x += dx * self.shift.z * half_fovy.tan() * 2f32 * self.aspect;
+        self.shift.y += dy * self.shift.z * half_fovy.tan() * 2f32;
+    }
 
-    fn yawpitch(&mut self, dx: i16, dy: i16) {}
+    fn yawpitch(&mut self, dx: cgmath::Deg<f32>, dy: cgmath::Deg<f32>) {
+        self.yaw += dx;
+        self.pitch += dy;
+    }
 
     fn dolly(&mut self, d: i16) {
         if d > 0 {
@@ -64,26 +73,28 @@ impl Camera {
     }
 
     pub fn update(&mut self, state: &ScreenState) {
-        let dx = state.MouseX - self.lastMouseX;
-        let dy = state.MouseY - self.lastMouseY;
-        self.lastMouseX = state.MouseX;
-        self.lastMouseY = state.MouseY;
+        let dx = state.MouseX - self.last_mouse_x;
+        let dy = state.MouseY - self.last_mouse_y;
+        self.last_mouse_x = state.MouseX;
+        self.last_mouse_y = state.MouseY;
 
-        let aspect = state.Width as f32/state.Height as f32;
-        if aspect!=self.aspect
-        {
+        let aspect = state.Width as f32 / state.Height as f32;
+        if aspect != self.aspect {
             self.aspect = aspect;
             self.calc_projection();
         }
 
         if state.MouseFlag.has(MouseButtonFlags::MiddleDown) {
             // shift
-            self.shift(dx, dy);
+            self.shift(
+                -dx as f32 / state.Width as f32,
+                dy as f32 / state.Height as f32,
+            );
         }
 
         if state.MouseFlag.has(MouseButtonFlags::RightDown) {
             // yaw, pitch
-            self.shift(dx, dy);
+            self.yawpitch(cgmath::Deg(dx as f32), cgmath::Deg(dy as f32));
         }
 
         if state.MouseFlag.has(MouseButtonFlags::WheelMinus) {

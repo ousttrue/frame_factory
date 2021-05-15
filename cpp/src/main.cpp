@@ -10,6 +10,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_win32.h>
 #include <backends/imgui_impl_dx11.h>
+#include <iostream>
 
 const auto CLASS_NAME = L"CPP_SAMPLE_CLASS";
 
@@ -49,7 +50,8 @@ public:
     }
 
     ID3D11ShaderResourceView *render(ID3D11Device *device,
-                                     ID3D11DeviceContext *context, const screenstate::ScreenState &state)
+                                     ID3D11DeviceContext *context,
+                                     const screenstate::ScreenState &state)
     {
         if (m_width != state.Width || m_height != state.Height)
         {
@@ -126,7 +128,8 @@ public:
         // Check japanese (meiryo UI) font is exist on system.
         {
             // Create glyphs.
-            io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\meiryo.ttc", 18.0f, nullptr,
+            io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\meiryo.ttc",
+                                         18.0f, nullptr,
                                          io.Fonts->GetGlyphRangesJapanese());
         }
 
@@ -152,7 +155,8 @@ public:
         ImGui::DestroyContext();
     }
 
-    void update(ID3D11Device *device, ID3D11DeviceContext *context, const screenstate::ScreenState &state)
+    void update(ID3D11Device *device, ID3D11DeviceContext *context,
+                const screenstate::ScreenState &state)
     {
         // Start the Dear ImGui frame
         ImGui_ImplDX11_NewFrame();
@@ -165,7 +169,8 @@ public:
         ImGui::Render();
     }
 
-    void gui(ID3D11Device *device, ID3D11DeviceContext *context, const screenstate::ScreenState &state)
+    void gui(ID3D11Device *device, ID3D11DeviceContext *context,
+             const screenstate::ScreenState &state)
     {
         ImGuiWindowFlags window_flags =
             ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
@@ -211,13 +216,12 @@ public:
                 auto mouseXY = ImGui::GetMousePos();
 
                 // render
-                auto x = mouseXY.x - pos.x;
-                auto y = mouseXY.y - pos.y - frameHeight;
-
-                auto crop = state.Crop((int)x, (int)y, (int)size.x, (int)size.y);
-
-                auto srv =
-                    m_scene->render(device, context, crop);
+                auto crop = state.Crop(static_cast<int>(pos.x),
+                                       static_cast<int>(pos.y + frameHeight),
+                                       static_cast<int>(size.x),
+                                       static_cast<int>(size.y));
+                std::cout << crop.MouseX << " " << crop.MouseY << std::endl;
+                auto srv = m_scene->render(device, context, crop);
                 if (srv)
                 {
                     ImGui::ImageButton((ImTextureID)srv, size,
@@ -262,8 +266,9 @@ public:
     }
 };
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine, int nCmdShow)
+// int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+//                    LPSTR lpCmdLine, int nCmdShow)
+int main(int argc, char **argv)
 {
     auto window = SampleWindow::create(CLASS_NAME, L"CPP_SAMPLE");
     if (!window)
@@ -278,7 +283,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return 2;
         }
 
-        FPS fps(60);
+        FPS fps(30);
 
         float clearColor[] = {0.0f, 0.2f, 0.4f, 1.0f};
         {
@@ -286,7 +291,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                          d3d->context().Get());
 
             screenstate::ScreenState state;
-            while(window->main_loop(&state))
+            while (window->main_loop(&state))
             {
                 // update imgui
                 gui.update(d3d->device().Get(), d3d->context().Get(), state);

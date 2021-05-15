@@ -15,7 +15,7 @@ pub enum MouseButtonFlags {
 impl MouseButtonFlags {
     pub fn has(self, flag: MouseButtonFlags) -> bool {
         let value = self;
-        value as u32 & flag as u32 != 0
+        (value as u32 & flag as u32) != 0
     }
 }
 

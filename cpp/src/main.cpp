@@ -10,7 +10,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_win32.h>
 #include <backends/imgui_impl_dx11.h>
-#include <iostream>
+
 
 const auto CLASS_NAME = L"CPP_SAMPLE_CLASS";
 
@@ -220,7 +220,6 @@ public:
                                        static_cast<int>(pos.y + frameHeight),
                                        static_cast<int>(size.x),
                                        static_cast<int>(size.y));
-                std::cout << crop.MouseX << " " << crop.MouseY << std::endl;
                 auto srv = m_scene->render(device, context, crop);
                 if (srv)
                 {

@@ -13,6 +13,9 @@
     "settings": {
         "files.associations": {
             "memory": "cpp"
-        }
+        },
+        "cSpell.words": [
+            "imgui"
+        ]
     }
 }

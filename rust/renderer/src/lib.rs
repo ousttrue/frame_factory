@@ -45,12 +45,19 @@ fn or_create() {
 }
 
 #[no_mangle]
-pub extern "C" fn FRAME_FACTORY_sample_destroy() {
+pub extern "C" fn FRAME_FACTORY_shutdown() {
     unsafe { G_SCENE = None };
 }
 
 #[no_mangle]
-pub extern "C" fn FRAME_FACTORY_sample_create(
+pub extern "C" fn FRAME_FACTORY_scene_destroy(scene: u32) {
+    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+        scene_manager.scenes.remove(&scene).unwrap();
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_scene_sample(
     device: *mut d3d11::ID3D11Device,
     source: *const u8,
     source_size: usize,
@@ -58,7 +65,6 @@ pub extern "C" fn FRAME_FACTORY_sample_create(
     ps_main: *const u8,
 ) -> u32 {
     let d3d_device = unsafe { device.as_ref().unwrap() };
-
     or_create();
 
     if let Some(scene_manager) = unsafe { &mut G_SCENE } {
@@ -71,7 +77,24 @@ pub extern "C" fn FRAME_FACTORY_sample_create(
 }
 
 #[no_mangle]
-pub extern "C" fn FRAME_FACTORY_sample_render(
+pub extern "C" fn FRAME_FACTORY_scene_load(
+    device: *mut d3d11::ID3D11Device,
+    path: *const u8,
+) -> u32 {
+    let d3d_device = unsafe { device.as_ref().unwrap() };
+    or_create();
+
+    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+        if let Ok(scene) = Scene::load(d3d_device, path) {
+            return scene_manager.add(scene);
+        }
+    }
+
+    0
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_scene_render(
     scene: u32,
     device: *mut d3d11::ID3D11Device,
     context: *mut d3d11::ID3D11DeviceContext,

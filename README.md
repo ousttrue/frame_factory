@@ -2,16 +2,18 @@
 rust 練習
 
 ```
-+------------------------------+
-|rust renderer dll             |
-|Scene Resource Renderer(D3D11)|
-+------------------------------+
-  A            A
-  |            |
-+--------+     |
-| Window |     |
-|c++ main|-> imgui
-+--------+
++--------------------------------+
+|rust renderer dll               |
+|+-----+  +-------------+        |
+||Scene|->|D3D Resources|->Render|
+|+-----+  +-------------+        |
++--------------------------------+
+  A          
+  |          
++---------+
+| Window  |
+|c++ imgui|
++---------+
 ```
 
 # ToDo
@@ -25,6 +27,7 @@ rust 練習
 * [x] save window state
 * [x] docking
 * [x] font
+* [ ] logger
 * [ ] SDL2
 
 ## Scene

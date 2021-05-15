@@ -58,6 +58,10 @@ impl Scene {
         })
     }
 
+    pub fn load(d3d_device: &d3d11::ID3D11Device, path: *const u8) -> Result<Scene, ComError> {
+        Err(ComError::StaticMessage("not impl"))
+    }
+
     pub fn get_or_create_rtv(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,

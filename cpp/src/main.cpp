@@ -3,6 +3,7 @@
 #include "dx11.h"
 #include <Windows.h>
 #include <vector>
+#include <list>
 #include <fstream>
 #include <memory>
 #include <functional>
@@ -36,16 +37,38 @@ class RustRenderer
     Microsoft::WRL::ComPtr<ID3D11Texture2D> m_texture;
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv;
 
-public:
-    RustRenderer(ID3D11Device *device, const char *data, size_t len)
+    RustRenderer(uint32_t scene)
     {
-        m_scene =
-            FRAME_FACTORY_sample_create(device, data, len, "vsMain", "psMain");
+        m_scene = scene;
     }
 
+public:
     ~RustRenderer()
     {
-        FRAME_FACTORY_sample_destroy();
+        FRAME_FACTORY_shutdown();
+    }
+
+    static std::unique_ptr<RustRenderer>
+    load_sample(ID3D11Device *device, const char *data, size_t len)
+    {
+        auto scene =
+            FRAME_FACTORY_scene_sample(device, data, len, "vsMain", "psMain");
+        if (!scene)
+        {
+            return nullptr;
+        }
+        return std::unique_ptr<RustRenderer>(new RustRenderer(scene));
+    }
+
+    static std::unique_ptr<RustRenderer> load_gltf(ID3D11Device *device,
+                                                   const char *path)
+    {
+        auto scene = FRAME_FACTORY_scene_load(device, path);
+        if (!scene)
+        {
+            return nullptr;
+        }
+        return std::unique_ptr<RustRenderer>(new RustRenderer(scene));
     }
 
     ID3D11ShaderResourceView *render(ID3D11Device *device,
@@ -91,8 +114,8 @@ public:
             }
         }
 
-        if (!FRAME_FACTORY_sample_render(m_scene, device, context,
-                                         m_texture.Get(), &state))
+        if (!FRAME_FACTORY_scene_render(m_scene, device, context,
+                                        m_texture.Get(), &state))
         {
             return nullptr;
         }
@@ -104,9 +127,8 @@ public:
 struct ImGuiApp
 {
     bool m_show_demo_window = true;
-    // 3D View
-    std::unique_ptr<RustRenderer> m_scene;
     float m_clearColor[4] = {0.0f, 0.2f, 0.4f, 1.0f};
+    std::list<std::unique_ptr<RustRenderer>> m_scenes;
 
 public:
     ImGuiApp(HWND hwnd, ID3D11Device *device, ID3D11DeviceContext *context)
@@ -136,13 +158,6 @@ public:
         ImGui_ImplWin32_Init(hwnd);
         ImGui_ImplDX11_Init(device, context);
 
-        auto source = ReadAllBytes("../shaders/mvp.hlsl");
-        if (!source.empty())
-        {
-            m_scene.reset(
-                new RustRenderer(device, source.data(), source.size()));
-        }
-
         // docking
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     }
@@ -153,6 +168,32 @@ public:
         ImGui_ImplDX11_Shutdown();
         ImGui_ImplWin32_Shutdown();
         ImGui::DestroyContext();
+    }
+
+    void load(ID3D11Device *device, int argc, char **argv)
+    {
+        if (argc < 2)
+        {
+            auto source = ReadAllBytes("../shaders/mvp.hlsl");
+            if (!source.empty())
+            {
+                if (auto scene = RustRenderer::load_sample(
+                        device, source.data(), source.size()))
+                {
+                    m_scenes.push_back(std::move(scene));
+                }
+            }
+        }
+        else
+        {
+            for (int i = 1; i < argc; ++i)
+            {
+                if (auto scene = RustRenderer::load_gltf(device, argv[i]))
+                {
+                    m_scenes.push_back(std::move(scene));
+                }
+            }
+        }
     }
 
     void update(ID3D11Device *device, ID3D11DeviceContext *context,
@@ -204,6 +245,7 @@ public:
         }
 
         // 3d view
+        for (auto &scene : m_scenes)
         {
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
             if (ImGui::Begin("render target", nullptr,
@@ -220,7 +262,7 @@ public:
                                        static_cast<int>(pos.y + frameHeight),
                                        static_cast<int>(size.x),
                                        static_cast<int>(size.y));
-                auto srv = m_scene->render(device, context, crop);
+                auto srv = scene->render(device, context, crop);
                 if (srv)
                 {
                     ImGui::ImageButton((ImTextureID)srv, size,
@@ -288,6 +330,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     }
 
     ImGuiApp gui(window->handle(), d3d->device().Get(), d3d->context().Get());
+    gui.load(d3d->device().Get(), argc, argv);
 
     FPS fps(30);
     while (true)
@@ -295,7 +338,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         fps.begin();
 
         screenstate::ScreenState state;
-        if(!window->main_loop(&state))
+        if (!window->main_loop(&state))
         {
             break;
         }

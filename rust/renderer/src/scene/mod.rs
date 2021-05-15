@@ -1,24 +1,12 @@
 use cgmath::{Matrix, One};
 use winapi::um::{d3d11, winuser::DefMDIChildProcW};
 
-
 use super::rendertarget::RenderTarget;
 use crate::{com_util::ComError, shader::Shader, vertex_buffer::VertexBuffer};
 
 pub mod camera;
-use self::camera::Camera;
-
-#[repr(C)]
-pub struct ScreenState {
-    Width: u16,
-    Height: u16,
-    // uint32_t Time,
-    ElapsedSeconds: f32,
-    DeltaSeconds: f32,
-    MouseX: u16,
-    MouseY: u16,
-    MouseFlag: u32,
-}
+use self::{camera::Camera, screenstate::ScreenState};
+pub mod screenstate;
 
 #[repr(C)]
 struct c0 {
@@ -66,7 +54,7 @@ impl Scene {
             model,
             vertex_buffer,
             render_target: None,
-            camera: Camera::persepective(cgmath::Deg(60f32), 1.0f32, 0.1f32, 100f32),
+            camera: Camera::new(),
         })
     }
 
@@ -92,6 +80,7 @@ impl Scene {
         state: &ScreenState,
     ) {
         // update camera
+        self.camera.update(state);
 
         // render
         self.get_or_create_rtv(d3d_device, texture);

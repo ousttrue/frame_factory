@@ -2,5 +2,6 @@
 
 members = [
     "renderer",
-    "sample"
+    "sample",
+    "from_jsonschema",
 ]

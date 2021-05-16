@@ -11,7 +11,7 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--package=renderer",
+                    "--package=from_jsonschema",
                     "--bin=from_jsonschema"
                 ],
                 "filter": {
@@ -20,7 +20,7 @@
                 }
             },
             "args": [
-                "${workspaceFolder}/glTF/specification/2.0/schema/glTF.schema.json"
+                "${workspaceFolder}/../glTF/specification/2.0/schema/glTF.schema.json"
             ],
             "cwd": "${workspaceFolder}"
         },

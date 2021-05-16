@@ -1,15 +1,18 @@
 {
 	"folders": [
-		{
-			"path": "rust"
-		},
-		{
-			"path": "cpp"
-		},
-		{
-			"path": "shaders"
-		}
-	],
+        {
+            "path": "rust"
+        },
+        {
+            "path": "cpp"
+        },
+        {
+            "path": "shaders"
+        },
+        {
+            "path": "glTF\\specification\\2.0\\schema"
+        }
+    ],
     "settings": {
         "files.associations": {
             "memory": "cpp"

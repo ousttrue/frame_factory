@@ -73,36 +73,36 @@ impl Camera {
     }
 
     pub fn update(&mut self, state: &ScreenState) {
-        let dx = state.MouseX - self.last_mouse_x;
-        let dy = state.MouseY - self.last_mouse_y;
-        self.last_mouse_x = state.MouseX;
-        self.last_mouse_y = state.MouseY;
+        let dx = state.mouse_x - self.last_mouse_x;
+        let dy = state.mouse_y - self.last_mouse_y;
+        self.last_mouse_x = state.mouse_x;
+        self.last_mouse_y = state.mouse_y;
 
-        let aspect = state.Width as f32 / state.Height as f32;
+        let aspect = state.width as f32 / state.height as f32;
         if aspect != self.aspect {
             self.aspect = aspect;
             self.calc_projection();
         }
 
-        if state.MouseFlag.has(MouseButtonFlags::MiddleDown) {
+        if state.mouse_flag.has(MouseButtonFlags::MiddleDown) {
             // shift
             self.shift(
-                -dx as f32 / state.Width as f32,
-                dy as f32 / state.Height as f32,
+                -dx as f32 / state.width as f32,
+                dy as f32 / state.height as f32,
             );
         }
 
-        if state.MouseFlag.has(MouseButtonFlags::RightDown) {
+        if state.mouse_flag.has(MouseButtonFlags::RightDown) {
             // yaw, pitch
             self.yawpitch(cgmath::Deg(dx as f32), cgmath::Deg(dy as f32));
         }
 
-        if state.MouseFlag.has(MouseButtonFlags::WheelMinus) {
+        if state.mouse_flag.has(MouseButtonFlags::WheelMinus) {
             // dolly
             self.dolly(-1);
         }
 
-        if state.MouseFlag.has(MouseButtonFlags::WheelPlus) {
+        if state.mouse_flag.has(MouseButtonFlags::WheelPlus) {
             // dolly
             self.dolly(1);
         }

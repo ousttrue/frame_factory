@@ -16,6 +16,7 @@ pub struct Renderer {
     pub back_buffer: Option<ComPtr<d3d11::ID3D11RenderTargetView>>,
 }
 
+#[allow(dead_code)]
 impl Renderer {
     pub fn new(hwnd: HWND) -> Result<Renderer, &'static str> {
         let swapchain_desc = dxgi::DXGI_SWAP_CHAIN_DESC {

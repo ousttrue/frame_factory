@@ -1,14 +1,13 @@
 use std::{
     cell::Cell,
     convert::TryInto,
-    ffi::CStr,
     fs::File,
-    io::{Bytes, Read},
+    io::{Read},
     str::from_utf8,
 };
 
 use cgmath::{Matrix, One};
-use winapi::um::{d3d11, winuser::DefMDIChildProcW};
+use winapi::um::d3d11;
 
 use super::rendertarget::RenderTarget;
 use crate::{com_util::ComError, shader::Shader, vertex_buffer::VertexBuffer};
@@ -23,6 +22,7 @@ struct c0 {
     projection: [f32; 16],
 }
 
+#[allow(dead_code)]
 #[repr(C)]
 struct c1 {
     model: [f32; 16],
@@ -35,7 +35,6 @@ pub enum LoadError {
     CanNotRead,
     InvalidHeader,
     UnknownVersion,
-    Fail,
     InvalidUtf8,
     UnknownChunkType,
 }
@@ -149,7 +148,7 @@ impl Scene {
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).map_err(|_| LoadError::CanNotRead)?;
 
-        let mut reader = BytesReader::new(&buf);
+        let reader = BytesReader::new(&buf);
 
         if reader.read_str(4)? != "glTF" {
             return Err(LoadError::InvalidHeader);

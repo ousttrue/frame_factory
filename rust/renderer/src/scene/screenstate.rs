@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 #[repr(u32)]
 #[derive(Clone, Copy)]
 pub enum MouseButtonFlags {
@@ -21,11 +19,11 @@ impl MouseButtonFlags {
 
 #[repr(C)]
 pub struct ScreenState {
-    pub Width: i16,
-    pub Height: i16,
-    pub ElapsedSeconds: f32,
-    pub DeltaSeconds: f32,
-    pub MouseX: i16,
-    pub MouseY: i16,
-    pub MouseFlag: MouseButtonFlags,
+    pub width: i16,
+    pub height: i16,
+    pub elapsed_seconds: f32,
+    pub delta_seconds: f32,
+    pub mouse_x: i16,
+    pub mouse_y: i16,
+    pub mouse_flag: MouseButtonFlags,
 }

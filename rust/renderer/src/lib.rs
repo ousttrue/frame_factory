@@ -7,7 +7,7 @@ mod vertex_buffer;
 use scene::{screenstate::ScreenState, Scene};
 use std::{
     collections::HashMap,
-    ffi::{c_void, CStr},
+    ffi::CStr,
     path::Path,
 };
 

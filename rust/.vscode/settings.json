@@ -1,9 +1,13 @@
 {
     "cSpell.words": [
         "HRESULT",
+        "cgmath",
         "dxgi",
         "dxgiformat",
         "hwnd",
+        "rendertarget",
+        "repr",
+        "screenstate",
         "winapi"
     ],
 }

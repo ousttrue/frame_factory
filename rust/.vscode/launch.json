@@ -7,6 +7,26 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "from jsonschema",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=renderer",
+                    "--bin=from_jsonschema"
+                ],
+                "filter": {
+                    "name": "from_jsonschema",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "${workspaceFolder}/glTF/specification/2.0/schema/glTF.schema.json"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'renderer'",
             "cargo": {
                 "args": [

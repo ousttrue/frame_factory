@@ -1,7 +1,7 @@
 extern crate serde_json;
 use core::panic;
 use serde_json::value::Value;
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, path};
 
 #[derive(Debug)]
 enum JsonSchemaError {
@@ -36,23 +36,55 @@ struct JsonSchema {
 }
 
 impl JsonSchema {
-    fn print(&self, indent: &str) {
-        if let Some(base) = &self.base {
-            println!("{}{}: {}", indent, self.title, base.title);
-        } else {
-            println!("{}{}", indent, self.title);
-        }
+    fn generate(&self, file: &mut fs::File) {
+        // 深さ優先で object 列挙する
 
-        match &self.js_type {
-            JsonSchemaType::Array(item) => item.print(&concat(indent, "  ")),
-            JsonSchemaType::Object(props) => {
-                for (k, v) in props.iter() {
-                    println!("{}{} =>", indent, k);
-                    v.print(&concat(indent, "  "));
+        // match &self.js_type {
+        //     JsonSchemaType::Object(props) => {
+        //         println!("{{");
+        //         for (k, v) in props.iter() {
+        //             print!("{}: ", k);
+        //             let prop = self.get_prop(k);
+        //             prop.print(&concat(indent, "  "));
+        //             println!("");
+        //         }
+        //         print!("}}");
+        //     }
+        //     JsonSchemaType::Array(items) => {
+        //         print!("[");
+        //         items.print("");
+        //         print!("]");
+        //     }
+        //     JsonSchemaType::Integer => {
+        //         print!("integer")
+        //     }
+        //     JsonSchemaType::Number => {
+        //         print!("number")
+        //     }
+        //     JsonSchemaType::String => {
+        //         print!("string")
+        //     }
+        //     JsonSchemaType::None => {
+        //         print!("none")
+        //     }
+        //     _ => print!("{}", self.title),
+        // }
+    }
+
+    fn get_prop(&self, key: &str) -> &Box<JsonSchema> {
+        if let JsonSchemaType::Object(props) = &self.js_type {
+            if let Some(prop) = props.get(key) {
+                if let JsonSchemaType::None = self.js_type {
+                    if let Some(base) = &self.base {
+                        return base.get_prop(key);
+                    }
+                } else {
+                    return prop;
                 }
             }
-            _ => panic!(),
         }
+
+        panic!();
     }
 }
 
@@ -241,14 +273,29 @@ fn parse_file(path: &str) -> Result<Box<JsonSchema>, JsonSchemaError> {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.len() < 2 {
-        println!("usage: {} {{path_to_glTF.schema.json}}", args[0]);
+    if args.len() < 3 {
+        println!(
+            "usage: {} {{path_to_glTF.schema.json}} {{dst_dir}}",
+            args[0]
+        );
         return;
     }
 
     match parse_file(&args[1]) {
         Ok(json_schema) => {
-            json_schema.print("");
+            // remove dir if exis
+            if fs::metadata(&args[2]).is_ok() {
+                fs::remove_dir_all(&args[2]).unwrap();
+            }
+
+            // create dir
+            fs::create_dir_all(&args[2]).unwrap();
+
+            // open
+            let out_path = format!("{}/generated.rs", args[2]);
+            let mut file = fs::File::create(out_path).unwrap();
+
+            json_schema.generate(&mut file);
         }
         Err(err) => println!("{:?}", err),
     }

@@ -1,19 +1,26 @@
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, rc::Rc};
 
 use serde_json::Value;
 
-use crate::jsonschema::{JsonSchemaError, JsonSchemaType};
 use crate::jsonschema::JsonSchema;
+use crate::jsonschema::{JsonSchemaError, JsonSchemaType};
 
-
-pub struct JsonSchemaParser {}
+pub struct JsonSchemaParser {
+    cache: HashMap<String, Rc<JsonSchema>>,
+}
 
 impl JsonSchemaParser {
     pub fn new() -> JsonSchemaParser {
-        JsonSchemaParser {}
+        JsonSchemaParser {
+            cache: HashMap::new(),
+        }
     }
 
-    fn parse_ref(&self, path: &str, object: &Value) -> Result<Box<JsonSchema>, JsonSchemaError> {
+    fn parse_ref(&mut self, path: &str, object: &Value) -> Result<Rc<JsonSchema>, JsonSchemaError> {
+        if let Some(cache) = self.cache.get(path) {
+            return Ok(cache.clone());
+        }
+
         if let Some(object) = object.as_object() {
             if object.len() == 1 {
                 if let Some(ref_path) = object.get("$ref") {
@@ -26,7 +33,9 @@ impl JsonSchemaParser {
                             .unwrap(),
                         ref_path.as_str().unwrap()
                     );
-                    return self.parse_file(path.as_str());
+                    let cache = self.parse_file(path.as_str())?;
+                    self.cache.insert(path, cache.clone());
+                    return Ok(cache);
                 }
             }
         }
@@ -35,10 +44,10 @@ impl JsonSchemaParser {
     }
 
     pub fn parse(
-        &self,
+        &mut self,
         path: &str,
         json: &serde_json::Value,
-    ) -> Result<Box<JsonSchema>, JsonSchemaError> {
+    ) -> Result<Rc<JsonSchema>, JsonSchemaError> {
         let title = if let Some(title) = json.get("title") {
             title.as_str().unwrap()
         } else {
@@ -51,7 +60,7 @@ impl JsonSchemaParser {
             ""
         }
         .to_owned();
-        let base: Option<Box<JsonSchema>> = if let Some(allOf) = json.get("allOf") {
+        let base: Option<Rc<JsonSchema>> = if let Some(allOf) = json.get("allOf") {
             if let Some(allOf) = allOf.as_array() {
                 // inherit
                 if allOf.len() != 1 {
@@ -74,7 +83,7 @@ impl JsonSchemaParser {
                     if let Some(additionalProperties) = json.get("additionalProperties") {
                         JsonSchemaType::Dictionary(self.parse(path, additionalProperties).unwrap())
                     } else {
-                        let mut props: HashMap<String, Box<JsonSchema>> = HashMap::new();
+                        let mut props: HashMap<String, Rc<JsonSchema>> = HashMap::new();
                         if let Some(properties) = json.get("properties") {
                             for (prop_name, prop) in json["properties"].as_object().unwrap().iter()
                             {
@@ -105,7 +114,7 @@ impl JsonSchemaParser {
                 _ => panic!(""),
             };
 
-            Box::new(JsonSchema {
+            Rc::new(JsonSchema {
                 path: String::from(path),
                 title,
                 description,
@@ -116,14 +125,14 @@ impl JsonSchemaParser {
             let anyOf = anyOf.as_array().unwrap();
             let anyOf_type = anyOf[anyOf.len() - 1]["type"].as_str().unwrap();
             match anyOf_type {
-                "integer" => Box::new(JsonSchema {
+                "integer" => Rc::new(JsonSchema {
                     path: String::from(path),
                     title,
                     description,
                     base,
                     js_type: JsonSchemaType::Integer,
                 }),
-                "string" => Box::new(JsonSchema {
+                "string" => Rc::new(JsonSchema {
                     path: String::from(path),
                     title,
                     description,
@@ -134,7 +143,7 @@ impl JsonSchemaParser {
             }
         } else if json.len() == 0 {
             // empty. name, extensions, extras
-            Box::new(JsonSchema {
+            Rc::new(JsonSchema {
                 path: String::from(path),
                 title,
                 description,
@@ -142,7 +151,7 @@ impl JsonSchemaParser {
                 js_type: JsonSchemaType::None,
             })
         } else if json.len() == 1 && base.is_some() {
-            Box::new(JsonSchema {
+            Rc::new(JsonSchema {
                 path: String::from(path),
                 title,
                 description,
@@ -150,7 +159,7 @@ impl JsonSchemaParser {
                 js_type: JsonSchemaType::None,
             })
         } else {
-            Box::new(JsonSchema {
+            Rc::new(JsonSchema {
                 path: String::from(path),
                 title,
                 description,
@@ -188,7 +197,7 @@ impl JsonSchemaParser {
         Ok(js)
     }
 
-    pub fn parse_file(&self, path: &str) -> Result<Box<JsonSchema>, JsonSchemaError> {
+    pub fn parse_file(&mut self, path: &str) -> Result<Rc<JsonSchema>, JsonSchemaError> {
         if !std::path::Path::new(path).exists() {
             return Err(JsonSchemaError::FileNotFound);
         }

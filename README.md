@@ -41,8 +41,7 @@ Texture2DRenderTarget
 
 ## glTF loader
 * [x] parse JsonSchema
-* [ ] shared reference
-* [ ] preprocess(flatten inheritance)
+* [x] shared reference
 * [ ] generate rust struct from JsonSchema
 * [ ] glTF2
 

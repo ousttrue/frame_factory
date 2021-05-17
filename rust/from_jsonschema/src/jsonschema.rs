@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, rc::Rc};
 
 #[derive(Debug)]
 pub enum JsonSchemaError {
@@ -13,9 +13,9 @@ pub enum JsonSchemaType {
     Number,
     Integer,
     String,
-    Array(Box<JsonSchema>),
-    Object(HashMap<String, Box<JsonSchema>>),
-    Dictionary(Box<JsonSchema>),
+    Array(Rc<JsonSchema>),
+    Object(HashMap<String, Rc<JsonSchema>>),
+    Dictionary(Rc<JsonSchema>),
 }
 
 fn concat(lhs: &str, rhs: &str) -> String {
@@ -28,7 +28,7 @@ pub struct JsonSchema {
     pub path: String,
     pub title: String,
     pub description: String,
-    pub base: Option<Box<JsonSchema>>,
+    pub base: Option<Rc<JsonSchema>>,
     pub js_type: JsonSchemaType,
 }
 
@@ -68,7 +68,7 @@ impl JsonSchema {
         // }
     }
 
-    fn get_prop(&self, key: &str) -> &Box<JsonSchema> {
+    fn get_prop(&self, key: &str) -> &Rc<JsonSchema> {
         if let JsonSchemaType::Object(props) = &self.js_type {
             if let Some(prop) = props.get(key) {
                 if let JsonSchemaType::None = self.js_type {

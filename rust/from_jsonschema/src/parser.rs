@@ -87,7 +87,7 @@ impl JsonSchemaParser {
                         if let Some(properties) = json.get("properties") {
                             for (prop_name, prop) in json["properties"].as_object().unwrap().iter()
                             {
-                                let prop = self.parse(path, prop)?;
+                                let mut prop = self.parse(path, prop)?;
                                 props.insert(prop_name.clone(), prop);
                             }
                         }

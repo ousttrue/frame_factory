@@ -3,7 +3,7 @@ mod parser;
 
 extern crate serde_json;
 use crate::parser::JsonSchemaParser;
-use std::fs;
+use std::{fs, io::BufWriter};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -28,7 +28,7 @@ fn main() {
 
             // open
             let out_path = format!("{}/generated.rs", args[2]);
-            let mut file = fs::File::create(out_path).unwrap();
+            let mut file = BufWriter::new(fs::File::create(out_path).unwrap());
 
             json_schema.generate(&mut file);
         }

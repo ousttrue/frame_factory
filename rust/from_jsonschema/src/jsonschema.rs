@@ -36,8 +36,6 @@ fn concat(lhs: &str, rhs: &str) -> String {
     lhs
 }
 
-
-
 pub struct JsonSchema {
     pub path: String,
     pub title: String,
@@ -50,17 +48,22 @@ impl JsonSchema {
     pub fn get_prop(&self, key: &str) -> Option<Rc<JsonSchema>> {
         if let JsonSchemaType::Object(props) = &self.js_type {
             if let Some(prop) = props.get(key) {
-                if let Some(base) = &self.base {
-                    if let Some(from_base) = base.get_prop(key) {
-                        return Some(from_base);
+                return Some(prop.clone());
+            } else {
+                return None;
+            }
+        } else {
+            for base in self.bases() {
+                if let JsonSchemaType::Object(props) = &base.js_type {
+                    if let Some(prop) = props.get(key) {
+                        return Some(prop.clone());
+                    } else {
+                        return None;
                     }
                 }
-
-                return Some(prop.clone());
             }
+            panic!();
         }
-
-        None
     }
 
     pub fn get_type(&self, key: &str, prop: &Rc<JsonSchema>) -> String {

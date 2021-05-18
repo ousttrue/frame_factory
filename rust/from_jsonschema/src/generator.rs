@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     io::{BufWriter, Write},
     rc::Rc,
@@ -22,6 +22,7 @@ fn escape(src: &str) -> &str {
 
 pub struct Generator {
     file: BufWriter<fs::File>,
+    used: HashSet<String>,
 }
 
 impl Generator {
@@ -32,11 +33,19 @@ impl Generator {
             .unwrap();
         file.write("\n".as_bytes()).unwrap();
 
-        Generator { file }
+        Generator {
+            file,
+            used: HashSet::new(),
+        }
     }
 
     pub fn generate(&mut self, js: &Rc<JsonSchema>) {
         // 深さ優先で object 列挙する
+
+        if js.title == "Accessor Sparse Indices" {
+            let a = 0;
+        };
+
         match &js.js_type {
             JsonSchemaType::Object(props) => {
                 self.generate_object(js, props).unwrap();
@@ -62,7 +71,7 @@ impl Generator {
         props: &HashMap<String, Rc<JsonSchema>>,
     ) -> Result<(), JsonSchemaError> {
         // recursive
-        for (k, _) in props.iter() {
+        for k in props.keys().sorted() {
             if let Some(prop) = js.get_prop(k) {
                 self.generate(&prop);
             }
@@ -80,21 +89,24 @@ impl Generator {
         props: &HashMap<String, Rc<JsonSchema>>,
     ) -> std::io::Result<()> {
         let title = js.get_title();
+        if !self.used.contains(&title) {
+            // write js
+            self.file.write(format!("/// {} \n", title).as_bytes())?;
+            self.file
+                .write(format!("/// {} \n", js.description).as_bytes())?;
+            self.file
+                .write(format!("struct {} {{\n", title.replace(" ", "")).as_bytes())?;
+            for k in props.keys().sorted() {
+                let v = props.get(k).unwrap();
+                let t = js.get_type(k, v);
+                let k = escape(k);
+                self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
+            }
+            self.file.write(b"}\n")?;
+            self.file.write(b"\n")?;
 
-        // write js
-        self.file.write(format!("/// {} \n", title).as_bytes())?;
-        self.file
-            .write(format!("/// {} \n", js.description).as_bytes())?;
-        self.file
-            .write(format!("struct {} {{\n", title.replace(" ", "")).as_bytes())?;
-        for k in props.keys().sorted() {
-            let v = props.get(k).unwrap();
-            let t = js.get_type(k, v);
-            let k = escape(k);
-            self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
+            self.used.insert(title);
         }
-        self.file.write(b"}\n")?;
-        self.file.write(b"\n")?;
 
         Ok(())
     }

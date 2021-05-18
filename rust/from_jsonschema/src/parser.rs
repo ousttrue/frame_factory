@@ -168,32 +168,6 @@ impl JsonSchemaParser {
             })
         };
 
-        // for (k, v) in json.as_object().unwrap().iter() {
-        //     match k.as_str() {
-        //         "$schema" => {}
-        //         "title" => {
-        //             js.title = String::from(v.as_str().unwrap());
-        //         }
-        //         "allOf" => {
-        //         }
-        //         "dependencies" => {
-        //             // validation
-        //         }
-        //         "description" => {
-        //             js.description = String::from(v.as_str().unwrap());
-        //         }
-        //         "required" => {
-        //             // validation
-        //         }
-        //         "type" => {}
-        //         "properties" => {}
-        //         "items" => {}
-        //         _ => {
-        //             print!("unknown key: {}", k);
-        //         }
-        //     }
-        // }
-
         Ok(js)
     }
 

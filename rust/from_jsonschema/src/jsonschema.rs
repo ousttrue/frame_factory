@@ -1,4 +1,5 @@
 extern crate itertools;
+use core::panic;
 use std::{
     collections::HashMap,
     fs,
@@ -6,8 +7,8 @@ use std::{
     rc::Rc,
 };
 
-use itertools::Itertools;
 use super::baseiterator::BaseIterator;
+use itertools::Itertools;
 
 #[derive(Debug)]
 pub enum JsonSchemaError {
@@ -53,6 +54,10 @@ impl JsonSchema {
     pub fn generate(&self, file: &mut BufWriter<fs::File>) {
         // 深さ優先で object 列挙する
 
+        if self.title == "glTFProperty" {
+            return;
+        }
+
         match &self.js_type {
             JsonSchemaType::Object(props) => {
                 self.generate_object(file, props).unwrap();
@@ -60,7 +65,14 @@ impl JsonSchema {
             JsonSchemaType::Array(items) => {
                 items.generate(file);
             }
-            JsonSchemaType::None => {}
+            JsonSchemaType::None => {
+                for base in BaseIterator::new(self) {
+                    if let JsonSchemaType::Object(props) = &base.js_type {
+                        self.generate_object(file, props).unwrap();
+                        break;
+                    }
+                }
+            }
             _ => (),
         }
     }
@@ -120,14 +132,15 @@ impl JsonSchema {
     ) -> std::io::Result<()> {
         // recursive
         for (k, _) in props.iter() {
-            let prop = self.get_prop(k).unwrap();
-            prop.generate(file);
+            if let Some(prop) = self.get_prop(k) {
+                prop.generate(file);
+            }
         }
 
         // write self
-        file.write(format!("/// {} \n", self.title).as_bytes())?;
+        file.write(format!("/// {} \n", self.get_title()).as_bytes())?;
         file.write(format!("/// {} \n", self.description).as_bytes())?;
-        file.write(format!("struct {} {{\n", self.title.replace(" ", "")).as_bytes())?;
+        file.write(format!("struct {} {{\n", self.get_title().replace(" ", "")).as_bytes())?;
         for k in props.keys().sorted() {
             let v = props.get(k).unwrap();
             let t = self.get_type(k, v);
@@ -139,5 +152,22 @@ impl JsonSchema {
 
         Ok(())
     }
-}
 
+    fn bases(&self) -> BaseIterator {
+        BaseIterator::new(self)
+    }
+
+    fn get_title(&self) -> String {
+        if self.title.len() > 0 {
+            return self.title.clone();
+        };
+
+        for base in self.bases() {
+            if base.title.len() > 0 {
+                return base.title.clone();
+            }
+        }
+
+        panic!();
+    }
+}

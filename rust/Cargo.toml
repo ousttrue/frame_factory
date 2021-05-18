@@ -4,4 +4,5 @@ members = [
     "renderer",
     "sample",
     "from_jsonschema",
+    "gltf",
 ]

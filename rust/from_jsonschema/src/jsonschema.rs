@@ -15,6 +15,8 @@ pub enum JsonSchemaError {
     FileNotFound,
     CanNotRead,
     ParseError,
+    Skip,
+    IO,
 }
 
 pub enum JsonSchemaType {
@@ -34,13 +36,7 @@ fn concat(lhs: &str, rhs: &str) -> String {
     lhs
 }
 
-fn escape(src: &str) -> &str {
-    if src == "type" {
-        &"r#type"
-    } else {
-        src
-    }
-}
+
 
 pub struct JsonSchema {
     pub path: String,
@@ -51,33 +47,7 @@ pub struct JsonSchema {
 }
 
 impl JsonSchema {
-    pub fn generate(&self, file: &mut BufWriter<fs::File>) {
-        // 深さ優先で object 列挙する
-
-        if self.title == "glTFProperty" {
-            return;
-        }
-
-        match &self.js_type {
-            JsonSchemaType::Object(props) => {
-                self.generate_object(file, props).unwrap();
-            }
-            JsonSchemaType::Array(items) => {
-                items.generate(file);
-            }
-            JsonSchemaType::None => {
-                for base in BaseIterator::new(self) {
-                    if let JsonSchemaType::Object(props) = &base.js_type {
-                        self.generate_object(file, props).unwrap();
-                        break;
-                    }
-                }
-            }
-            _ => (),
-        }
-    }
-
-    fn get_prop(&self, key: &str) -> Option<Rc<JsonSchema>> {
+    pub fn get_prop(&self, key: &str) -> Option<Rc<JsonSchema>> {
         if let JsonSchemaType::Object(props) = &self.js_type {
             if let Some(prop) = props.get(key) {
                 if let Some(base) = &self.base {
@@ -93,9 +63,9 @@ impl JsonSchema {
         None
     }
 
-    fn get_type(&self, key: &str, prop: &Rc<JsonSchema>) -> String {
+    pub fn get_type(&self, key: &str, prop: &Rc<JsonSchema>) -> String {
         if key == "extras" || key == "extensions" {
-            return "serd_json::Value".to_owned();
+            return "serde_json::Value".to_owned();
         }
 
         match &prop.js_type {
@@ -125,39 +95,11 @@ impl JsonSchema {
         }
     }
 
-    fn generate_object(
-        &self,
-        file: &mut BufWriter<fs::File>,
-        props: &HashMap<String, Rc<JsonSchema>>,
-    ) -> std::io::Result<()> {
-        // recursive
-        for (k, _) in props.iter() {
-            if let Some(prop) = self.get_prop(k) {
-                prop.generate(file);
-            }
-        }
-
-        // write self
-        file.write(format!("/// {} \n", self.get_title()).as_bytes())?;
-        file.write(format!("/// {} \n", self.description).as_bytes())?;
-        file.write(format!("struct {} {{\n", self.get_title().replace(" ", "")).as_bytes())?;
-        for k in props.keys().sorted() {
-            let v = props.get(k).unwrap();
-            let t = self.get_type(k, v);
-            let k = escape(k);
-            file.write(format!("    {}: {},\n", k, t).as_bytes())?;
-        }
-        file.write(b"}\n")?;
-        file.write(b"\n")?;
-
-        Ok(())
-    }
-
-    fn bases(&self) -> BaseIterator {
+    pub fn bases(&self) -> BaseIterator {
         BaseIterator::new(self)
     }
 
-    fn get_title(&self) -> String {
+    pub fn get_title(&self) -> String {
         if self.title.len() > 0 {
             return self.title.clone();
         };

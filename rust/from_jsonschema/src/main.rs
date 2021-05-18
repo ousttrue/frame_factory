@@ -1,10 +1,14 @@
+mod baseiterator;
 mod jsonschema;
 mod parser;
-mod baseiterator;
+mod generator;
 
 extern crate serde_json;
 use crate::parser::JsonSchemaParser;
-use std::{fs, io::BufWriter};
+use std::{
+    fs,
+    io::{BufWriter, Write},
+};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -28,10 +32,10 @@ fn main() {
             fs::create_dir_all(&args[2]).unwrap();
 
             // open
-            let out_path = format!("{}/generated.rs", args[2]);
-            let mut file = BufWriter::new(fs::File::create(out_path).unwrap());
+            let out_path = format!("{}/mod.rs", args[2]);
+            let mut generator = generator::Generator::new(&out_path);
 
-            json_schema.generate(&mut file);
+            generator.generate(&json_schema);
         }
         Err(err) => println!("{:?}", err),
     }

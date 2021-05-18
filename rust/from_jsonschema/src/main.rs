@@ -1,5 +1,6 @@
 mod jsonschema;
 mod parser;
+mod baseiterator;
 
 extern crate serde_json;
 use crate::parser::JsonSchemaParser;

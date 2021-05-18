@@ -7,6 +7,7 @@ use std::{
 };
 
 use itertools::Itertools;
+use super::baseiterator::BaseIterator;
 
 #[derive(Debug)]
 pub enum JsonSchemaError {
@@ -59,6 +60,7 @@ impl JsonSchema {
             JsonSchemaType::Array(items) => {
                 items.generate(file);
             }
+            JsonSchemaType::None => {}
             _ => (),
         }
     }
@@ -86,20 +88,16 @@ impl JsonSchema {
 
         match &prop.js_type {
             JsonSchemaType::None => {
-                let mut current = self;
                 if let Some(prop) = &prop.base {
                     return self.get_type(key, prop);
                 };
-                loop {
-                    if let Some(base) = &current.base {
-                        if let Some(prop) = base.get_prop(key) {
-                            return base.get_type(key, &prop);
-                        }
-                        current = base;
-                    } else {
-                        panic!();
+
+                for base in BaseIterator::new(self) {
+                    if let Some(prop) = base.get_prop(key) {
+                        return base.get_type(key, &prop);
                     }
                 }
+                panic!();
             }
             JsonSchemaType::Boolean => "bool".to_owned(),
             JsonSchemaType::Integer => "i32".to_owned(),
@@ -142,3 +140,4 @@ impl JsonSchema {
         Ok(())
     }
 }
+

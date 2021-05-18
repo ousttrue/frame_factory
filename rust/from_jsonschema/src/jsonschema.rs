@@ -4,7 +4,6 @@ use std::{
     fs,
     io::{BufWriter, Write},
     rc::Rc,
-    usize,
 };
 
 use itertools::Itertools;
@@ -108,6 +107,10 @@ impl JsonSchema {
             JsonSchemaType::String => "String".to_owned(),
             JsonSchemaType::Array(items) => format!("Vec<{}>", self.get_type(key, items)),
             JsonSchemaType::Object(_) => prop.title.replace(" ", ""),
+            JsonSchemaType::Dictionary(additionalProperties) => format!(
+                "HashMap<String, {}>",
+                self.get_type(key, additionalProperties)
+            ),
             _ => "## unknown ##".to_owned(),
         }
     }
@@ -124,7 +127,8 @@ impl JsonSchema {
         }
 
         // write self
-        file.write(format!("// {} \n", self.title).as_bytes())?;
+        file.write(format!("/// {} \n", self.title).as_bytes())?;
+        file.write(format!("/// {} \n", self.description).as_bytes())?;
         file.write(format!("struct {} {{\n", self.title.replace(" ", "")).as_bytes())?;
         for k in props.keys().sorted() {
             let v = props.get(k).unwrap();
@@ -137,35 +141,4 @@ impl JsonSchema {
 
         Ok(())
     }
-
-    // match &self.js_type {
-    //     JsonSchemaType::Object(props) => {
-    //         println!("{{");
-    //         for (k, v) in props.iter() {
-    //             print!("{}: ", k);
-    //             let prop = self.get_prop(k);
-    //             prop.print(&concat(indent, "  "));
-    //             println!("");
-    //         }
-    //         print!("}}");
-    //     }
-    //     JsonSchemaType::Array(items) => {
-    //         print!("[");
-    //         items.print("");
-    //         print!("]");
-    //     }
-    //     JsonSchemaType::Integer => {
-    //         print!("integer")
-    //     }
-    //     JsonSchemaType::Number => {
-    //         print!("number")
-    //     }
-    //     JsonSchemaType::String => {
-    //         print!("string")
-    //     }
-    //     JsonSchemaType::None => {
-    //         print!("none")
-    //     }
-    //     _ => print!("{}", self.title),
-    // }
 }

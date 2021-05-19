@@ -13,17 +13,10 @@ pub struct Model {
 impl Model {
     pub fn create_triangle(
         d3d_device: &d3d11::ID3D11Device,
-        source: *const u8,
-        source_size: usize,
-        vs_main: *const u8,
-        ps_main: *const u8,
+        shader: Shader,
     ) -> Result<Model, ComError> {
-        let (vs, input_layout, vs_constant_buffer) =
-            Shader::compile_vertex_shader(&d3d_device, source, source_size, vs_main)?;
-        let ps = Shader::compile_pixel_shader(d3d_device, source, source_size, ps_main)?;
-
         Ok(Model {
-            shader: Shader::new(vs, vs_constant_buffer, ps, input_layout),
+            shader,
             model: cgmath::Matrix4::one(),
             vertex_buffer: VertexBuffer::create_triangle(d3d_device)?,
         })

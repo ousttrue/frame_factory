@@ -7,6 +7,7 @@ mod scene;
 mod shader;
 mod vertex_buffer;
 use scene::{loader::Loader, model::Model, screenstate::ScreenState, Scene};
+use shader::Shader;
 use std::{collections::HashMap, ffi::CStr, path::Path};
 
 use winapi::um::d3d11::{self};
@@ -71,8 +72,12 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
 
     if let Some(scene_manager) = unsafe { &mut G_SCENE } {
         let mut scene = Scene::new();
-        if let Ok(model) = Model::create_triangle(d3d_device, source, source_size, vs_main, ps_main) {
-            scene.models.push(model);
+
+        if let Ok(shader) = Shader::compile(d3d_device, source, source_size, vs_main, ps_main)
+        {
+            if let Ok(model) = Model::create_triangle(d3d_device, shader) {
+                scene.models.push(model);
+            }
         }
 
         return scene_manager.add(scene);

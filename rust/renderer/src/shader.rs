@@ -256,6 +256,21 @@ impl Shader {
             input_layout,
         }
     }
+
+    pub fn compile(
+        d3d_device: &d3d11::ID3D11Device,
+        source: *const u8,
+        source_size: usize,
+        vs_main: *const u8,
+        ps_main: *const u8,
+    ) -> Result<Shader, ComError> {
+        let (vs, input_layout, vs_constant_buffer) =
+            Shader::compile_vertex_shader(&d3d_device, source, source_size, vs_main)?;
+        let ps = Shader::compile_pixel_shader(d3d_device, source, source_size, ps_main)?;
+
+        Ok(Shader::new(vs, vs_constant_buffer, ps, input_layout))
+    }
+
     pub fn compile_vertex_shader(
         d3d_device: &d3d11::ID3D11Device,
         source: *const u8,

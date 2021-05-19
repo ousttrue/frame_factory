@@ -6,7 +6,7 @@ mod rendertarget;
 mod scene;
 mod shader;
 mod vertex_buffer;
-use scene::{screenstate::ScreenState, Scene};
+use scene::{Scene, loader::Loader, screenstate::ScreenState};
 use std::{
     collections::HashMap,
     ffi::CStr,
@@ -94,7 +94,7 @@ pub extern "C" fn FRAME_FACTORY_scene_load(
         let path = unsafe { CStr::from_ptr(path) };
         if let Ok(path) = path.to_str() {
             let path = Path::new(path);
-            if let Ok(scene) = Scene::load(d3d_device, path) {
+            if let Ok(scene) = Loader::load(d3d_device, path) {
                 return scene_manager.add(scene);
             }
         }

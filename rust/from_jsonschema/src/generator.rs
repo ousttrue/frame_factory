@@ -92,6 +92,38 @@ use std::collections::HashMap;
         Ok(())
     }
 
+    pub fn get_type(js: &Rc<JsonSchema>, key: &str, prop: &Rc<JsonSchema>) -> String {
+        if key == "extras" || key == "extensions" {
+            return "serde_json::Value".to_owned();
+        }
+
+        match &prop.js_type {
+            JsonSchemaType::None => {
+                if let Some(prop) = &prop.base {
+                    return Self::get_type(js, key, prop);
+                };
+
+                for base in BaseIterator::new(js) {
+                    if let Some(prop) = base.get_prop(key) {
+                        return Self::get_type(&base, key, &prop);
+                    }
+                }
+                panic!();
+            }
+            JsonSchemaType::Boolean => "bool".to_owned(),
+            JsonSchemaType::Integer => "Option<i32>".to_owned(),
+            JsonSchemaType::Number => "f32".to_owned(),
+            JsonSchemaType::String => "String".to_owned(),
+            JsonSchemaType::Array(items) => format!("Vec<{}>", Self::get_type(js, key, items)),
+            JsonSchemaType::Object(_) => prop.title.replace(" ", ""),
+            JsonSchemaType::Dictionary(additionalProperties) => format!(
+                "HashMap<String, {}>",
+                Self::get_type(js, key, additionalProperties)
+            ),
+            _ => "## unknown ##".to_owned(),
+        }
+    }
+
     fn write_object(
         &mut self,
         js: &Rc<JsonSchema>,
@@ -107,7 +139,7 @@ use std::collections::HashMap;
             self.writeln(format!("pub struct {} {{", title.replace(" ", "")).as_str());
             for k in props.keys().sorted() {
                 let v = props.get(k).unwrap();
-                let t = js.get_type(k, v);
+                let t = Self::get_type(js, k, v);
                 let k = escape(k);
                 self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
             }

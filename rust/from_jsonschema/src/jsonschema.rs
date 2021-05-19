@@ -66,38 +66,6 @@ impl JsonSchema {
         }
     }
 
-    pub fn get_type(&self, key: &str, prop: &Rc<JsonSchema>) -> String {
-        if key == "extras" || key == "extensions" {
-            return "serde_json::Value".to_owned();
-        }
-
-        match &prop.js_type {
-            JsonSchemaType::None => {
-                if let Some(prop) = &prop.base {
-                    return self.get_type(key, prop);
-                };
-
-                for base in BaseIterator::new(self) {
-                    if let Some(prop) = base.get_prop(key) {
-                        return base.get_type(key, &prop);
-                    }
-                }
-                panic!();
-            }
-            JsonSchemaType::Boolean => "bool".to_owned(),
-            JsonSchemaType::Integer => "i32".to_owned(),
-            JsonSchemaType::Number => "f32".to_owned(),
-            JsonSchemaType::String => "String".to_owned(),
-            JsonSchemaType::Array(items) => format!("Vec<{}>", self.get_type(key, items)),
-            JsonSchemaType::Object(_) => prop.title.replace(" ", ""),
-            JsonSchemaType::Dictionary(additionalProperties) => format!(
-                "HashMap<String, {}>",
-                self.get_type(key, additionalProperties)
-            ),
-            _ => "## unknown ##".to_owned(),
-        }
-    }
-
     pub fn bases(&self) -> BaseIterator {
         BaseIterator::new(self)
     }

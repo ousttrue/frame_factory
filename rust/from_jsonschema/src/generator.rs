@@ -102,7 +102,8 @@ use std::collections::HashMap;
             // write js
             self.writeln(format!("/// {}", title).as_str());
             self.writeln(format!("/// {}", js.description).as_str());
-            self.writeln(format!("#[derive(Serialize, Deserialize, Debug)]").as_str());
+            self.writeln("#[derive(Serialize, Deserialize, Debug)]");
+            self.writeln("#[allow(non_snake_case)]");
             self.writeln(format!("struct {} {{", title.replace(" ", "")).as_str());
             for k in props.keys().sorted() {
                 let v = props.get(k).unwrap();
@@ -110,8 +111,8 @@ use std::collections::HashMap;
                 let k = escape(k);
                 self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
             }
-            self.file.write(b"}\n")?;
-            self.file.write(b"\n")?;
+            self.writeln("}");
+            self.writeln("");
 
             self.used.insert(title);
         }

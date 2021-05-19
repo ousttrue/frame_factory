@@ -28,6 +28,26 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "deserialize",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=gltf",
+                    "--bin=deserialize"
+                ],
+                "filter": {
+                    "name": "deserialize",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "${env:GLTF_SAMPLE_MODELS}/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'renderer'",
             "cargo": {
                 "args": [

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 /// Index array of size `count` that points to those accessor attributes that deviate from their initialization value. Indices must strictly increase.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct AccessorSparseIndices {
+pub struct AccessorSparseIndices {
     bufferView: i32,
     byteOffset: i32,
     componentType: i32,
@@ -18,7 +18,7 @@ struct AccessorSparseIndices {
 /// Array of size `count` times number of components, storing the displaced accessor attributes pointed by `indices`. Substituted values must have the same `componentType` and number of components as the base accessor.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct AccessorSparseValues {
+pub struct AccessorSparseValues {
     bufferView: i32,
     byteOffset: i32,
     extensions: serde_json::Value,
@@ -29,7 +29,7 @@ struct AccessorSparseValues {
 /// Sparse storage of attributes that deviate from their initialization value.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct AccessorSparse {
+pub struct AccessorSparse {
     count: i32,
     extensions: serde_json::Value,
     extras: serde_json::Value,
@@ -41,7 +41,7 @@ struct AccessorSparse {
 /// A typed view into a bufferView.  A bufferView contains raw binary data.  An accessor provides a typed view into a bufferView or a subset of a bufferView similar to how WebGL's `vertexAttribPointer()` defines an attribute in a buffer.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Accessor {
+pub struct Accessor {
     bufferView: i32,
     byteOffset: i32,
     componentType: i32,
@@ -60,7 +60,7 @@ struct Accessor {
 /// The index of the node and TRS property to target.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct AnimationChannelTarget {
+pub struct AnimationChannelTarget {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     node: i32,
@@ -71,7 +71,7 @@ struct AnimationChannelTarget {
 /// Targets an animation's sampler at a node's property.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct AnimationChannel {
+pub struct AnimationChannel {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     sampler: i32,
@@ -82,7 +82,7 @@ struct AnimationChannel {
 /// Combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct AnimationSampler {
+pub struct AnimationSampler {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     input: i32,
@@ -94,7 +94,7 @@ struct AnimationSampler {
 /// A keyframe animation.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Animation {
+pub struct Animation {
     channels: Vec<AnimationChannel>,
     extensions: serde_json::Value,
     extras: serde_json::Value,
@@ -106,7 +106,7 @@ struct Animation {
 /// Metadata about the glTF asset.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Asset {
+pub struct Asset {
     copyright: String,
     extensions: serde_json::Value,
     extras: serde_json::Value,
@@ -119,7 +119,7 @@ struct Asset {
 /// A view into a buffer generally representing a subset of the buffer.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct BufferView {
+pub struct BufferView {
     buffer: i32,
     byteLength: i32,
     byteOffset: i32,
@@ -134,7 +134,7 @@ struct BufferView {
 /// A buffer points to binary geometry, animation, or skins.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Buffer {
+pub struct Buffer {
     byteLength: i32,
     extensions: serde_json::Value,
     extras: serde_json::Value,
@@ -146,7 +146,7 @@ struct Buffer {
 /// An orthographic camera containing properties to create an orthographic projection matrix.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct CameraOrthographic {
+pub struct CameraOrthographic {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     xmag: f32,
@@ -159,7 +159,7 @@ struct CameraOrthographic {
 /// A perspective camera containing properties to create a perspective projection matrix.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct CameraPerspective {
+pub struct CameraPerspective {
     aspectRatio: f32,
     extensions: serde_json::Value,
     extras: serde_json::Value,
@@ -172,7 +172,7 @@ struct CameraPerspective {
 /// A camera's projection.  A node can reference a camera to apply a transform to place the camera in the scene.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Camera {
+pub struct Camera {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     name: String,
@@ -185,7 +185,7 @@ struct Camera {
 /// Image data used to create a texture. Image can be referenced by URI or `bufferView` index. `mimeType` is required in the latter case.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Image {
+pub struct Image {
     bufferView: i32,
     extensions: serde_json::Value,
     extras: serde_json::Value,
@@ -198,7 +198,7 @@ struct Image {
 /// The emissive map texture.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct TextureInfo {
+pub struct TextureInfo {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     index: i32,
@@ -209,7 +209,7 @@ struct TextureInfo {
 /// The normal map texture.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct MaterialNormalTextureInfo {
+pub struct MaterialNormalTextureInfo {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     index: TextureInfo,
@@ -221,7 +221,7 @@ struct MaterialNormalTextureInfo {
 /// The occlusion map texture.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct MaterialOcclusionTextureInfo {
+pub struct MaterialOcclusionTextureInfo {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     index: TextureInfo,
@@ -233,7 +233,7 @@ struct MaterialOcclusionTextureInfo {
 /// A set of parameter values that are used to define the metallic-roughness material model from Physically-Based Rendering (PBR) methodology. When not specified, all the default values of `pbrMetallicRoughness` apply.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct MaterialPBRMetallicRoughness {
+pub struct MaterialPBRMetallicRoughness {
     baseColorFactor: Vec<f32>,
     baseColorTexture: TextureInfo,
     extensions: serde_json::Value,
@@ -247,7 +247,7 @@ struct MaterialPBRMetallicRoughness {
 /// The material appearance of a primitive.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Material {
+pub struct Material {
     alphaCutoff: f32,
     alphaMode: String,
     doubleSided: bool,
@@ -265,7 +265,7 @@ struct Material {
 /// Geometry to be rendered with the given material.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct MeshPrimitive {
+pub struct MeshPrimitive {
     attributes: HashMap<String, i32>,
     extensions: serde_json::Value,
     extras: serde_json::Value,
@@ -279,7 +279,7 @@ struct MeshPrimitive {
 /// A set of primitives to be rendered.  A node can contain one mesh.  A node's transform places the mesh in the scene.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Mesh {
+pub struct Mesh {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     name: String,
@@ -291,7 +291,7 @@ struct Mesh {
 /// A node in the node hierarchy.  When the node contains `skin`, all `mesh.primitives` must contain `JOINTS_0` and `WEIGHTS_0` attributes.  A node can have either a `matrix` or any combination of `translation`/`rotation`/`scale` (TRS) properties. TRS properties are converted to matrices and postmultiplied in the `T * R * S` order to compose the transformation matrix; first the scale is applied to the vertices, then the rotation, and then the translation. If none are provided, the transform is the identity. When a node is targeted for animation (referenced by an animation.channel.target), only TRS properties may be present; `matrix` will not be present.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Node {
+pub struct Node {
     camera: i32,
     children: Vec<i32>,
     extensions: serde_json::Value,
@@ -310,7 +310,7 @@ struct Node {
 /// Texture sampler properties for filtering and wrapping modes.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Sampler {
+pub struct Sampler {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     magFilter: i32,
@@ -324,7 +324,7 @@ struct Sampler {
 /// The root nodes of a scene.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Scene {
+pub struct Scene {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     name: String,
@@ -335,7 +335,7 @@ struct Scene {
 /// Joints and matrices defining a skin.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Skin {
+pub struct Skin {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     inverseBindMatrices: i32,
@@ -348,7 +348,7 @@ struct Skin {
 /// A texture and its sampler.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct Texture {
+pub struct Texture {
     extensions: serde_json::Value,
     extras: serde_json::Value,
     name: String,
@@ -360,7 +360,7 @@ struct Texture {
 /// The root object for a glTF asset.
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-struct glTF {
+pub struct glTF {
     accessors: Vec<Accessor>,
     animations: Vec<Animation>,
     asset: Asset,

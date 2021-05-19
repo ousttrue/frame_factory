@@ -104,7 +104,7 @@ use std::collections::HashMap;
             self.writeln(format!("/// {}", js.description).as_str());
             self.writeln("#[derive(Serialize, Deserialize, Debug)]");
             self.writeln("#[allow(non_snake_case)]");
-            self.writeln(format!("struct {} {{", title.replace(" ", "")).as_str());
+            self.writeln(format!("pub struct {} {{", title.replace(" ", "")).as_str());
             for k in props.keys().sorted() {
                 let v = props.get(k).unwrap();
                 let t = js.get_type(k, v);

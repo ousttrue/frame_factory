@@ -1,3 +1,5 @@
+extern crate gltf;
+extern crate serde_json;
 mod com_util;
 mod renderer;
 mod rendertarget;

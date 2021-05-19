@@ -191,6 +191,16 @@ impl Scene {
     }
 
     pub fn load_gltf(json: &str, bin: &[u8]) -> Result<Scene, LoadError> {
+
+        let deserialized: gltf::glTF = serde_json::from_str(json).unwrap();
+        
+        for m in deserialized.meshes
+        {
+
+
+            break;
+        }
+
         Err(LoadError::NotImpl)
     }
 

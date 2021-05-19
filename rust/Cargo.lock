@@ -105,6 +105,8 @@ version = "0.1.0"
 dependencies = [
  "cgmath",
  "com_ptr",
+ "gltf",
+ "serde_json",
  "winapi",
 ]
 

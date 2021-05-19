@@ -144,11 +144,11 @@ use std::collections::HashMap;
                 if t.starts_with("Vec")
                 {
                     self.writeln("    #[serde(default)]");
-                    self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
+                    self.file.write(format!("    pub {}: {},\n", k, t).as_bytes())?;
                 }else
                 {
                     t = format!("Option<{}>", t);
-                    self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
+                    self.file.write(format!("    pub {}: {},\n", k, t).as_bytes())?;
                 }
             }
             self.writeln("}");

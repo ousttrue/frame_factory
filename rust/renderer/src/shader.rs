@@ -243,6 +243,19 @@ pub struct Shader {
 }
 
 impl Shader {
+    pub fn new(
+        vs: ComPtr<d3d11::ID3D11VertexShader>,
+        vs_constant_buffer: ConstantBufferShader,
+        ps: ComPtr<d3d11::ID3D11PixelShader>,
+        input_layout: ComPtr<d3d11::ID3D11InputLayout>,
+    ) -> Shader {
+        Shader {
+            vs,
+            vs_constant_buffer,
+            ps,
+            input_layout,
+        }
+    }
     pub fn compile_vertex_shader(
         d3d_device: &d3d11::ID3D11Device,
         source: *const u8,

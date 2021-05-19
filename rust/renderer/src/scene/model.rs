@@ -1,8 +1,8 @@
 use winapi::um::d3d11;
 
+use super::frame::c0;
 use crate::{com_util::ComError, shader::Shader, vertex_buffer::VertexBuffer};
 use cgmath::One;
-use super::frame::c0;
 
 pub struct Model {
     shader: Shader,
@@ -11,7 +11,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn create(
+    pub fn create_triangle(
         d3d_device: &d3d11::ID3D11Device,
         source: *const u8,
         source_size: usize,
@@ -21,20 +21,11 @@ impl Model {
         let (vs, input_layout, vs_constant_buffer) =
             Shader::compile_vertex_shader(&d3d_device, source, source_size, vs_main)?;
         let ps = Shader::compile_pixel_shader(d3d_device, source, source_size, ps_main)?;
-        let shader = Shader {
-            vs,
-            ps,
-            input_layout,
-            vs_constant_buffer,
-        };
-        let vertex_buffer = VertexBuffer::create_triangle(d3d_device)?;
-
-        let model: cgmath::Matrix4<f32> = cgmath::Matrix4::one();
 
         Ok(Model {
-            shader,
-            model,
-            vertex_buffer,
+            shader: Shader::new(vs, vs_constant_buffer, ps, input_layout),
+            model: cgmath::Matrix4::one(),
+            vertex_buffer: VertexBuffer::create_triangle(d3d_device)?,
         })
     }
 

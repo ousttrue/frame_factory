@@ -17,7 +17,7 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn create() -> Scene {
+    pub fn new() -> Scene {
         Scene {
             render_target: None,
             camera: Camera::new(),

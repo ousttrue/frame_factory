@@ -70,8 +70,8 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
     or_create();
 
     if let Some(scene_manager) = unsafe { &mut G_SCENE } {
-        let mut scene = Scene::create();
-        if let Ok(model) = Model::create(d3d_device, source, source_size, vs_main, ps_main) {
+        let mut scene = Scene::new();
+        if let Ok(model) = Model::create_triangle(d3d_device, source, source_size, vs_main, ps_main) {
             scene.models.push(model);
         }
 
@@ -93,7 +93,13 @@ pub extern "C" fn FRAME_FACTORY_scene_load(
         let path = unsafe { CStr::from_ptr(path) };
         if let Ok(path) = path.to_str() {
             let path = Path::new(path);
-            if let Ok(scene) = Loader::load(d3d_device, path) {
+
+            let loader = Loader::new();
+            if let Ok(()) = loader.load(d3d_device, path) {
+                let mut scene = Scene::new();
+                for m in loader.models {
+                    scene.models.push(m);
+                }
                 return scene_manager.add(scene);
             }
         }

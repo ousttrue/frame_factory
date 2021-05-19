@@ -2,7 +2,7 @@ use std::{cell::Cell, convert::TryInto, fs::File, io::Read};
 
 use winapi::um::d3d11;
 
-use super::Scene;
+use super::{model::Model, Scene};
 
 pub enum LoadError {
     NotImpl,
@@ -23,7 +23,10 @@ struct BytesReader<'a> {
 impl<'a> BytesReader<'a> {
     fn new(buf: &[u8]) -> BytesReader {
         {
-            BytesReader { pos: Cell::new(0), buf }
+            BytesReader {
+                pos: Cell::new(0),
+                buf,
+            }
         }
     }
 
@@ -55,21 +58,24 @@ impl<'a> BytesReader<'a> {
     }
 }
 
-pub struct Loader
-{
-    
+pub struct Loader {
+    pub models: Vec<Model>,
 }
 
-impl Loader
-{
+impl Loader {
+    pub fn new() -> Loader {
+        Loader { models: Vec::new() }
+    }
+
     pub fn load(
+        &self,
         d3d_device: &d3d11::ID3D11Device,
         path: &std::path::Path,
-    ) -> Result<Scene, LoadError> {
+    ) -> Result<(), LoadError> {
         if let Some(ext) = path.extension() {
             if let ext = ext.to_string_lossy() {
                 match ext.to_lowercase().as_str() {
-                    "glb" => return Self::load_glb(d3d_device, path),
+                    "glb" => return self.load_glb(d3d_device, path),
                     _ => (),
                 }
             }
@@ -82,9 +88,10 @@ impl Loader
     /// https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#glb-file-format-specification
     ///
     pub fn load_glb(
+        &self,
         d3d_device: &d3d11::ID3D11Device,
         path: &std::path::Path,
-    ) -> Result<Scene, LoadError> {
+    ) -> Result<(), LoadError> {
         if !path.exists() {
             return Err(LoadError::FileNotFound);
         }
@@ -114,7 +121,8 @@ impl Loader
 
             match &chunk_type {
                 &"JSON" => {
-                    json = Some(std::str::from_utf8(&chunk_data).map_err(|_| LoadError::InvalidUtf8)?);
+                    json =
+                        Some(std::str::from_utf8(&chunk_data).map_err(|_| LoadError::InvalidUtf8)?);
                 }
                 &"BIN\0" => {
                     bin = Some(&chunk_data);
@@ -127,25 +135,18 @@ impl Loader
 
         if let Some(json) = json {
             if let Some(bin) = bin {
-                return Self::load_gltf(json, bin);
+                return self.load_gltf(json, bin);
             }
         }
 
         Err(LoadError::NotImpl)
     }
 
-    pub fn load_gltf(json: &str, bin: &[u8]) -> Result<Scene, LoadError> {
-
+    pub fn load_gltf(&self, json: &str, bin: &[u8]) -> Result<(), LoadError> {
         let deserialized: gltf::glTF = serde_json::from_str(json).unwrap();
-        
-        for m in deserialized.meshes
-        {
 
-
-            break;
-        }
+        for m in deserialized.meshes {}
 
         Err(LoadError::NotImpl)
     }
-
 }

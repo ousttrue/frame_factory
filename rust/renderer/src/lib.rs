@@ -7,7 +7,7 @@ mod scene;
 mod shader;
 mod vertex_buffer;
 use scene::{loader::Loader, model::Model, screenstate::ScreenState, Scene};
-use shader::Shader;
+use shader::{Shader, ShaderSource};
 use std::{collections::HashMap, ffi::CStr, path::Path};
 
 use winapi::um::d3d11::{self};
@@ -64,8 +64,8 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
     device: *mut d3d11::ID3D11Device,
     source: *const u8,
     source_size: usize,
-    vs_main: *const u8,
-    ps_main: *const u8,
+    vs_main: *const i8,
+    ps_main: *const i8,
 ) -> u32 {
     let d3d_device = unsafe { device.as_ref().unwrap() };
     or_create();
@@ -73,8 +73,9 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
     if let Some(scene_manager) = unsafe { &mut G_SCENE } {
         let mut scene = Scene::new();
 
-        if let Ok(shader) = Shader::compile(d3d_device, source, source_size, vs_main, ps_main)
-        {
+        let source = ShaderSource::new(source, source_size, vs_main, ps_main);
+
+        if let Ok(shader) = Shader::compile(d3d_device, &source) {
             if let Ok(model) = Model::create_triangle(d3d_device, shader) {
                 scene.models.push(model);
             }

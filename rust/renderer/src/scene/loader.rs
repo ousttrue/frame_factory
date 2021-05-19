@@ -2,7 +2,7 @@ use std::{cell::Cell, convert::TryInto, fs::File, io::Read};
 
 use winapi::um::d3d11;
 
-use super::{BytesReader, Scene};
+use super::Scene;
 
 pub enum LoadError {
     NotImpl,
@@ -13,6 +13,11 @@ pub enum LoadError {
     UnknownVersion,
     InvalidUtf8,
     UnknownChunkType,
+}
+
+struct BytesReader<'a> {
+    pos: Cell<usize>,
+    buf: &'a [u8],
 }
 
 impl<'a> BytesReader<'a> {

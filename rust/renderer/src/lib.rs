@@ -6,12 +6,8 @@ mod rendertarget;
 mod scene;
 mod shader;
 mod vertex_buffer;
-use scene::{Scene, loader::Loader, screenstate::ScreenState};
-use std::{
-    collections::HashMap,
-    ffi::CStr,
-    path::Path,
-};
+use scene::{loader::Loader, model::Model, screenstate::ScreenState, Scene};
+use std::{collections::HashMap, ffi::CStr, path::Path};
 
 use winapi::um::d3d11::{self};
 
@@ -74,9 +70,12 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
     or_create();
 
     if let Some(scene_manager) = unsafe { &mut G_SCENE } {
-        if let Ok(scene) = Scene::create(d3d_device, source, source_size, vs_main, ps_main) {
-            return scene_manager.add(scene);
+        let mut scene = Scene::create();
+        if let Ok(model) = Model::create(d3d_device, source, source_size, vs_main, ps_main) {
+            scene.models.push(model);
         }
+
+        return scene_manager.add(scene);
     }
 
     0

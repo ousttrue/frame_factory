@@ -1,70 +1,28 @@
-use std::cell::Cell;
-
-use cgmath::{Matrix, One};
+use cgmath::Matrix;
 use winapi::um::d3d11;
 
 use super::rendertarget::RenderTarget;
-use crate::{com_util::ComError, shader::Shader, vertex_buffer::VertexBuffer};
 
 pub mod camera;
-use self::{camera::Camera, screenstate::ScreenState};
-pub mod screenstate;
+pub mod model;
+use self::{camera::Camera, frame::c0, model::Model, screenstate::ScreenState};
+pub mod frame;
 pub mod loader;
-
-#[repr(C)]
-struct c0 {
-    view: [f32; 16],
-    projection: [f32; 16],
-}
-
-#[allow(dead_code)]
-#[repr(C)]
-struct c1 {
-    model: [f32; 16],
-}
+pub mod screenstate;
 
 pub struct Scene {
-    shader: Shader,
-    model: cgmath::Matrix4<f32>,
-    vertex_buffer: VertexBuffer,
-
     render_target: Option<RenderTarget>,
     camera: Camera,
-}
-
-struct BytesReader<'a> {
-    pos: Cell<usize>,
-    buf: &'a [u8],
+    pub models: Vec<Model>,
 }
 
 impl Scene {
-    pub fn create(
-        d3d_device: &d3d11::ID3D11Device,
-        source: *const u8,
-        source_size: usize,
-        vs_main: *const u8,
-        ps_main: *const u8,
-    ) -> Result<Scene, ComError> {
-        let (vs, input_layout, vs_constant_buffer) =
-            Shader::compile_vertex_shader(&d3d_device, source, source_size, vs_main)?;
-        let ps = Shader::compile_pixel_shader(d3d_device, source, source_size, ps_main)?;
-        let shader = Shader {
-            vs,
-            ps,
-            input_layout,
-            vs_constant_buffer,
-        };
-        let vertex_buffer = VertexBuffer::create_triangle(d3d_device)?;
-
-        let model: cgmath::Matrix4<f32> = cgmath::Matrix4::one();
-
-        Ok(Scene {
-            shader,
-            model,
-            vertex_buffer,
+    pub fn create() -> Scene {
+        Scene {
             render_target: None,
             camera: Camera::new(),
-        })
+            models: Vec::new(),
+        }
     }
 
     pub fn get_or_create_rtv(
@@ -113,17 +71,10 @@ impl Scene {
                     64,
                 );
             }
-            self.shader
-                .vs_constant_buffer
-                .update(d3d_context, 0, &frame);
 
-            self.shader
-                .vs_constant_buffer
-                .update(d3d_context, 1, &self.model);
-
-            // model
-            self.shader.set(d3d_context);
-            self.vertex_buffer.draw(d3d_context);
+            for model in &self.models {
+                model.render(d3d_context, &frame);
+            }
         }
     }
 }

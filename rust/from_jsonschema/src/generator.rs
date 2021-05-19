@@ -99,19 +99,19 @@ use std::collections::HashMap;
 
         match &prop.js_type {
             JsonSchemaType::None => {
-                if let Some(prop) = &prop.base {
-                    return Self::get_type(js, key, prop);
-                };
-
                 for base in BaseIterator::new(js) {
                     if let Some(prop) = base.get_prop(key) {
                         return Self::get_type(&base, key, &prop);
                     }
                 }
+
+                if let Some(prop) = &prop.base {
+                    return Self::get_type(js, key, prop);
+                };
                 panic!();
             }
             JsonSchemaType::Boolean => "bool".to_owned(),
-            JsonSchemaType::Integer => "Option<i32>".to_owned(),
+            JsonSchemaType::Integer => "i32".to_owned(),
             JsonSchemaType::Number => "f32".to_owned(),
             JsonSchemaType::String => "String".to_owned(),
             JsonSchemaType::Array(items) => format!("Vec<{}>", Self::get_type(js, key, items)),
@@ -139,9 +139,17 @@ use std::collections::HashMap;
             self.writeln(format!("pub struct {} {{", title.replace(" ", "")).as_str());
             for k in props.keys().sorted() {
                 let v = props.get(k).unwrap();
-                let t = Self::get_type(js, k, v);
+                let mut t = Self::get_type(js, k, v);
                 let k = escape(k);
-                self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
+                if t.starts_with("Vec")
+                {
+                    self.writeln("    #[serde(default)]");
+                    self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
+                }else
+                {
+                    t = format!("Option<{}>", t);
+                    self.file.write(format!("    {}: {},\n", k, t).as_bytes())?;
+                }
             }
             self.writeln("}");
             self.writeln("");

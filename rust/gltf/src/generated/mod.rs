@@ -10,8 +10,8 @@ pub struct AccessorSparseIndices {
     bufferView: Option<i32>,
     byteOffset: Option<i32>,
     componentType: Option<i32>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
 }
 
 /// Accessor Sparse Values
@@ -21,8 +21,8 @@ pub struct AccessorSparseIndices {
 pub struct AccessorSparseValues {
     bufferView: Option<i32>,
     byteOffset: Option<i32>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
 }
 
 /// Accessor Sparse
@@ -31,10 +31,10 @@ pub struct AccessorSparseValues {
 #[allow(non_snake_case)]
 pub struct AccessorSparse {
     count: Option<i32>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    indices: AccessorSparseIndices,
-    values: AccessorSparseValues,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    indices: Option<AccessorSparseIndices>,
+    values: Option<AccessorSparseValues>,
 }
 
 /// Accessor
@@ -46,14 +46,16 @@ pub struct Accessor {
     byteOffset: Option<i32>,
     componentType: Option<i32>,
     count: Option<i32>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    #[serde(default)]
     max: Vec<f32>,
+    #[serde(default)]
     min: Vec<f32>,
-    name: String,
-    normalized: bool,
-    sparse: AccessorSparse,
-    r#type: String,
+    name: Option<String>,
+    normalized: Option<bool>,
+    sparse: Option<AccessorSparse>,
+    r#type: Option<String>,
 }
 
 /// Animation Channel Target
@@ -61,10 +63,10 @@ pub struct Accessor {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct AnimationChannelTarget {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
     node: Option<i32>,
-    path: String,
+    path: Option<String>,
 }
 
 /// Animation Channel
@@ -72,10 +74,10 @@ pub struct AnimationChannelTarget {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct AnimationChannel {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
     sampler: Option<i32>,
-    target: AnimationChannelTarget,
+    target: Option<AnimationChannelTarget>,
 }
 
 /// Animation Sampler
@@ -83,10 +85,10 @@ pub struct AnimationChannel {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct AnimationSampler {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
     input: Option<i32>,
-    interpolation: String,
+    interpolation: Option<String>,
     output: Option<i32>,
 }
 
@@ -95,10 +97,12 @@ pub struct AnimationSampler {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Animation {
+    #[serde(default)]
     channels: Vec<AnimationChannel>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
+    #[serde(default)]
     samplers: Vec<AnimationSampler>,
 }
 
@@ -107,12 +111,12 @@ pub struct Animation {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Asset {
-    copyright: String,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    generator: String,
-    minVersion: String,
-    version: String,
+    copyright: Option<String>,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    generator: Option<String>,
+    minVersion: Option<String>,
+    version: Option<String>,
 }
 
 /// Buffer View
@@ -124,9 +128,9 @@ pub struct BufferView {
     byteLength: Option<i32>,
     byteOffset: Option<i32>,
     byteStride: Option<i32>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
     target: Option<i32>,
 }
 
@@ -136,10 +140,10 @@ pub struct BufferView {
 #[allow(non_snake_case)]
 pub struct Buffer {
     byteLength: Option<i32>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
-    uri: String,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
+    uri: Option<String>,
 }
 
 /// Camera Orthographic
@@ -147,12 +151,12 @@ pub struct Buffer {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct CameraOrthographic {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    xmag: f32,
-    ymag: f32,
-    zfar: f32,
-    znear: f32,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    xmag: Option<f32>,
+    ymag: Option<f32>,
+    zfar: Option<f32>,
+    znear: Option<f32>,
 }
 
 /// Camera Perspective
@@ -160,12 +164,12 @@ pub struct CameraOrthographic {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct CameraPerspective {
-    aspectRatio: f32,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    yfov: f32,
-    zfar: f32,
-    znear: f32,
+    aspectRatio: Option<f32>,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    yfov: Option<f32>,
+    zfar: Option<f32>,
+    znear: Option<f32>,
 }
 
 /// Camera
@@ -173,12 +177,12 @@ pub struct CameraPerspective {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Camera {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
-    orthographic: CameraOrthographic,
-    perspective: CameraPerspective,
-    r#type: String,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
+    orthographic: Option<CameraOrthographic>,
+    perspective: Option<CameraPerspective>,
+    r#type: Option<String>,
 }
 
 /// Image
@@ -187,11 +191,11 @@ pub struct Camera {
 #[allow(non_snake_case)]
 pub struct Image {
     bufferView: Option<i32>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    mimeType: String,
-    name: String,
-    uri: String,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    mimeType: Option<String>,
+    name: Option<String>,
+    uri: Option<String>,
 }
 
 /// Texture Info
@@ -199,8 +203,8 @@ pub struct Image {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct TextureInfo {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
     index: Option<i32>,
     texCoord: Option<i32>,
 }
@@ -210,10 +214,10 @@ pub struct TextureInfo {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct MaterialNormalTextureInfo {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    index: TextureInfo,
-    scale: f32,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    index: Option<i32>,
+    scale: Option<f32>,
     texCoord: Option<i32>,
 }
 
@@ -222,10 +226,10 @@ pub struct MaterialNormalTextureInfo {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct MaterialOcclusionTextureInfo {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    index: TextureInfo,
-    strength: f32,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    index: Option<i32>,
+    strength: Option<f32>,
     texCoord: Option<i32>,
 }
 
@@ -234,13 +238,14 @@ pub struct MaterialOcclusionTextureInfo {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct MaterialPBRMetallicRoughness {
+    #[serde(default)]
     baseColorFactor: Vec<f32>,
-    baseColorTexture: TextureInfo,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    metallicFactor: f32,
-    metallicRoughnessTexture: TextureInfo,
-    roughnessFactor: f32,
+    baseColorTexture: Option<TextureInfo>,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    metallicFactor: Option<f32>,
+    metallicRoughnessTexture: Option<TextureInfo>,
+    roughnessFactor: Option<f32>,
 }
 
 /// Material
@@ -248,17 +253,18 @@ pub struct MaterialPBRMetallicRoughness {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Material {
-    alphaCutoff: f32,
-    alphaMode: String,
-    doubleSided: bool,
+    alphaCutoff: Option<f32>,
+    alphaMode: Option<String>,
+    doubleSided: Option<bool>,
+    #[serde(default)]
     emissiveFactor: Vec<f32>,
-    emissiveTexture: TextureInfo,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
-    normalTexture: MaterialNormalTextureInfo,
-    occlusionTexture: MaterialOcclusionTextureInfo,
-    pbrMetallicRoughness: MaterialPBRMetallicRoughness,
+    emissiveTexture: Option<TextureInfo>,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
+    normalTexture: Option<MaterialNormalTextureInfo>,
+    occlusionTexture: Option<MaterialOcclusionTextureInfo>,
+    pbrMetallicRoughness: Option<MaterialPBRMetallicRoughness>,
 }
 
 /// Mesh Primitive
@@ -266,13 +272,14 @@ pub struct Material {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct MeshPrimitive {
-    attributes: HashMap<String, Option<i32>>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    attributes: Option<HashMap<String, i32>>,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
     indices: Option<i32>,
     material: Option<i32>,
     mode: Option<i32>,
-    targets: Vec<HashMap<String, Option<i32>>>,
+    #[serde(default)]
+    targets: Vec<HashMap<String, i32>>,
 }
 
 /// Mesh
@@ -280,10 +287,12 @@ pub struct MeshPrimitive {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Mesh {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
+    #[serde(default)]
     primitives: Vec<MeshPrimitive>,
+    #[serde(default)]
     weights: Vec<f32>,
 }
 
@@ -293,16 +302,22 @@ pub struct Mesh {
 #[allow(non_snake_case)]
 pub struct Node {
     camera: Option<i32>,
-    children: Vec<Option<i32>>,
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    #[serde(default)]
+    children: Vec<i32>,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    #[serde(default)]
     matrix: Vec<f32>,
     mesh: Option<i32>,
-    name: String,
+    name: Option<String>,
+    #[serde(default)]
     rotation: Vec<f32>,
+    #[serde(default)]
     scale: Vec<f32>,
     skin: Option<i32>,
+    #[serde(default)]
     translation: Vec<f32>,
+    #[serde(default)]
     weights: Vec<f32>,
 }
 
@@ -311,11 +326,11 @@ pub struct Node {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Sampler {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
     magFilter: Option<i32>,
     minFilter: Option<i32>,
-    name: String,
+    name: Option<String>,
     wrapS: Option<i32>,
     wrapT: Option<i32>,
 }
@@ -325,10 +340,11 @@ pub struct Sampler {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Scene {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
-    nodes: Vec<Option<i32>>,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
+    #[serde(default)]
+    nodes: Vec<i32>,
 }
 
 /// Skin
@@ -336,11 +352,12 @@ pub struct Scene {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Skin {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
     inverseBindMatrices: Option<i32>,
-    joints: Vec<Option<i32>>,
-    name: String,
+    #[serde(default)]
+    joints: Vec<i32>,
+    name: Option<String>,
     skeleton: Option<i32>,
 }
 
@@ -349,9 +366,9 @@ pub struct Skin {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Texture {
-    extensions: serde_json::Value,
-    extras: serde_json::Value,
-    name: String,
+    extensions: Option<serde_json::Value>,
+    extras: Option<serde_json::Value>,
+    name: Option<String>,
     sampler: Option<i32>,
     source: Option<i32>,
 }
@@ -361,24 +378,39 @@ pub struct Texture {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct glTF {
+    #[serde(default)]
     accessors: Vec<Accessor>,
+    #[serde(default)]
     animations: Vec<Animation>,
-    asset: Asset,
+    asset: Option<Asset>,
+    #[serde(default)]
     bufferViews: Vec<BufferView>,
+    #[serde(default)]
     buffers: Vec<Buffer>,
+    #[serde(default)]
     cameras: Vec<Camera>,
-    extensions: serde_json::Value,
+    extensions: Option<serde_json::Value>,
+    #[serde(default)]
     extensionsRequired: Vec<String>,
+    #[serde(default)]
     extensionsUsed: Vec<String>,
-    extras: serde_json::Value,
+    extras: Option<serde_json::Value>,
+    #[serde(default)]
     images: Vec<Image>,
+    #[serde(default)]
     materials: Vec<Material>,
+    #[serde(default)]
     meshes: Vec<Mesh>,
+    #[serde(default)]
     nodes: Vec<Node>,
+    #[serde(default)]
     samplers: Vec<Sampler>,
     scene: Option<i32>,
+    #[serde(default)]
     scenes: Vec<Scene>,
+    #[serde(default)]
     skins: Vec<Skin>,
+    #[serde(default)]
     textures: Vec<Texture>,
 }
 

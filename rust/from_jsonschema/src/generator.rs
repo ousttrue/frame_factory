@@ -27,16 +27,25 @@ pub struct Generator {
 
 impl Generator {
     pub fn new(path: &str) -> Generator {
-        let mut file = BufWriter::new(fs::File::create(path).unwrap());
+        let file = BufWriter::new(fs::File::create(path).unwrap());
 
-        file.write("use std::collections::HashMap;\n".as_bytes())
-            .unwrap();
-        file.write("\n".as_bytes()).unwrap();
-
-        Generator {
+        let mut generator = Generator {
             file,
             used: HashSet::new(),
-        }
+        };
+
+        generator.writeln("use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
+");
+
+        generator
+    }
+
+    fn writeln(&mut self, src: &str)
+    {
+        self.file.write(src.as_bytes()).unwrap();
+        self.file.write(b"\n").unwrap();
     }
 
     pub fn generate(&mut self, js: &Rc<JsonSchema>) {
@@ -91,11 +100,10 @@ impl Generator {
         let title = js.get_title();
         if !self.used.contains(&title) {
             // write js
-            self.file.write(format!("/// {} \n", title).as_bytes())?;
-            self.file
-                .write(format!("/// {} \n", js.description).as_bytes())?;
-            self.file
-                .write(format!("struct {} {{\n", title.replace(" ", "")).as_bytes())?;
+            self.writeln(format!("/// {}", title).as_str());
+            self.writeln(format!("/// {}", js.description).as_str());
+            self.writeln(format!("#[derive(Serialize, Deserialize, Debug)]").as_str());
+            self.writeln(format!("struct {} {{", title.replace(" ", "")).as_str());
             for k in props.keys().sorted() {
                 let v = props.get(k).unwrap();
                 let t = js.get_type(k, v);

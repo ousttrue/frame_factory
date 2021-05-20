@@ -50,7 +50,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gltf"
+name = "gltf2"
 version = "0.1.0"
 dependencies = [
  "serde",
@@ -105,7 +105,7 @@ version = "0.1.0"
 dependencies = [
  "cgmath",
  "com_ptr",
- "gltf",
+ "gltf2",
  "serde_json",
  "winapi",
 ]

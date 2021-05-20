@@ -20,9 +20,7 @@ impl VertexBuffer {
     /// clock wise
     ///    2
     ///   1 0
-    pub fn create_triangle(
-        d3d_device: &d3d11::ID3D11Device,
-    ) -> Result<VertexBuffer, ComError> {
+    pub fn create_triangle(d3d_device: &d3d11::ID3D11Device) -> Result<VertexBuffer, ComError> {
         // vertices
         let size = 0.5f32;
         let positions = [

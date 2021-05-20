@@ -2,7 +2,7 @@ use std::{cell::Cell, convert::TryInto, fs::File, io::Read};
 
 use winapi::um::d3d11;
 
-use crate::{asset_manager, shader::Shader};
+use crate::{asset_manager, shader::Shader, vertex_buffer::VertexBuffer};
 
 use super::model::Model;
 
@@ -16,7 +16,6 @@ pub enum LoadError {
     InvalidUtf8,
     UnknownChunkType,
     ShaderAsset,
-    InvalidGltf,
 }
 
 struct BytesReader<'a> {
@@ -151,7 +150,7 @@ impl Loader {
         json: &str,
         bin: &[u8],
     ) -> Result<(), LoadError> {
-        let deserialized: gltf::glTF = serde_json::from_str(json).unwrap();
+        let gltf: gltf2::glTF = serde_json::from_str(json).unwrap();
 
         let asset_manager = asset_manager::get().ok_or_else(|| LoadError::ShaderAsset)?;
         let source = asset_manager
@@ -159,15 +158,21 @@ impl Loader {
             .map_err(|_| LoadError::ShaderAsset)?;
         let shader = Shader::compile(d3d_device, source);
 
-        for m in deserialized.meshes {
-            for prim in m.primitives {
-                let position_index = *prim
-                    .attributes
-                    .get("POSITION")
-                    .ok_or_else(|| LoadError::InvalidGltf)? as usize;
-                let position_accessor = &deserialized.accessors[position_index];
-                let position_view = &deserialized.bufferViews[position_accessor.bufferView.unwrap() as usize];
-                
+        for m in &gltf.meshes {
+            for prim in &m.primitives {
+                let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
+
+                let postions = gltf
+                    .get_accessor_bytes::<(f32, f32, f32)>(bin, accessor_index)
+                    .unwrap();
+                let indices = gltf.get_accessor_bytes::<u16>(bin, prim.indices.unwrap()).unwrap();
+
+                // let position_index = *prim
+                //     .attributes
+                //     .get("POSITION")
+                //     .ok_or_else(|| LoadError::InvalidGltf)? as usize;
+                // let position_accessor = &deserialized.accessors[position_index];
+                // let position_view = &deserialized.bufferViews[position_accessor.bufferView.unwrap() as usize];
             }
 
             // let m = Model::new();

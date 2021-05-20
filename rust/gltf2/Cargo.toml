@@ -1,5 +1,5 @@
 [package]
-name = "gltf"
+name = "gltf2"
 version = "0.1.0"
 authors = ["ousttrue <ousttrue@gmail.com>"]
 edition = "2018"

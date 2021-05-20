@@ -1,4 +1,4 @@
-extern crate gltf;
+extern crate gltf2;
 extern crate serde_json;
 mod asset_manager;
 mod com_util;

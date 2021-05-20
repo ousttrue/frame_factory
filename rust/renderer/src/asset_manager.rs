@@ -28,7 +28,7 @@ impl AssetManager {
             let source = std::fs::read_to_string(full_path)?;
             self.shader_sources.insert(
                 path.to_owned(),
-                ShaderSource::new(source, "vsMain".to_owned(), "psMain".to_owned()),
+                ShaderSource::new(source, "vsMain\0".to_owned(), "psMain\0".to_owned()),
             );
         }
 

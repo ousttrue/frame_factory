@@ -9,6 +9,7 @@ mod vertex_buffer;
 use scene::{loader::Loader, model::Model, screenstate::ScreenState, Scene};
 use shader::{Shader, ShaderSource};
 use std::{collections::HashMap, ffi::CStr, path::Path};
+use vertex_buffer::VertexBuffer;
 
 use winapi::um::d3d11::{self};
 
@@ -75,8 +76,9 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
 
         let source = ShaderSource::new(source, source_size, vs_main, ps_main);
 
-        if let Ok(shader) = Shader::compile(d3d_device, &source) {
-            if let Ok(model) = Model::create_triangle(d3d_device, shader) {
+        if let Ok(vertex_buffer) = VertexBuffer::create_triangle(d3d_device) {
+            if let Ok(shader) = Shader::compile(d3d_device, &source) {
+                let model = Model::new(vertex_buffer, shader);
                 scene.models.push(model);
             }
         }

@@ -144,8 +144,7 @@ impl Loader {
     pub fn load_gltf(&self, json: &str, bin: &[u8]) -> Result<(), LoadError> {
         let deserialized: gltf::glTF = serde_json::from_str(json).unwrap();
 
-        for m in deserialized.meshes {
-
+        for m in deserialized.meshes {           
             // let m = Model::new();
         }
 

@@ -2,15 +2,9 @@ extern crate gltf2;
 extern crate serde_json;
 mod asset_manager;
 mod com_util;
-mod renderer;
-mod rendertarget;
+mod resource;
 mod scene;
-mod shader;
-mod vertex_buffer;
-use scene::{loader::Loader, model::Model, scene_manager, screen_state::ScreenState, Scene};
-use shader::{Shader};
 use std::{error::Error, ffi::CStr, path::Path};
-use vertex_buffer::VertexBuffer;
 
 use winapi::um::d3d11::{self};
 
@@ -41,7 +35,7 @@ pub extern "C" fn FRAME_FACTORY_shutdown() {
 
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_scene_destroy(scene: u32) {
-    if let Some(scene_manager) = scene_manager::get() {
+    if let Some(scene_manager) = scene::scene_manager::get() {
         scene_manager.scenes.remove(&scene).unwrap();
     }
 }
@@ -53,11 +47,11 @@ fn create_sample_scene(
     let asset_manager = asset_manager::get().unwrap();
     let shader_source = asset_manager.get_shader_source(&to_string(shader_path))?;
     let scene_manager = scene::scene_manager::get().unwrap();
-    let mut scene = Scene::new();
+    let mut scene = scene::Scene::new();
 
-    if let Ok(vertex_buffer) = VertexBuffer::create_triangle(d3d_device) {
-        if let Ok(shader) = Shader::compile(d3d_device, &shader_source) {
-            let model = Model::new(vertex_buffer, shader);
+    if let Ok(vertex_buffer) = resource::VertexBuffer::create_triangle(d3d_device) {
+        if let Ok(shader) = resource::Shader::compile(d3d_device, &shader_source) {
+            let model = scene::Model::new(vertex_buffer, shader);
             scene.models.push(model);
         }
     }
@@ -91,9 +85,9 @@ pub extern "C" fn FRAME_FACTORY_scene_load(
         if let Ok(path) = path.to_str() {
             let path = Path::new(path);
 
-            let loader = Loader::new();
+            let loader = scene::loader::Loader::new();
             if let Ok(()) = loader.load(d3d_device, path) {
-                let mut scene = Scene::new();
+                let mut scene = scene::Scene::new();
                 for m in loader.models {
                     scene.models.push(m);
                 }
@@ -111,7 +105,7 @@ pub extern "C" fn FRAME_FACTORY_scene_render(
     device: *mut d3d11::ID3D11Device,
     context: *mut d3d11::ID3D11DeviceContext,
     texture: *mut d3d11::ID3D11Texture2D,
-    state: *const ScreenState,
+    state: *const scene::ScreenState,
 ) -> bool {
     if let Some(scene_manager) = scene::scene_manager::get() {
         if let Some(scene) = scene_manager.scenes.get_mut(&scene) {

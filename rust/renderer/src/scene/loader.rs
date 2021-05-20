@@ -2,7 +2,7 @@ use std::{cell::Cell, convert::TryInto, fs::File, io::Read};
 
 use winapi::um::d3d11;
 
-use crate::{asset_manager, shader::Shader, vertex_buffer::VertexBuffer};
+use crate::{asset_manager, resource};
 
 use super::model::Model;
 
@@ -156,7 +156,7 @@ impl Loader {
         let source = asset_manager
             .get_shader_source("shaders/mvp.hlsl")
             .map_err(|_| LoadError::ShaderAsset)?;
-        let shader = Shader::compile(d3d_device, source);
+        let shader = resource::Shader::compile(d3d_device, source);
 
         for m in &gltf.meshes {
             for prim in &m.primitives {

@@ -1,6 +1,10 @@
 use std::{collections::HashMap, io};
 
-use crate::shader::ShaderSource;
+pub struct ShaderSource {
+    pub source: String,
+    pub vs_main: String,
+    pub ps_main: String,
+}
 
 pub struct AssetManager {
     pub asset_path: String,
@@ -16,7 +20,11 @@ impl AssetManager {
             {
                 self.shader_sources.insert(
                     path.to_owned(),
-                    ShaderSource::new(source, "vsMain".to_owned(), "psMain".to_owned()),
+                    ShaderSource {
+                        source,
+                        vs_main: "vsMain".to_owned(),
+                        ps_main: "psMain".to_owned(),
+                    },
                 );
             }
         }

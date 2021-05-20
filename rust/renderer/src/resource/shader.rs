@@ -1,4 +1,4 @@
-use crate::com_util::{ComCreate, ComError};
+use crate::{asset_manager::ShaderSource, com_util::{ComCreate, ComError}};
 use com_ptr::ComPtr;
 use std::{ffi::CStr, ptr, slice, str};
 use winapi::{ctypes::c_void, shared::ntdef::HRESULT, Interface};
@@ -232,12 +232,6 @@ impl ConstantBufferShader {
             };
         }
     }
-}
-
-pub struct ShaderSource {
-    source: String,
-    vs_main: String,
-    ps_main: String,
 }
 
 impl ShaderSource {

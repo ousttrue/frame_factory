@@ -1,15 +1,24 @@
 use cgmath::Matrix;
 use winapi::um::d3d11;
 
-use super::rendertarget::RenderTarget;
+use crate::resource::RenderTarget;
 
 pub mod scene_manager;
+pub use scene_manager::*;
+
 pub mod camera;
+pub use camera::*;
+
 pub mod model;
-use self::{camera::Camera, frame::c0, model::Model, screen_state::ScreenState};
+pub use model::*;
+
 pub mod frame;
+pub use frame::*;
+
 pub mod loader;
+
 pub mod screen_state;
+pub use screen_state::*;
 
 pub struct Scene {
     render_target: Option<RenderTarget>,

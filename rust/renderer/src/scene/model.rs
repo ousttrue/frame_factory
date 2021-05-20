@@ -1,17 +1,17 @@
 use winapi::um::d3d11;
 
 use super::frame::c0;
-use crate::{shader::Shader, vertex_buffer::VertexBuffer};
+use crate::resource;
 use cgmath::One;
 
 pub struct Model {
     model: cgmath::Matrix4<f32>,
-    vertex_buffer: VertexBuffer,
-    shader: Shader,
+    vertex_buffer: resource::VertexBuffer,
+    shader: resource::Shader,
 }
 
 impl Model {
-    pub fn new(vertex_buffer: VertexBuffer, shader: Shader) -> Model {
+    pub fn new(vertex_buffer: resource::VertexBuffer, shader: resource::Shader) -> Model {
         Model {
             model: cgmath::Matrix4::one(),
             shader,

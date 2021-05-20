@@ -50,7 +50,7 @@ public:
 
     static std::unique_ptr<RustRenderer> load_sample(ID3D11Device *device)
     {
-        auto scene = FRAME_FACTORY_scene_sample(device, "");
+        auto scene = FRAME_FACTORY_scene_sample(device, "shaders/mvp.hlsl");
         if (!scene)
         {
             return nullptr;
@@ -168,10 +168,16 @@ public:
         ImGui::DestroyContext();
     }
 
+    // 0: exe
+    // 1: assets path
+    // 2..: scenes
     void load(ID3D11Device *device, int argc, char **argv)
     {
-        if (argc < 2)
+        FRAME_FACTORY_asset_path(argv[1]);
+
+        if (argc < 3)
         {
+            // no arguments
             if (auto scene = RustRenderer::load_sample(device))
             {
                 m_scenes.push_back(std::move(scene));
@@ -179,7 +185,7 @@ public:
         }
         else
         {
-            for (int i = 1; i < argc; ++i)
+            for (int i = 2; i < argc; ++i)
             {
                 if (auto scene = RustRenderer::load_gltf(device, argv[i]))
                 {

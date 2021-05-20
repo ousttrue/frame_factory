@@ -1,5 +1,6 @@
 extern crate gltf2;
 extern crate serde_json;
+mod error;
 mod asset_manager;
 mod com_util;
 mod resource;

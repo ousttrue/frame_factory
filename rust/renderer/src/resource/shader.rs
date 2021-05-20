@@ -1,6 +1,9 @@
-use crate::{asset_manager::ShaderSource, com_util::{ComCreate, ComError}};
+use crate::{
+    asset_manager::ShaderSource,
+    com_util::{ComCreate, ComError},
+};
 use com_ptr::ComPtr;
-use std::{ffi::CStr, ptr, slice, str};
+use std::{ffi::CStr, ptr, str};
 use winapi::{ctypes::c_void, shared::ntdef::HRESULT, Interface};
 use winapi::{
     shared::dxgiformat,
@@ -235,16 +238,6 @@ impl ConstantBufferShader {
 }
 
 impl ShaderSource {
-    pub fn new(source: String, vs_main: String, ps_main: String) -> ShaderSource {
-        unsafe {
-            ShaderSource {
-                source,
-                vs_main,
-                ps_main,
-            }
-        }
-    }
-
     pub fn compile_vertex_shader(
         &self,
         d3d_device: &d3d11::ID3D11Device,

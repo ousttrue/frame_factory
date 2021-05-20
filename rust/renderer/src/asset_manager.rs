@@ -6,6 +6,16 @@ pub struct ShaderSource {
     pub ps_main: String,
 }
 
+impl ShaderSource {
+    pub fn new(source: String, vs_main: String, ps_main: String) -> ShaderSource {
+        ShaderSource {
+            source,
+            vs_main,
+            ps_main,
+        }
+    }
+}
+
 pub struct AssetManager {
     pub asset_path: String,
     shader_sources: HashMap<String, ShaderSource>,
@@ -16,17 +26,10 @@ impl AssetManager {
         if !self.shader_sources.contains_key(path) {
             let full_path = format!("{}/{}", &self.asset_path, path);
             let source = std::fs::read_to_string(full_path)?;
-
-            {
-                self.shader_sources.insert(
-                    path.to_owned(),
-                    ShaderSource {
-                        source,
-                        vs_main: "vsMain".to_owned(),
-                        ps_main: "psMain".to_owned(),
-                    },
-                );
-            }
+            self.shader_sources.insert(
+                path.to_owned(),
+                ShaderSource::new(source, "vsMain".to_owned(), "psMain".to_owned()),
+            );
         }
 
         Ok(self.shader_sources.get(path).unwrap())

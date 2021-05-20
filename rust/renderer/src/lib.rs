@@ -86,7 +86,7 @@ pub extern "C" fn FRAME_FACTORY_scene_load(
         if let Ok(path) = path.to_str() {
             let path = Path::new(path);
 
-            let loader = scene::loader::Loader::new();
+            let mut loader = scene::loader::Loader::new();
             if let Ok(()) = loader.load(d3d_device, path) {
                 let mut scene = scene::Scene::new();
                 for m in loader.models {

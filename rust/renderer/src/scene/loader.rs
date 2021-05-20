@@ -1,7 +1,7 @@
 use crate::{
     asset_manager,
     error::{Error, LoadError},
-    resource,
+    resource, scene,
 };
 use std::{cell::Cell, fs::File, io::Read};
 use winapi::um::d3d11;
@@ -56,7 +56,7 @@ impl Loader {
     }
 
     pub fn load(
-        &self,
+        &mut self,
         d3d_device: &d3d11::ID3D11Device,
         path: &std::path::Path,
     ) -> Result<(), Error> {
@@ -75,7 +75,7 @@ impl Loader {
     /// https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#glb-file-format-specification
     ///
     pub fn load_glb(
-        &self,
+        &mut self,
         _d3d_device: &d3d11::ID3D11Device,
         path: &std::path::Path,
     ) -> Result<(), Error> {
@@ -126,7 +126,7 @@ impl Loader {
     }
 
     pub fn load_gltf(
-        &self,
+        &mut self,
         d3d_device: &d3d11::ID3D11Device,
         json: &str,
         bin: &[u8],
@@ -137,26 +137,29 @@ impl Loader {
         let source = asset_manager
             .get_shader_source("shaders/mvp.hlsl")
             .map_err(|e| Error::IOError(e))?;
-        let shader = resource::Shader::compile(d3d_device, source);
 
         for m in &gltf.meshes {
             for prim in &m.primitives {
                 let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
 
-                let postions = gltf.get_accessor_bytes(bin, accessor_index).unwrap();
-                let indices = gltf.get_accessor_bytes(bin, prim.indices.unwrap()).unwrap();
+                let (positions, stride, _) = gltf.get_accessor_bytes(bin, accessor_index).unwrap();
+                let v = resource::VertexBuffer::create_vertices(d3d_device, positions)
+                    .map_err(|e| Error::ComError(e))?;
 
-                // let position_index = *prim
-                //     .attributes
-                //     .get("POSITION")
-                //     .ok_or_else(|| LoadError::InvalidGltf)? as usize;
-                // let position_accessor = &deserialized.accessors[position_index];
-                // let position_view = &deserialized.bufferViews[position_accessor.bufferView.unwrap() as usize];
+                let (indices, _, count) =
+                    gltf.get_accessor_bytes(bin, prim.indices.unwrap()).unwrap();
+                let i = resource::VertexBuffer::create_indices(d3d_device, indices)
+                    .map_err(|e| Error::ComError(e))?;
+
+                let vertex_buffer = resource::VertexBuffer::new(v, stride, i, count);
+                let shader = resource::Shader::compile(d3d_device, source)
+                    .map_err(|e| Error::ComError(e))?;
+                let model = scene::Model::new(vertex_buffer, shader);
+
+                self.models.push(model);
             }
-
-            // let m = Model::new();
         }
 
-        panic!()
+        Ok(())
     }
 }

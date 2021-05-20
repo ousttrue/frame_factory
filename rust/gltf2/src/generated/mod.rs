@@ -52,10 +52,12 @@ pub struct Accessor {
     pub max: Vec<f32>,
     #[serde(default)]
     pub min: Vec<f32>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     pub normalized: Option<bool>,
     pub sparse: Option<AccessorSparse>,
-    pub r#type: Option<String>,
+    #[serde(default)]
+    pub r#type: String,
 }
 
 /// Animation Channel Target
@@ -66,7 +68,8 @@ pub struct AnimationChannelTarget {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
     pub node: Option<i32>,
-    pub path: Option<String>,
+    #[serde(default)]
+    pub path: String,
 }
 
 /// Animation Channel
@@ -88,7 +91,8 @@ pub struct AnimationSampler {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
     pub input: Option<i32>,
-    pub interpolation: Option<String>,
+    #[serde(default)]
+    pub interpolation: String,
     pub output: Option<i32>,
 }
 
@@ -101,7 +105,8 @@ pub struct Animation {
     pub channels: Vec<AnimationChannel>,
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     #[serde(default)]
     pub samplers: Vec<AnimationSampler>,
 }
@@ -111,12 +116,16 @@ pub struct Animation {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case, non_camel_case_types)]
 pub struct Asset {
-    pub copyright: Option<String>,
+    #[serde(default)]
+    pub copyright: String,
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub generator: Option<String>,
-    pub minVersion: Option<String>,
-    pub version: Option<String>,
+    #[serde(default)]
+    pub generator: String,
+    #[serde(default)]
+    pub minVersion: String,
+    #[serde(default)]
+    pub version: String,
 }
 
 /// Buffer View
@@ -130,7 +139,8 @@ pub struct BufferView {
     pub byteStride: Option<i32>,
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     pub target: Option<i32>,
 }
 
@@ -142,8 +152,10 @@ pub struct Buffer {
     pub byteLength: Option<i32>,
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
-    pub uri: Option<String>,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub uri: String,
 }
 
 /// Camera Orthographic
@@ -179,10 +191,12 @@ pub struct CameraPerspective {
 pub struct Camera {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     pub orthographic: Option<CameraOrthographic>,
     pub perspective: Option<CameraPerspective>,
-    pub r#type: Option<String>,
+    #[serde(default)]
+    pub r#type: String,
 }
 
 /// Image
@@ -193,9 +207,12 @@ pub struct Image {
     pub bufferView: Option<i32>,
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub mimeType: Option<String>,
-    pub name: Option<String>,
-    pub uri: Option<String>,
+    #[serde(default)]
+    pub mimeType: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub uri: String,
 }
 
 /// Texture Info
@@ -254,14 +271,16 @@ pub struct MaterialPBRMetallicRoughness {
 #[allow(non_snake_case, non_camel_case_types)]
 pub struct Material {
     pub alphaCutoff: Option<f32>,
-    pub alphaMode: Option<String>,
+    #[serde(default)]
+    pub alphaMode: String,
     pub doubleSided: Option<bool>,
     #[serde(default)]
     pub emissiveFactor: Vec<f32>,
     pub emissiveTexture: Option<TextureInfo>,
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     pub normalTexture: Option<MaterialNormalTextureInfo>,
     pub occlusionTexture: Option<MaterialOcclusionTextureInfo>,
     pub pbrMetallicRoughness: Option<MaterialPBRMetallicRoughness>,
@@ -290,7 +309,8 @@ pub struct MeshPrimitive {
 pub struct Mesh {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     #[serde(default)]
     pub primitives: Vec<MeshPrimitive>,
     #[serde(default)]
@@ -310,7 +330,8 @@ pub struct Node {
     #[serde(default)]
     pub matrix: Vec<f32>,
     pub mesh: Option<i32>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     #[serde(default)]
     pub rotation: Vec<f32>,
     #[serde(default)]
@@ -331,7 +352,8 @@ pub struct Sampler {
     pub extras: Option<serde_json::Value>,
     pub magFilter: Option<i32>,
     pub minFilter: Option<i32>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     pub wrapS: Option<i32>,
     pub wrapT: Option<i32>,
 }
@@ -343,7 +365,8 @@ pub struct Sampler {
 pub struct Scene {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     #[serde(default)]
     pub nodes: Vec<i32>,
 }
@@ -358,7 +381,8 @@ pub struct Skin {
     pub inverseBindMatrices: Option<i32>,
     #[serde(default)]
     pub joints: Vec<i32>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     pub skeleton: Option<i32>,
 }
 
@@ -369,7 +393,8 @@ pub struct Skin {
 pub struct Texture {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     pub sampler: Option<i32>,
     pub source: Option<i32>,
 }

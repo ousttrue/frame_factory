@@ -21,7 +21,7 @@
             },
             "args": [
                 "${workspaceFolder}/../glTF/specification/2.0/schema/glTF.schema.json",
-                "${workspaceFolder}/gltf/src/generated"
+                "${workspaceFolder}/gltf2/src/generated"
             ],
             "cwd": "${workspaceFolder}"
         },

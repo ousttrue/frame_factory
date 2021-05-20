@@ -135,14 +135,14 @@ use std::collections::HashMap;
             self.writeln(format!("pub struct {} {{", title.replace(" ", "")).as_str());
             for k in props.keys().sorted() {
                 let v = props.get(k).unwrap();
-                let mut t = Self::get_type(js, k, v);
+                let t = Self::get_type(js, k, v);
                 let k = escape(k);
-                if t.starts_with("Vec<") || t.starts_with("HashMap<") {
+                if t.starts_with("Vec<") || t.starts_with("HashMap<") || t == "String" {
                     self.writeln("    #[serde(default)]");
                     self.file
                         .write(format!("    pub {}: {},\n", k, t).as_bytes())?;
                 } else {
-                    t = format!("Option<{}>", t);
+                    let t = format!("Option<{}>", t);
                     self.file
                         .write(format!("    pub {}: {},\n", k, t).as_bytes())?;
                 }

@@ -2,6 +2,8 @@ use std::{cell::Cell, convert::TryInto, fs::File, io::Read};
 
 use winapi::um::d3d11;
 
+use crate::{asset_manager, shader::Shader};
+
 use super::model::Model;
 
 pub enum LoadError {
@@ -13,6 +15,8 @@ pub enum LoadError {
     UnknownVersion,
     InvalidUtf8,
     UnknownChunkType,
+    ShaderAsset,
+    InvalidGltf,
 }
 
 struct BytesReader<'a> {
@@ -134,17 +138,38 @@ impl Loader {
 
         if let Some(json) = json {
             if let Some(bin) = bin {
-                return self.load_gltf(json, bin);
+                return self.load_gltf(_d3d_device, json, bin);
             }
         }
 
         Err(LoadError::NotImpl)
     }
 
-    pub fn load_gltf(&self, json: &str, bin: &[u8]) -> Result<(), LoadError> {
+    pub fn load_gltf(
+        &self,
+        d3d_device: &d3d11::ID3D11Device,
+        json: &str,
+        bin: &[u8],
+    ) -> Result<(), LoadError> {
         let deserialized: gltf::glTF = serde_json::from_str(json).unwrap();
 
-        for m in deserialized.meshes {           
+        let asset_manager = asset_manager::get().ok_or_else(|| LoadError::ShaderAsset)?;
+        let source = asset_manager
+            .get_shader_source("shaders/mvp.hlsl")
+            .map_err(|_| LoadError::ShaderAsset)?;
+        let shader = Shader::compile(d3d_device, source);
+
+        for m in deserialized.meshes {
+            for prim in m.primitives {
+                let position_index = *prim
+                    .attributes
+                    .get("POSITION")
+                    .ok_or_else(|| LoadError::InvalidGltf)? as usize;
+                let position_accessor = &deserialized.accessors[position_index];
+                let position_view = &deserialized.bufferViews[position_accessor.bufferView.unwrap() as usize];
+                
+            }
+
             // let m = Model::new();
         }
 

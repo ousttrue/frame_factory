@@ -137,7 +137,7 @@ use std::collections::HashMap;
                 let v = props.get(k).unwrap();
                 let mut t = Self::get_type(js, k, v);
                 let k = escape(k);
-                if t.starts_with("Vec") {
+                if t.starts_with("Vec<") || t.starts_with("HashMap<") {
                     self.writeln("    #[serde(default)]");
                     self.file
                         .write(format!("    pub {}: {},\n", k, t).as_bytes())?;

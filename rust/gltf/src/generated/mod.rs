@@ -272,7 +272,8 @@ pub struct Material {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case, non_camel_case_types)]
 pub struct MeshPrimitive {
-    pub attributes: Option<HashMap<String, i32>>,
+    #[serde(default)]
+    pub attributes: HashMap<String, i32>,
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
     pub indices: Option<i32>,

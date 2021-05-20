@@ -6,9 +6,9 @@ mod rendertarget;
 mod scene;
 mod shader;
 mod vertex_buffer;
-use scene::{loader::Loader, model::Model, screenstate::ScreenState, Scene};
+use scene::{loader::Loader, model::Model, scene_manager, screen_state::ScreenState, Scene};
 use shader::{Shader, ShaderSource};
-use std::{collections::HashMap, ffi::CStr, path::Path};
+use std::{ffi::CStr, path::Path};
 use vertex_buffer::VertexBuffer;
 
 use winapi::um::d3d11::{self};
@@ -21,41 +21,14 @@ mod tests {
     }
 }
 
-struct SceneManager {
-    next_id: u32,
-    scenes: HashMap<u32, Scene>,
-}
-
-impl SceneManager {
-    fn add(&mut self, scene: Scene) -> u32 {
-        let id = self.next_id;
-        self.next_id += 1;
-        self.scenes.insert(id, scene);
-        id
-    }
-}
-
-static mut G_SCENE: Option<Box<SceneManager>> = None;
-
-fn or_create() {
-    unsafe {
-        if G_SCENE.is_none() {
-            G_SCENE = Some(Box::new(SceneManager {
-                next_id: 1,
-                scenes: HashMap::new(),
-            }))
-        }
-    }
-}
-
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_shutdown() {
-    unsafe { G_SCENE = None };
+    scene::scene_manager::shutdown();
 }
 
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_scene_destroy(scene: u32) {
-    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+    if let Some(scene_manager) = scene_manager::get() {
         scene_manager.scenes.remove(&scene).unwrap();
     }
 }
@@ -69,9 +42,8 @@ pub extern "C" fn FRAME_FACTORY_scene_sample(
     ps_main: *const i8,
 ) -> u32 {
     let d3d_device = unsafe { device.as_ref().unwrap() };
-    or_create();
 
-    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+    if let Some(scene_manager) = scene::scene_manager::get() {
         let mut scene = Scene::new();
 
         let source = ShaderSource::new(source, source_size, vs_main, ps_main);
@@ -95,9 +67,8 @@ pub extern "C" fn FRAME_FACTORY_scene_load(
     path: *const i8,
 ) -> u32 {
     let d3d_device = unsafe { device.as_ref().unwrap() };
-    or_create();
 
-    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+    if let Some(scene_manager) = scene::scene_manager::get() {
         let path = unsafe { CStr::from_ptr(path) };
         if let Ok(path) = path.to_str() {
             let path = Path::new(path);
@@ -124,7 +95,7 @@ pub extern "C" fn FRAME_FACTORY_scene_render(
     texture: *mut d3d11::ID3D11Texture2D,
     state: *const ScreenState,
 ) -> bool {
-    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+    if let Some(scene_manager) = scene::scene_manager::get() {
         if let Some(scene) = scene_manager.scenes.get_mut(&scene) {
             unsafe {
                 scene.render(

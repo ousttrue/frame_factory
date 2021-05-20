@@ -3,12 +3,13 @@ use winapi::um::d3d11;
 
 use super::rendertarget::RenderTarget;
 
+pub mod scene_manager;
 pub mod camera;
 pub mod model;
-use self::{camera::Camera, frame::c0, model::Model, screenstate::ScreenState};
+use self::{camera::Camera, frame::c0, model::Model, screen_state::ScreenState};
 pub mod frame;
 pub mod loader;
-pub mod screenstate;
+pub mod screen_state;
 
 pub struct Scene {
     render_target: Option<RenderTarget>,

@@ -1,6 +1,6 @@
 use cgmath::{Angle, Matrix4, One, Vector3};
 
-use super::screenstate::{MouseButtonFlags, ScreenState};
+use super::screen_state::{MouseButtonFlags, ScreenState};
 
 pub struct Camera {
     pub projection: cgmath::Matrix4<f32>,

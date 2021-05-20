@@ -15,19 +15,19 @@ impl SceneManager {
     }
 }
 
-static mut G_SCENE: Option<Box<SceneManager>> = None;
+static mut G_MANAGER: Option<Box<SceneManager>> = None;
 
 pub fn get() -> Option<&'static mut Box<SceneManager>> {
     unsafe {
-        if G_SCENE.is_none() {
-            G_SCENE = Some(Box::new(SceneManager {
+        if G_MANAGER.is_none() {
+            G_MANAGER = Some(Box::new(SceneManager {
                 next_id: 1,
                 scenes: HashMap::new(),
             }))
         }
     }
 
-    if let Some(scene_manager) = unsafe { &mut G_SCENE } {
+    if let Some(scene_manager) = unsafe { &mut G_MANAGER } {
         Some(scene_manager)
     } else {
         None
@@ -35,5 +35,5 @@ pub fn get() -> Option<&'static mut Box<SceneManager>> {
 }
 
 pub fn shutdown() {
-    unsafe { G_SCENE = None };
+    unsafe { G_MANAGER = None };
 }

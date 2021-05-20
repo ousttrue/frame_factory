@@ -48,11 +48,9 @@ public:
         FRAME_FACTORY_shutdown();
     }
 
-    static std::unique_ptr<RustRenderer>
-    load_sample(ID3D11Device *device, const char *data, size_t len)
+    static std::unique_ptr<RustRenderer> load_sample(ID3D11Device *device)
     {
-        auto scene =
-            FRAME_FACTORY_scene_sample(device, data, len, "vsMain", "psMain");
+        auto scene = FRAME_FACTORY_scene_sample(device, "");
         if (!scene)
         {
             return nullptr;
@@ -174,14 +172,9 @@ public:
     {
         if (argc < 2)
         {
-            auto source = ReadAllBytes("../shaders/mvp.hlsl");
-            if (!source.empty())
+            if (auto scene = RustRenderer::load_sample(device))
             {
-                if (auto scene = RustRenderer::load_sample(
-                        device, source.data(), source.size()))
-                {
-                    m_scenes.push_back(std::move(scene));
-                }
+                m_scenes.push_back(std::move(scene));
             }
         }
         else

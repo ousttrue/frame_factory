@@ -7,10 +7,10 @@
             "path": "cpp"
         },
         {
-            "path": "shaders"
+            "path": "glTF\\specification\\2.0\\schema"
         },
         {
-            "path": "glTF\\specification\\2.0\\schema"
+            "path": "assets"
         }
     ],
     "settings": {

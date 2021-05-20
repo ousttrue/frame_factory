@@ -241,17 +241,12 @@ pub struct ShaderSource {
 }
 
 impl ShaderSource {
-    pub fn new(
-        source: *const u8,
-        source_size: usize,
-        vs_main: *const i8,
-        ps_main: *const i8,
-    ) -> ShaderSource {
+    pub fn new(source: String, vs_main: String, ps_main: String) -> ShaderSource {
         unsafe {
             ShaderSource {
-                source: str::from_utf8(slice::from_raw_parts(source, source_size)).unwrap().to_owned(),
-                vs_main: CStr::from_ptr(vs_main).to_str().unwrap().to_owned(),
-                ps_main: CStr::from_ptr(ps_main).to_str().unwrap().to_owned(),
+                source,
+                vs_main,
+                ps_main,
             }
         }
     }
@@ -268,12 +263,7 @@ impl ShaderSource {
         ComError,
     > {
         let compiled_vertex_shader = ComPtr::new(|| unsafe {
-            compile_shader_from_source(
-                "vs\0",
-                &self.source,
-                &self.vs_main,
-                "vs_4_0\0",
-            )
+            compile_shader_from_source("vs\0", &self.source, &self.vs_main, "vs_4_0\0")
         })?;
 
         let shader = ComPtr::create_if_success(|pp| unsafe {
@@ -303,12 +293,7 @@ impl ShaderSource {
         d3d_device: &d3d11::ID3D11Device,
     ) -> Result<ComPtr<d3d11::ID3D11PixelShader>, ComError> {
         let compiled = ComPtr::new(|| unsafe {
-            compile_shader_from_source(
-                "ps\0",
-                &self.source,
-                &self.ps_main,
-                "ps_4_0\0",
-            )
+            compile_shader_from_source("ps\0", &self.source, &self.ps_main, "ps_4_0\0")
         })?;
 
         let mut shader: *mut d3d11::ID3D11PixelShader = ptr::null_mut();

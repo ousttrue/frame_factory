@@ -5,7 +5,7 @@ use std::collections::HashMap;
 /// Accessor Sparse Indices
 /// Index array of size `count` that points to those accessor attributes that deviate from their initialization value. Indices must strictly increase.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct AccessorSparseIndices {
     pub bufferView: Option<i32>,
     pub byteOffset: Option<i32>,
@@ -17,7 +17,7 @@ pub struct AccessorSparseIndices {
 /// Accessor Sparse Values
 /// Array of size `count` times number of components, storing the displaced accessor attributes pointed by `indices`. Substituted values must have the same `componentType` and number of components as the base accessor.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct AccessorSparseValues {
     pub bufferView: Option<i32>,
     pub byteOffset: Option<i32>,
@@ -28,7 +28,7 @@ pub struct AccessorSparseValues {
 /// Accessor Sparse
 /// Sparse storage of attributes that deviate from their initialization value.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct AccessorSparse {
     pub count: Option<i32>,
     pub extensions: Option<serde_json::Value>,
@@ -40,7 +40,7 @@ pub struct AccessorSparse {
 /// Accessor
 /// A typed view into a bufferView.  A bufferView contains raw binary data.  An accessor provides a typed view into a bufferView or a subset of a bufferView similar to how WebGL's `vertexAttribPointer()` defines an attribute in a buffer.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Accessor {
     pub bufferView: Option<i32>,
     pub byteOffset: Option<i32>,
@@ -61,7 +61,7 @@ pub struct Accessor {
 /// Animation Channel Target
 /// The index of the node and TRS property to target.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct AnimationChannelTarget {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -72,7 +72,7 @@ pub struct AnimationChannelTarget {
 /// Animation Channel
 /// Targets an animation's sampler at a node's property.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct AnimationChannel {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -83,7 +83,7 @@ pub struct AnimationChannel {
 /// Animation Sampler
 /// Combines input and output accessors with an interpolation algorithm to define a keyframe graph (but not its target).
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct AnimationSampler {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -95,7 +95,7 @@ pub struct AnimationSampler {
 /// Animation
 /// A keyframe animation.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Animation {
     #[serde(default)]
     pub channels: Vec<AnimationChannel>,
@@ -109,7 +109,7 @@ pub struct Animation {
 /// Asset
 /// Metadata about the glTF asset.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Asset {
     pub copyright: Option<String>,
     pub extensions: Option<serde_json::Value>,
@@ -122,7 +122,7 @@ pub struct Asset {
 /// Buffer View
 /// A view into a buffer generally representing a subset of the buffer.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct BufferView {
     pub buffer: Option<i32>,
     pub byteLength: Option<i32>,
@@ -137,7 +137,7 @@ pub struct BufferView {
 /// Buffer
 /// A buffer points to binary geometry, animation, or skins.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Buffer {
     pub byteLength: Option<i32>,
     pub extensions: Option<serde_json::Value>,
@@ -149,7 +149,7 @@ pub struct Buffer {
 /// Camera Orthographic
 /// An orthographic camera containing properties to create an orthographic projection matrix.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct CameraOrthographic {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -162,7 +162,7 @@ pub struct CameraOrthographic {
 /// Camera Perspective
 /// A perspective camera containing properties to create a perspective projection matrix.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct CameraPerspective {
     pub aspectRatio: Option<f32>,
     pub extensions: Option<serde_json::Value>,
@@ -175,7 +175,7 @@ pub struct CameraPerspective {
 /// Camera
 /// A camera's projection.  A node can reference a camera to apply a transform to place the camera in the scene.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Camera {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -188,7 +188,7 @@ pub struct Camera {
 /// Image
 /// Image data used to create a texture. Image can be referenced by URI or `bufferView` index. `mimeType` is required in the latter case.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Image {
     pub bufferView: Option<i32>,
     pub extensions: Option<serde_json::Value>,
@@ -201,7 +201,7 @@ pub struct Image {
 /// Texture Info
 /// The emissive map texture.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct TextureInfo {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -212,7 +212,7 @@ pub struct TextureInfo {
 /// Material Normal Texture Info
 /// The normal map texture.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct MaterialNormalTextureInfo {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -224,7 +224,7 @@ pub struct MaterialNormalTextureInfo {
 /// Material Occlusion Texture Info
 /// The occlusion map texture.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct MaterialOcclusionTextureInfo {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -236,7 +236,7 @@ pub struct MaterialOcclusionTextureInfo {
 /// Material PBR Metallic Roughness
 /// A set of parameter values that are used to define the metallic-roughness material model from Physically-Based Rendering (PBR) methodology. When not specified, all the default values of `pbrMetallicRoughness` apply.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct MaterialPBRMetallicRoughness {
     #[serde(default)]
     pub baseColorFactor: Vec<f32>,
@@ -251,7 +251,7 @@ pub struct MaterialPBRMetallicRoughness {
 /// Material
 /// The material appearance of a primitive.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Material {
     pub alphaCutoff: Option<f32>,
     pub alphaMode: Option<String>,
@@ -270,7 +270,7 @@ pub struct Material {
 /// Mesh Primitive
 /// Geometry to be rendered with the given material.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct MeshPrimitive {
     pub attributes: Option<HashMap<String, i32>>,
     pub extensions: Option<serde_json::Value>,
@@ -285,7 +285,7 @@ pub struct MeshPrimitive {
 /// Mesh
 /// A set of primitives to be rendered.  A node can contain one mesh.  A node's transform places the mesh in the scene.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Mesh {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -299,7 +299,7 @@ pub struct Mesh {
 /// Node
 /// A node in the node hierarchy.  When the node contains `skin`, all `mesh.primitives` must contain `JOINTS_0` and `WEIGHTS_0` attributes.  A node can have either a `matrix` or any combination of `translation`/`rotation`/`scale` (TRS) properties. TRS properties are converted to matrices and postmultiplied in the `T * R * S` order to compose the transformation matrix; first the scale is applied to the vertices, then the rotation, and then the translation. If none are provided, the transform is the identity. When a node is targeted for animation (referenced by an animation.channel.target), only TRS properties may be present; `matrix` will not be present.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Node {
     pub camera: Option<i32>,
     #[serde(default)]
@@ -324,7 +324,7 @@ pub struct Node {
 /// Sampler
 /// Texture sampler properties for filtering and wrapping modes.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Sampler {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -338,7 +338,7 @@ pub struct Sampler {
 /// Scene
 /// The root nodes of a scene.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Scene {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -350,7 +350,7 @@ pub struct Scene {
 /// Skin
 /// Joints and matrices defining a skin.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Skin {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,
@@ -364,7 +364,7 @@ pub struct Skin {
 /// Texture
 /// A texture and its sampler.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct Texture {
     pub extensions: Option<serde_json::Value>,
     pub extras: Option<serde_json::Value>,

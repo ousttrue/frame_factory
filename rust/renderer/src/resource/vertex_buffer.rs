@@ -1,5 +1,4 @@
-use std::ptr;
-
+use crate::com_util::ComCreate;
 use com_ptr::ComPtr;
 use winapi::{
     ctypes::c_void,
@@ -17,31 +16,39 @@ pub struct VertexBuffer {
 }
 
 impl VertexBuffer {
-    /// clock wise
-    ///    2
-    ///   1 0
-    pub fn create_triangle(d3d_device: &d3d11::ID3D11Device) -> Result<VertexBuffer, ComError> {
-        // vertices
-        let size = 0.5f32;
-        let positions = [
-            size, -size, 0.0f32, -size, -size, 0.0f32, 0.0f32, size, 0.0f32,
-        ];
+    pub fn new(
+        vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
+        stride: i32,
+        index_buffer: ComPtr<d3d11::ID3D11Buffer>,
+        index_count: i32,
+    ) -> VertexBuffer {
+        VertexBuffer {
+            vertex_buffer,
+            stride,
+            index_buffer,
+            index_count,
+        }
+    }
+
+    pub fn create_vertices<T>(
+        d3d_device: &d3d11::ID3D11Device,
+        vertices: &[T],
+    ) -> Result<ComPtr<d3d11::ID3D11Buffer>, ComError> {
         let mut desc = d3d11::D3D11_BUFFER_DESC::default();
-        desc.ByteWidth = std::mem::size_of_val(&positions) as u32;
+        desc.ByteWidth = std::mem::size_of_val(vertices) as u32;
         desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
         desc.BindFlags = d3d11::D3D11_BIND_VERTEX_BUFFER;
         desc.CPUAccessFlags = 0;
         let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-        data.pSysMem = positions.as_ptr() as *mut c_void;
-        let mut vertex_buffer: *mut d3d11::ID3D11Buffer = ptr::null_mut();
-        let hr = unsafe { d3d_device.CreateBuffer(&desc, &data, &mut vertex_buffer) };
-        if hr != 0 {
-            return Err(ComError::StaticMessage("CreateBuffer vertex_buffer"));
-        }
-        let vertex_buffer = unsafe { ComPtr::from_raw(vertex_buffer) };
+        data.pSysMem = vertices.as_ptr() as *mut c_void;
+        ComPtr::create_if_success(|pp| unsafe { d3d_device.CreateBuffer(&desc, &data, pp) })
+    }
 
+    pub fn create_indices<T>(
+        d3d_device: &d3d11::ID3D11Device,
+        indices: &[T],
+    ) -> Result<ComPtr<d3d11::ID3D11Buffer>, ComError> {
         // indices
-        let indices = [0, 1, 2];
         let mut desc = d3d11::D3D11_BUFFER_DESC::default();
         desc.ByteWidth = std::mem::size_of_val(&indices) as u32;
         desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
@@ -49,19 +56,26 @@ impl VertexBuffer {
         desc.CPUAccessFlags = 0;
         let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
         data.pSysMem = indices.as_ptr() as *mut c_void;
-        let mut index_buffer: *mut d3d11::ID3D11Buffer = ptr::null_mut();
-        let hr = unsafe { d3d_device.CreateBuffer(&desc, &data, &mut index_buffer) };
-        if hr != 0 {
-            return Err(ComError::StaticMessage("CreateBuffer index_buffer"));
-        }
-        let index_buffer = unsafe { ComPtr::from_raw(index_buffer) };
+        ComPtr::create_if_success(|pp| unsafe { d3d_device.CreateBuffer(&desc, &data, pp) })
+    }
 
-        Ok(VertexBuffer {
-            vertex_buffer,
-            stride: 12,
-            index_buffer,
-            index_count: 3,
-        })
+    /// clock wise
+    ///    2
+    ///   1 0
+    pub fn create_triangle(d3d_device: &d3d11::ID3D11Device) -> Result<VertexBuffer, ComError> {
+        let size = 0.5f32;
+        let positions = [
+            (size, -size, 0.0f32),
+            (-size, -size, 0.0f32),
+            (0.0f32, size, 0.0f32),
+        ];
+        let vertex_buffer = Self::create_vertices(d3d_device, &positions)?;
+        let stride = 12;
+
+        let indices = [0, 1, 2];
+        let index_buffer = Self::create_indices(d3d_device, &indices)?;
+
+        Ok(VertexBuffer::new(vertex_buffer, stride, index_buffer, 3))
     }
 
     pub fn draw(&self, d3d_context: &d3d11::ID3D11DeviceContext) {

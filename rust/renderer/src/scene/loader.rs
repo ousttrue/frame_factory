@@ -163,9 +163,9 @@ impl Loader {
                 let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
 
                 let postions = gltf
-                    .get_accessor_bytes::<(f32, f32, f32)>(bin, accessor_index)
+                    .get_accessor_bytes(bin, accessor_index)
                     .unwrap();
-                let indices = gltf.get_accessor_bytes::<u16>(bin, prim.indices.unwrap()).unwrap();
+                let indices = gltf.get_accessor_bytes(bin, prim.indices.unwrap()).unwrap();
 
                 // let position_index = *prim
                 //     .attributes

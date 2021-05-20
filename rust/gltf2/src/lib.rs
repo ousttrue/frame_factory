@@ -5,8 +5,7 @@ pub mod generated;
 pub use generated::*;
 
 impl glTF {
-    pub fn get_accessor_bytes<T>(&self, bin: &[u8], accessor_index: i32) -> Option<&[T]> {
-        let p = bin.as_ptr() as *const T;
-        unsafe { Some(&std::slice::from_raw_parts(p, 1)) }
+    pub fn get_accessor_bytes<'a>(&self, bin: &'a [u8], accessor_index: i32) -> Option<&'a [u8]> {
+        Some(bin)
     }
 }

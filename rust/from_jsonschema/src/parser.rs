@@ -60,34 +60,34 @@ impl JsonSchemaParser {
             ""
         }
         .to_owned();
-        let base: Option<Rc<JsonSchema>> = if let Some(allOf) = json.get("allOf") {
-            if let Some(allOf) = allOf.as_array() {
+        let base: Option<Rc<JsonSchema>> = if let Some(all_of) = json.get("allOf") {
+            if let Some(all_of) = all_of.as_array() {
                 // inherit
-                if allOf.len() != 1 {
+                if all_of.len() != 1 {
                     panic!();
                 }
-                Some(self.parse_ref(path, allOf.get(0).unwrap()).unwrap())
+                Some(self.parse_ref(path, all_of.get(0).unwrap()).unwrap())
             } else {
                 None
             }
-        } else if let Some(ref_) = json.get("$ref") {
+        } else if let Some(_) = json.get("$ref") {
             Some(self.parse_ref(path, json).unwrap())
         } else {
             None
         };
         let json = json.as_object().unwrap();
 
-        let mut js = if let Some(t) = json.get("type") {
+        let js = if let Some(t) = json.get("type") {
             let js_type = match t.as_str().unwrap() {
                 "object" => {
-                    if let Some(additionalProperties) = json.get("additionalProperties") {
-                        JsonSchemaType::Dictionary(self.parse(path, additionalProperties).unwrap())
+                    if let Some(additional_properties) = json.get("additionalProperties") {
+                        JsonSchemaType::Dictionary(self.parse(path, additional_properties).unwrap())
                     } else {
                         let mut props: HashMap<String, Rc<JsonSchema>> = HashMap::new();
-                        if let Some(properties) = json.get("properties") {
+                        if let Some(_) = json.get("properties") {
                             for (prop_name, prop) in json["properties"].as_object().unwrap().iter()
                             {
-                                let mut prop = self.parse(path, prop)?;
+                                let prop = self.parse(path, prop)?;
                                 props.insert(prop_name.clone(), prop);
                             }
                         }
@@ -121,10 +121,10 @@ impl JsonSchemaParser {
                 base,
                 js_type,
             })
-        } else if let Some(anyOf) = json.get("anyOf") {
-            let anyOf = anyOf.as_array().unwrap();
-            let anyOf_type = anyOf[anyOf.len() - 1]["type"].as_str().unwrap();
-            match anyOf_type {
+        } else if let Some(any_of) = json.get("anyOf") {
+            let any_of = any_of.as_array().unwrap();
+            let any_of_type = any_of[any_of.len() - 1]["type"].as_str().unwrap();
+            match any_of_type {
                 "integer" => Rc::new(JsonSchema {
                     path: String::from(path),
                     title,

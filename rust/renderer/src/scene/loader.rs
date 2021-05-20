@@ -2,7 +2,7 @@ use std::{cell::Cell, convert::TryInto, fs::File, io::Read};
 
 use winapi::um::d3d11;
 
-use super::{model::Model, Scene};
+use super::model::Model;
 
 pub enum LoadError {
     NotImpl,
@@ -73,11 +73,10 @@ impl Loader {
         path: &std::path::Path,
     ) -> Result<(), LoadError> {
         if let Some(ext) = path.extension() {
-            if let ext = ext.to_string_lossy() {
-                match ext.to_lowercase().as_str() {
-                    "glb" => return self.load_glb(d3d_device, path),
-                    _ => (),
-                }
+            let ext = ext.to_string_lossy();
+            match ext.to_lowercase().as_str() {
+                "glb" => return self.load_glb(d3d_device, path),
+                _ => (),
             }
         }
 
@@ -89,7 +88,7 @@ impl Loader {
     ///
     pub fn load_glb(
         &self,
-        d3d_device: &d3d11::ID3D11Device,
+        _d3d_device: &d3d11::ID3D11Device,
         path: &std::path::Path,
     ) -> Result<(), LoadError> {
         if !path.exists() {

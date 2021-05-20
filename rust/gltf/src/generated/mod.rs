@@ -376,7 +376,7 @@ pub struct Texture {
 /// glTF
 /// The root object for a glTF asset.
 #[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
+#[allow(non_snake_case, non_camel_case_types)]
 pub struct glTF {
     #[serde(default)]
     pub accessors: Vec<Accessor>,

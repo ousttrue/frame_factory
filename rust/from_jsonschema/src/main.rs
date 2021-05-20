@@ -5,10 +5,7 @@ mod generator;
 
 extern crate serde_json;
 use crate::parser::JsonSchemaParser;
-use std::{
-    fs,
-    io::{BufWriter, Write},
-};
+use std::fs;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

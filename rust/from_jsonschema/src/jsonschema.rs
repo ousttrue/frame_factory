@@ -1,21 +1,14 @@
 extern crate itertools;
 use core::panic;
-use std::{
-    collections::HashMap,
-    fs,
-    io::{BufWriter, Write},
-    rc::Rc,
-};
+use std::{collections::HashMap, rc::Rc};
 
 use super::baseiterator::BaseIterator;
-use itertools::Itertools;
 
 #[derive(Debug)]
 pub enum JsonSchemaError {
     FileNotFound,
     CanNotRead,
     ParseError,
-    Skip,
     IO,
 }
 
@@ -28,12 +21,6 @@ pub enum JsonSchemaType {
     Array(Rc<JsonSchema>),
     Object(HashMap<String, Rc<JsonSchema>>),
     Dictionary(Rc<JsonSchema>),
-}
-
-fn concat(lhs: &str, rhs: &str) -> String {
-    let mut lhs = lhs.to_owned();
-    lhs.push_str(rhs);
-    lhs
 }
 
 pub struct JsonSchema {

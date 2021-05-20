@@ -34,26 +34,23 @@ impl Generator {
             used: HashSet::new(),
         };
 
-        generator.writeln("use serde::{Deserialize, Serialize};
+        generator.writeln(
+            "use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-");
+",
+        );
 
         generator
     }
 
-    fn writeln(&mut self, src: &str)
-    {
+    fn writeln(&mut self, src: &str) {
         self.file.write(src.as_bytes()).unwrap();
         self.file.write(b"\n").unwrap();
     }
 
     pub fn generate(&mut self, js: &Rc<JsonSchema>) {
         // 深さ優先で object 列挙する
-
-        if js.title == "Accessor Sparse Indices" {
-            let a = 0;
-        };
 
         match &js.js_type {
             JsonSchemaType::Object(props) => {
@@ -116,11 +113,10 @@ use std::collections::HashMap;
             JsonSchemaType::String => "String".to_owned(),
             JsonSchemaType::Array(items) => format!("Vec<{}>", Self::get_type(js, key, items)),
             JsonSchemaType::Object(_) => prop.title.replace(" ", ""),
-            JsonSchemaType::Dictionary(additionalProperties) => format!(
+            JsonSchemaType::Dictionary(additional_properties) => format!(
                 "HashMap<String, {}>",
-                Self::get_type(js, key, additionalProperties)
+                Self::get_type(js, key, additional_properties)
             ),
-            _ => "## unknown ##".to_owned(),
         }
     }
 
@@ -135,20 +131,20 @@ use std::collections::HashMap;
             self.writeln(format!("/// {}", title).as_str());
             self.writeln(format!("/// {}", js.description).as_str());
             self.writeln("#[derive(Serialize, Deserialize, Debug)]");
-            self.writeln("#[allow(non_snake_case)]");
+            self.writeln("#[allow(non_snake_case, non_camel_case_types)]");
             self.writeln(format!("pub struct {} {{", title.replace(" ", "")).as_str());
             for k in props.keys().sorted() {
                 let v = props.get(k).unwrap();
                 let mut t = Self::get_type(js, k, v);
                 let k = escape(k);
-                if t.starts_with("Vec")
-                {
+                if t.starts_with("Vec") {
                     self.writeln("    #[serde(default)]");
-                    self.file.write(format!("    pub {}: {},\n", k, t).as_bytes())?;
-                }else
-                {
+                    self.file
+                        .write(format!("    pub {}: {},\n", k, t).as_bytes())?;
+                } else {
                     t = format!("Option<{}>", t);
-                    self.file.write(format!("    pub {}: {},\n", k, t).as_bytes())?;
+                    self.file
+                        .write(format!("    pub {}: {},\n", k, t).as_bytes())?;
                 }
             }
             self.writeln("}");

@@ -38,9 +38,16 @@ Texture2DRenderTarget
 * [x] Camera, Mouse
 * [ ] Teapot
 * [x] SubMesh Material
+* [ ] Node
+* [ ] generate tangent
+* [ ] TextureLoader image-rs
+* [ ] Skinning
+* [ ] MorphTarget
+* [ ] Animation
+
+## Renderer
 * [ ] ColorTexture
-* [ ] generate tangent, normal map
-* [ ] image loader(STL)
+* [ ] NormalTexture
 
 ## glTF loader
 * [x] parse JsonSchema

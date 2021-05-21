@@ -31,7 +31,7 @@ Texture2DRenderTarget
 * [x] font
 * [ ] logger
 * [ ] SDL2
-* [ ] separate crate dll, scene and resource
+* [x] separate crate dll, scene and resource
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer

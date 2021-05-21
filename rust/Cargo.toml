@@ -1,9 +1,11 @@
 [workspace]
 
 members = [
+    "gltf2",
     "scene",
     "renderer",
+    "frame_factory",
+    #
     "sample",
     "from_jsonschema",
-    "gltf2",
 ]

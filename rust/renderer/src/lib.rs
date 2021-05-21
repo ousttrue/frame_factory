@@ -30,6 +30,7 @@ pub extern "C" fn FRAME_FACTORY_asset_path(path: *const i8) {
 
 #[no_mangle]
 pub extern "C" fn FRAME_FACTORY_shutdown() {
+    resource::shutdown();
     scene::scene_manager::shutdown();
     asset_manager::shutdown();
 }

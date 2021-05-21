@@ -9,7 +9,7 @@ mod render_target;
 pub use render_target::*;
 use winapi::um::d3d11;
 
-use crate::scene::{Scene, ScreenState, c0};
+use crate::scene::{Model, Scene, c0};
 
 pub struct ResourceManager {
     render_target: Option<RenderTarget>,
@@ -61,9 +61,29 @@ impl ResourceManager {
             }
 
             for model in &scene.models {
-                model.render(d3d_context, &frame);
+                self.render_model(d3d_device, d3d_context, &frame, model);
             }
         }
+    }
+
+    fn render_model(
+        &mut self,
+        d3d_device: &d3d11::ID3D11Device,
+        d3d_context: &d3d11::ID3D11DeviceContext,
+        frame: &c0,
+        model: &Model,
+    ) {
+        model.shader
+            .vs_constant_buffer
+            .update(d3d_context, 0, frame);
+
+        model.shader
+            .vs_constant_buffer
+            .update(d3d_context, 1, &model.model);
+
+        // model
+        model.shader.set(d3d_context);
+        model.vertex_buffer.draw(d3d_context);        
     }
 }
 

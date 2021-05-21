@@ -4,6 +4,9 @@ pub use scene_manager::*;
 pub mod camera;
 pub use camera::*;
 
+pub mod accessor_bytes;
+pub use accessor_bytes::*;
+
 pub mod model;
 pub use model::*;
 

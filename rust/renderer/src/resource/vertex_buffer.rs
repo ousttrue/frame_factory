@@ -1,4 +1,7 @@
-use crate::com_util::ComCreate;
+use crate::{
+    com_util::ComCreate,
+    scene::{AccessorBytes, Shader},
+};
 use com_ptr::ComPtr;
 use winapi::{
     ctypes::c_void,
@@ -10,31 +13,33 @@ use crate::com_util::ComError;
 
 pub struct VertexBuffer {
     vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
-    stride: i32,
+    stride: u32,
     index_buffer: ComPtr<d3d11::ID3D11Buffer>,
     index_format: dxgiformat::DXGI_FORMAT,
-    index_count: i32,
+    index_count: u32,
 }
 
 impl VertexBuffer {
-    pub fn new(
-        vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
-        stride: i32,
-        index_buffer: ComPtr<d3d11::ID3D11Buffer>,
-        index_stride: i32,
-        index_count: i32,
-    ) -> VertexBuffer {
-        let index_format = match index_stride
-        {
+    fn stride_to_format(stride: u32) -> dxgiformat::DXGI_FORMAT {
+        match stride {
             2 => dxgiformat::DXGI_FORMAT_R16_UINT,
             4 => dxgiformat::DXGI_FORMAT_R32_UINT,
             _ => panic!(),
-        };
+        }
+    }
+
+    pub fn new(
+        vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
+        stride: u32,
+        index_buffer: ComPtr<d3d11::ID3D11Buffer>,
+        index_stride: u32,
+        index_count: u32,
+    ) -> VertexBuffer {
         VertexBuffer {
             vertex_buffer,
             stride,
             index_buffer,
-            index_format,
+            index_format: Self::stride_to_format(index_stride),
             index_count,
         }
     }
@@ -67,23 +72,21 @@ impl VertexBuffer {
         ComPtr::create_if_success(|pp| unsafe { d3d_device.CreateBuffer(&desc, &data, pp) })
     }
 
-    /// clock wise
-    ///    2
-    ///   1 0
-    pub fn create_triangle(d3d_device: &d3d11::ID3D11Device) -> Result<VertexBuffer, ComError> {
-        let size = 0.5f32;
-        let positions = [
-            (size, -size, 0.0f32),
-            (-size, -size, 0.0f32),
-            (0.0f32, size, 0.0f32),
-        ];
-        let vertex_buffer = Self::create_vertices(d3d_device, &positions)?;
-        let stride = 12;
+    pub fn from(
+        d3d_device: &d3d11::ID3D11Device,
+        positions: &AccessorBytes,
+        indices: &AccessorBytes,
+    ) -> Result<VertexBuffer, ComError> {
+        let vertex_buffer = Self::create_vertices(d3d_device, &positions.bytes)?;
+        let index_buffer = Self::create_indices(d3d_device, &indices.bytes)?;
 
-        let indices = [0, 1, 2];
-        let index_buffer = Self::create_indices(d3d_device, &indices)?;
-
-        Ok(VertexBuffer::new(vertex_buffer, stride, index_buffer, 4, 3))
+        Ok(VertexBuffer {
+            vertex_buffer,
+            stride: positions.stride,
+            index_buffer,
+            index_format: Self::stride_to_format(indices.stride),
+            index_count: indices.count,
+        })
     }
 
     pub fn draw(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
@@ -100,11 +103,7 @@ impl VertexBuffer {
                 offsets.as_ptr(),
             );
 
-            d3d_context.IASetIndexBuffer(
-                self.index_buffer.as_ptr(),
-                self.index_format,
-                0,
-            );
+            d3d_context.IASetIndexBuffer(self.index_buffer.as_ptr(), self.index_format, 0);
 
             d3d_context.IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

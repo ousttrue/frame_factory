@@ -1,4 +1,6 @@
 mod shader;
+use std::collections::HashMap;
+
 use cgmath::Matrix;
 pub use shader::*;
 mod vertex_buffer;
@@ -9,10 +11,15 @@ mod render_target;
 pub use render_target::*;
 use winapi::um::d3d11;
 
-use crate::scene::{Model, Scene, c0};
+use crate::{
+    asset_manager,
+    scene::{self, c0, Model, Scene},
+};
 
 pub struct ResourceManager {
     render_target: Option<RenderTarget>,
+    unlit: Option<Shader>,
+    vertex_buffer: HashMap<u32, VertexBuffer>,
 }
 
 impl ResourceManager {
@@ -28,6 +35,36 @@ impl ResourceManager {
         }
 
         self.render_target = RenderTarget::create(d3d_device, texture).ok();
+    }
+
+    pub fn get_or_create_shader(
+        &mut self,
+        d3d_device: &d3d11::ID3D11Device,
+        shader: &scene::Shader,
+    ) -> &Shader {
+        if self.unlit.is_none() {
+            if let Some(asset_manager) = asset_manager::get() {
+                let source = asset_manager.get_shader_source("shaders/mvp.hlsl").unwrap();
+                let shader = Shader::compile(d3d_device, source).unwrap();
+                self.unlit = Some(shader);
+            }
+        }
+
+        &self.unlit.as_ref().unwrap()
+    }
+
+    pub fn get_or_create_vertex_buffer(
+        &mut self,
+        d3d_device: &d3d11::ID3D11Device,
+        model: &Model,
+    ) -> &VertexBuffer {
+        if !self.vertex_buffer.contains_key(&model.get_id()) {
+            let vertex_buffer =
+                VertexBuffer::from(d3d_device, &model.positions, &model.indices).unwrap();
+            self.vertex_buffer.insert(model.get_id(), vertex_buffer);
+        }
+
+        self.vertex_buffer.get(&model.get_id()).unwrap()
     }
 
     pub fn render(
@@ -73,17 +110,24 @@ impl ResourceManager {
         frame: &c0,
         model: &Model,
     ) {
-        model.shader
-            .vs_constant_buffer
-            .update(d3d_context, 0, frame);
+        //
+        // shader
+        //
+        let shader = self.get_or_create_shader(d3d_device, &model.material);
 
-        model.shader
-            .vs_constant_buffer
-            .update(d3d_context, 1, &model.model);
+        shader.vs_constant_buffer.update(d3d_context, 0, frame);
 
+        shader
+            .vs_constant_buffer
+            .update(d3d_context, 1, &model.transform);
+
+        //
         // model
-        model.shader.set(d3d_context);
-        model.vertex_buffer.draw(d3d_context);        
+        //
+        shader.set(d3d_context);
+
+        let vertex_buffer = self.get_or_create_vertex_buffer(d3d_device, model);
+        vertex_buffer.draw(d3d_context);
     }
 }
 
@@ -94,6 +138,8 @@ pub fn get() -> Option<&'static mut Box<ResourceManager>> {
         if G_MANAGER.is_none() {
             G_MANAGER = Some(Box::new(ResourceManager {
                 render_target: None,
+                unlit: None,
+                vertex_buffer: HashMap::new(),
             }))
         }
     }

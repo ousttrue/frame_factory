@@ -9,7 +9,7 @@ use winapi::{
 
 use crate::com_util::{ComCreate, ComError};
 
-pub struct Renderer {
+pub struct DX11 {
     pub d3d_device: ComPtr<d3d11::ID3D11Device>,
     pub d3d_context: ComPtr<d3d11::ID3D11DeviceContext>,
     pub dxgi_swapchain: ComPtr<dxgi::IDXGISwapChain>,
@@ -17,8 +17,8 @@ pub struct Renderer {
 }
 
 #[allow(dead_code)]
-impl Renderer {
-    pub fn new(hwnd: HWND) -> Result<Renderer, &'static str> {
+impl DX11 {
+    pub fn new(hwnd: HWND) -> Result<DX11, &'static str> {
         let swapchain_desc = dxgi::DXGI_SWAP_CHAIN_DESC {
             BufferDesc: dxgitype::DXGI_MODE_DESC {
                 Format: dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -61,7 +61,7 @@ impl Renderer {
             if result != 0 {
                 return Err("D3D11CreateDeviceAndSwapChain");
             }
-            Ok(Renderer {
+            Ok(DX11 {
                 d3d_device: ComPtr::from_raw(d3d_device),
                 d3d_context: ComPtr::from_raw(d3d_context),
                 dxgi_swapchain: ComPtr::from_raw(dxgi_swapchain),
@@ -124,7 +124,7 @@ impl Renderer {
     }
 }
 
-impl Drop for Renderer {
+impl Drop for DX11 {
     fn drop(&mut self) {
         println!("Renderer.drop");
     }

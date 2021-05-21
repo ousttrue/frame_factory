@@ -31,20 +31,23 @@ Texture2DRenderTarget
 * [x] font
 * [ ] logger
 * [ ] SDL2
+* [ ] separate crate dll, scene and resource
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer
 * [x] Camera, Mouse
 * [ ] Teapot
 * [ ] SubMesh Material
-* [ ] Texture
-
+* [ ] ColorTexture
+* [ ] generate tangent, normal map
+* [ ] image loader(STL)
 ## glTF loader
 * [x] parse JsonSchema
 * [x] shared reference
-* [ ] generate rust struct from JsonSchema
-* [ ] glTF2
-
+* [x] generate rust struct from JsonSchema
+* [x] glTF2
+* [ ] unlit material
+* [ ] pbr material
 ## Gizmo
 * [ ] grid
 * [ ] Translate

@@ -18,7 +18,8 @@
             "memory": "cpp"
         },
         "cSpell.words": [
-            "imgui"
+            "imgui",
+            "struct"
         ]
     }
 }

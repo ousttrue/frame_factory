@@ -57,7 +57,6 @@ impl VertexBuffer {
         d3d_device: &d3d11::ID3D11Device,
         indices: &[T],
     ) -> Result<ComPtr<d3d11::ID3D11Buffer>, ComError> {
-        // indices
         let mut desc = d3d11::D3D11_BUFFER_DESC::default();
         desc.ByteWidth = std::mem::size_of_val(indices) as u32;
         desc.Usage = d3d11::D3D11_USAGE_DEFAULT;

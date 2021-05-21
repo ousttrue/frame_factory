@@ -1,8 +1,8 @@
 extern crate gltf2;
 extern crate serde_json;
-mod error;
 mod asset_manager;
 mod com_util;
+mod error;
 mod resource;
 mod scene;
 use std::{error::Error, ffi::CStr, path::Path};
@@ -110,13 +110,20 @@ pub extern "C" fn FRAME_FACTORY_scene_render(
 ) -> bool {
     if let Some(scene_manager) = scene::scene_manager::get() {
         if let Some(scene) = scene_manager.scenes.get_mut(&scene) {
-            unsafe {
-                scene.render(
-                    device.as_ref().unwrap(),
-                    context.as_ref().unwrap(),
-                    texture,
-                    state.as_ref().unwrap(),
-                );
+            let state = unsafe { state.as_ref().unwrap() };
+            // update camera
+            scene.camera.update(state);
+
+            if let Some(resource_manager) = resource::get() {
+                unsafe {
+                    resource_manager.render(
+                        device.as_ref().unwrap(),
+                        context.as_ref().unwrap(),
+                        texture,
+                        scene,
+                    )
+                };
+
                 return true;
             }
         }

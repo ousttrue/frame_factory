@@ -10,6 +10,13 @@ pub enum MouseButtonFlags {
     CursorUpdate = 0x20,
 }
 
+impl Default for MouseButtonFlags
+{
+    fn default() -> Self {
+        MouseButtonFlags::None
+    }
+}
+
 impl MouseButtonFlags {
     pub fn has(self, flag: MouseButtonFlags) -> bool {
         let value = self;
@@ -18,6 +25,7 @@ impl MouseButtonFlags {
 }
 
 #[repr(C)]
+#[derive(Default)]
 pub struct ScreenState {
     pub width: i16,
     pub height: i16,

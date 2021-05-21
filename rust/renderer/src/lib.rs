@@ -1,10 +1,8 @@
-extern crate gltf2;
-extern crate serde_json;
+extern crate scene;
 mod asset_manager;
 mod com_util;
 mod error;
 mod resource;
-mod scene;
 use std::{error::Error, ffi::CStr, path::Path};
 
 use winapi::um::d3d11::{self};

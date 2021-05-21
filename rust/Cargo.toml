@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "scene",
     "renderer",
     "sample",
     "from_jsonschema",

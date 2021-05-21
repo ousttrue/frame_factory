@@ -1,3 +1,8 @@
+extern crate gltf2;
+
+pub mod error;
+pub use error::*;
+
 pub mod scene_manager;
 pub use scene_manager::*;
 

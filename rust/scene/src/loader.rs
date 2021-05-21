@@ -1,10 +1,12 @@
-use crate::{
-    asset_manager,
-    error::{Error, LoadError},
-    resource, scene,
-};
+// use crate::{
+//     asset_manager,
+//     error::{Error, LoadError},
+//     resource, scene,
+// };
 use std::{cell::Cell, fs::File, io::Read};
-use winapi::um::d3d11;
+// use winapi::um::d3d11;
+
+use crate::{Error, LoadError, Material, UnLightMaterial};
 
 use super::{mesh::Mesh, AccessorBytes, RGBA};
 
@@ -120,14 +122,14 @@ impl Loader {
         Err(Error::NotImpl)
     }
 
-    fn load_material(&mut self, gltf_material: &gltf2::Material) -> scene::Material {
-        let unlit = scene::UnLightMaterial {
+    fn load_material(&mut self, gltf_material: &gltf2::Material) -> Material {
+        let unlit = UnLightMaterial {
             color: RGBA::white(),
             color_texture: None,
         };
-        scene::Material {
+        Material {
             name: gltf_material.name.clone(),
-            material_type: scene::MaterialTypes::UnLight(unlit),
+            material_type: crate::MaterialTypes::UnLight(unlit),
         }
     }
 
@@ -135,8 +137,8 @@ impl Loader {
         let gltf: gltf2::glTF = serde_json::from_str(json).unwrap();
 
         for m in &gltf.meshes {
-            let mut vertex_buffer: Option<scene::AccessorBytes> = None;
-            let mut index_buffer: Option<scene::AccessorBytes> = None;
+            let mut vertex_buffer: Option<crate::AccessorBytes> = None;
+            let mut index_buffer: Option<crate::AccessorBytes> = None;
             let mut index_count_list = Vec::new();
 
             for prim in &m.primitives {
@@ -170,7 +172,7 @@ impl Loader {
 
             if let Some(vertex_buffer) = vertex_buffer {
                 if let Some(index_buffer) = index_buffer {
-                    let mut model = scene::Mesh::new(vertex_buffer, index_buffer);
+                    let mut model = crate::Mesh::new(vertex_buffer, index_buffer);
 
                     let mut offset = 0;
                     for (i, prim) in m.primitives.iter().enumerate() {
@@ -178,7 +180,7 @@ impl Loader {
                             self.load_material(&gltf.materials[prim.material.unwrap() as usize]);
 
                         let index_count = index_count_list[i];
-                        model.submeshes.push(scene::Submesh {
+                        model.submeshes.push(crate::Submesh {
                             offset: offset,
                             index_count: index_count,
                             material,

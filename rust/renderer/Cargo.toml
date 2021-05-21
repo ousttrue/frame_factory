@@ -21,5 +21,4 @@ winapi = { version = "0.3", features = [
 ] }
 com_ptr = "0.2.1"
 cgmath = "0.18.0"
-gltf2 = { path = "../gltf2" }
-serde_json = "1.0.64"
+scene = { path = "../scene" }

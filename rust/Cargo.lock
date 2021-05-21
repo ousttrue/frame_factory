@@ -105,8 +105,7 @@ version = "0.1.0"
 dependencies = [
  "cgmath",
  "com_ptr",
- "gltf2",
- "serde_json",
+ "scene",
  "winapi",
 ]
 
@@ -123,6 +122,15 @@ dependencies = [
  "cgmath",
  "renderer",
  "winapi",
+]
+
+[[package]]
+name = "scene"
+version = "0.1.0"
+dependencies = [
+ "cgmath",
+ "gltf2",
+ "serde_json",
 ]
 
 [[package]]

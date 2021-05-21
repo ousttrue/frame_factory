@@ -22,7 +22,7 @@ impl Model {
     pub fn render(&self, d3d_context: &d3d11::ID3D11DeviceContext, frame: &c0) {
         self.shader
             .vs_constant_buffer
-            .update(d3d_context, 0, &frame);
+            .update(d3d_context, 0, frame);
 
         self.shader
             .vs_constant_buffer

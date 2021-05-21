@@ -53,7 +53,7 @@ fn create_sample_scene(
 
     // if let Ok(vertex_buffer) = resource::VertexBuffer::create_triangle(d3d_device) {
         if let Ok(shader) = resource::Shader::compile(d3d_device, &shader_source) {
-            let model = scene::Model::create_triangle();
+            let model = scene::Mesh::create_triangle();
             scene.models.push(model);
         }
     // }

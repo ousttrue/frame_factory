@@ -37,10 +37,11 @@ Texture2DRenderTarget
 * [x] MVP Matrix, ConstantBuffer
 * [x] Camera, Mouse
 * [ ] Teapot
-* [ ] SubMesh Material
+* [x] SubMesh Material
 * [ ] ColorTexture
 * [ ] generate tangent, normal map
 * [ ] image loader(STL)
+
 ## glTF loader
 * [x] parse JsonSchema
 * [x] shared reference
@@ -48,6 +49,7 @@ Texture2DRenderTarget
 * [x] glTF2
 * [ ] unlit material
 * [ ] pbr material
+
 ## Gizmo
 * [ ] grid
 * [ ] Translate

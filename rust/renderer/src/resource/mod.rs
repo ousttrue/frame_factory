@@ -1,5 +1,5 @@
 mod shader;
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use cgmath::Matrix;
 pub use shader::*;
@@ -13,13 +13,13 @@ use winapi::um::d3d11;
 
 use crate::{
     asset_manager,
-    scene::{self, c0, Model, Scene},
+    scene::{self, c0, Mesh, Scene, Submesh},
 };
 
 pub struct ResourceManager {
     render_target: Option<RenderTarget>,
     unlit: Option<Shader>,
-    vertex_buffer: HashMap<u32, VertexBuffer>,
+    vertex_buffer: HashMap<u32, Rc<VertexBuffer>>,
 }
 
 impl ResourceManager {
@@ -40,7 +40,7 @@ impl ResourceManager {
     pub fn get_or_create_shader(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
-        shader: &scene::Shader,
+        shader: &scene::Material,
     ) -> &Shader {
         if self.unlit.is_none() {
             if let Some(asset_manager) = asset_manager::get() {
@@ -56,15 +56,16 @@ impl ResourceManager {
     pub fn get_or_create_vertex_buffer(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
-        model: &Model,
-    ) -> &VertexBuffer {
+        model: &Mesh,
+    ) -> Rc<VertexBuffer> {
         if !self.vertex_buffer.contains_key(&model.get_id()) {
             let vertex_buffer =
                 VertexBuffer::from(d3d_device, &model.positions, &model.indices).unwrap();
-            self.vertex_buffer.insert(model.get_id(), vertex_buffer);
+            self.vertex_buffer
+                .insert(model.get_id(), Rc::new(vertex_buffer));
         }
 
-        self.vertex_buffer.get(&model.get_id()).unwrap()
+        self.vertex_buffer.get(&model.get_id()).unwrap().clone()
     }
 
     pub fn render(
@@ -98,36 +99,33 @@ impl ResourceManager {
             }
 
             for model in &scene.models {
-                self.render_model(d3d_device, d3d_context, &frame, model);
+                self.render_mesh(d3d_device, d3d_context, &frame, model);
             }
         }
     }
 
-    fn render_model(
+    fn render_mesh(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
         frame: &c0,
-        model: &Model,
+        mesh: &Mesh,
     ) {
-        //
-        // shader
-        //
-        let shader = self.get_or_create_shader(d3d_device, &model.material);
+        let vertex_buffer = self.get_or_create_vertex_buffer(d3d_device, mesh);
+        vertex_buffer.prepare(d3d_context);
 
-        shader.vs_constant_buffer.update(d3d_context, 0, frame);
+        for submesh in &mesh.submeshes {
+            let shader = self.get_or_create_shader(d3d_device, &submesh.material);
 
-        shader
-            .vs_constant_buffer
-            .update(d3d_context, 1, &model.transform);
+            shader.vs_constant_buffer.update(d3d_context, 0, frame);
 
-        //
-        // model
-        //
-        shader.set(d3d_context);
+            shader
+                .vs_constant_buffer
+                .update(d3d_context, 1, &mesh.transform);
 
-        let vertex_buffer = self.get_or_create_vertex_buffer(d3d_device, model);
-        vertex_buffer.draw(d3d_context);
+            shader.set(d3d_context);
+            vertex_buffer.draw(d3d_context, submesh.index_count, submesh.offset)
+        }
     }
 }
 

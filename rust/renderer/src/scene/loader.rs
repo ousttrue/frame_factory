@@ -6,7 +6,7 @@ use crate::{
 use std::{cell::Cell, fs::File, io::Read};
 use winapi::um::d3d11;
 
-use super::{model::Model, Shader};
+use super::{mesh::Mesh, AccessorBytes, RGBA};
 
 struct BytesReader<'a> {
     pos: Cell<usize>,
@@ -47,7 +47,7 @@ impl<'a> BytesReader<'a> {
 }
 
 pub struct Loader {
-    pub models: Vec<Model>,
+    pub models: Vec<Mesh>,
 }
 
 impl Loader {
@@ -125,6 +125,17 @@ impl Loader {
         Err(Error::NotImpl)
     }
 
+    fn load_material(&mut self, gltf_material: &gltf2::Material) -> scene::Material {
+        let unlit = scene::UnLightMaterial {
+            color: RGBA::white(),
+            color_texture: None,
+        };
+        scene::Material {
+            name: gltf_material.name.clone(),
+            material_type: scene::MaterialTypes::UnLight(unlit),
+        }
+    }
+
     pub fn load_gltf(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
@@ -133,43 +144,60 @@ impl Loader {
     ) -> Result<(), Error> {
         let gltf: gltf2::glTF = serde_json::from_str(json).unwrap();
 
-        let asset_manager = asset_manager::get().unwrap();
-        let source = asset_manager
-            .get_shader_source("shaders/mvp.hlsl")
-            .map_err(|e| Error::IOError(e))?;
-
         for m in &gltf.meshes {
+            let mut vertex_buffer: Option<scene::AccessorBytes> = None;
+            let mut index_buffer: Option<scene::AccessorBytes> = None;
+            let mut index_count_list = Vec::new();
+
             for prim in &m.primitives {
                 let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
-
                 let (positions, position_stride, position_count) =
                     gltf.get_accessor_bytes(bin, accessor_index).unwrap();
-                let v = resource::VertexBuffer::create_vertices(d3d_device, positions)
-                    .map_err(|e| Error::ComError(e))?;
-
-                let (indices, indices_stride, indices_count) =
-                    gltf.get_accessor_bytes(bin, prim.indices.unwrap()).unwrap();
-                let i = resource::VertexBuffer::create_indices(d3d_device, indices)
-                    .map_err(|e| Error::ComError(e))?;
-
-                // let vertex_buffer = resource::VertexBuffer::new(v, stride, i, index_stride, index_count);
-                // let shader = resource::Shader::compile(d3d_device, source)
-                //     .map_err(|e| Error::ComError(e))?;
-                let model = scene::Model::new(
-                    scene::AccessorBytes::new(
+                if let Some(vertices) = &mut vertex_buffer {
+                    vertices.extends(positions, position_stride as u32, position_count as u32);
+                } else {
+                    vertex_buffer = Some(AccessorBytes::new(
                         Vec::from(positions),
                         position_stride as u32,
                         position_count as u32,
-                    ),
-                    scene::AccessorBytes::new(
+                    ));
+                }
+
+                let (indices, indices_stride, indices_count) =
+                    gltf.get_accessor_bytes(bin, prim.indices.unwrap()).unwrap();
+                index_count_list.push(indices_count as u32);
+
+                if let Some(index_buffer) = &mut index_buffer {
+                    index_buffer.extends(indices, indices_stride as u32, indices_count as u32);
+                } else {
+                    index_buffer = Some(AccessorBytes::new(
                         Vec::from(indices),
                         indices_stride as u32,
                         indices_count as u32,
-                    ),
-                    Shader::UnLight,
-                );
+                    ));
+                }
+            }
 
-                self.models.push(model);
+            if let Some(vertex_buffer) = vertex_buffer {
+                if let Some(index_buffer) = index_buffer {
+                    let mut model = scene::Mesh::new(vertex_buffer, index_buffer);
+
+                    let mut offset = 0;
+                    for (i, prim) in m.primitives.iter().enumerate() {
+                        let material =
+                            self.load_material(&gltf.materials[prim.material.unwrap() as usize]);
+
+                        let index_count = index_count_list[i];
+                        model.submeshes.push(scene::Submesh {
+                            offset: offset,
+                            index_count: index_count,
+                            material,
+                        });
+                        offset += index_count;
+                    }
+
+                    self.models.push(model);
+                }
             }
         }
 

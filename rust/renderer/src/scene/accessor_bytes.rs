@@ -26,4 +26,9 @@ impl AccessorBytes {
         }
         Self::new(bytes, stride as u32, len as u32)
     }
+
+    pub fn extends(&mut self, bytes: &[u8], stride: u32, count: u32)
+    {
+
+    }
 }

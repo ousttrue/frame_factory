@@ -1,7 +1,5 @@
-use crate::{
-    com_util::ComCreate,
-    scene::{AccessorBytes, Shader},
-};
+use crate::com_util::ComCreate;
+use crate::scene::AccessorBytes;
 use com_ptr::ComPtr;
 use winapi::{
     ctypes::c_void,
@@ -89,7 +87,7 @@ impl VertexBuffer {
         })
     }
 
-    pub fn draw(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
+    pub fn prepare(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
         let buffers = [self.vertex_buffer.as_ptr()];
         let strides = [self.stride as UINT];
         let offsets = [0 as UINT];
@@ -106,8 +104,10 @@ impl VertexBuffer {
             d3d_context.IASetIndexBuffer(self.index_buffer.as_ptr(), self.index_format, 0);
 
             d3d_context.IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-            d3d_context.DrawIndexed(self.index_count as UINT, 0, 0);
         }
+    }
+
+    pub fn draw(&self, d3d_context: &d3d11::ID3D11DeviceContext, index_count: u32, offset: u32) {
+        unsafe { d3d_context.DrawIndexed(index_count, offset, 0) };
     }
 }

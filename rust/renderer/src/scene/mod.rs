@@ -7,8 +7,11 @@ pub use camera::*;
 pub mod accessor_bytes;
 pub use accessor_bytes::*;
 
-pub mod model;
-pub use model::*;
+pub mod material;
+pub use material::*;
+
+pub mod mesh;
+pub use mesh::*;
 
 pub mod frame;
 pub use frame::*;
@@ -20,7 +23,7 @@ pub use screen_state::*;
 
 pub struct Scene {
     pub camera: Camera,
-    pub models: Vec<Model>,
+    pub models: Vec<Mesh>,
 }
 
 impl Scene {

@@ -12,6 +12,7 @@ pub struct VertexBuffer {
     vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
     stride: i32,
     index_buffer: ComPtr<d3d11::ID3D11Buffer>,
+    index_format: dxgiformat::DXGI_FORMAT,
     index_count: i32,
 }
 
@@ -20,12 +21,20 @@ impl VertexBuffer {
         vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
         stride: i32,
         index_buffer: ComPtr<d3d11::ID3D11Buffer>,
+        index_stride: i32,
         index_count: i32,
     ) -> VertexBuffer {
+        let index_format = match index_stride
+        {
+            2 => dxgiformat::DXGI_FORMAT_R16_UINT,
+            4 => dxgiformat::DXGI_FORMAT_R32_UINT,
+            _ => panic!(),
+        };
         VertexBuffer {
             vertex_buffer,
             stride,
             index_buffer,
+            index_format,
             index_count,
         }
     }
@@ -50,7 +59,7 @@ impl VertexBuffer {
     ) -> Result<ComPtr<d3d11::ID3D11Buffer>, ComError> {
         // indices
         let mut desc = d3d11::D3D11_BUFFER_DESC::default();
-        desc.ByteWidth = std::mem::size_of_val(&indices) as u32;
+        desc.ByteWidth = std::mem::size_of_val(indices) as u32;
         desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
         desc.BindFlags = d3d11::D3D11_BIND_INDEX_BUFFER;
         desc.CPUAccessFlags = 0;
@@ -75,7 +84,7 @@ impl VertexBuffer {
         let indices = [0, 1, 2];
         let index_buffer = Self::create_indices(d3d_device, &indices)?;
 
-        Ok(VertexBuffer::new(vertex_buffer, stride, index_buffer, 3))
+        Ok(VertexBuffer::new(vertex_buffer, stride, index_buffer, 4, 3))
     }
 
     pub fn draw(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
@@ -94,7 +103,7 @@ impl VertexBuffer {
 
             d3d_context.IASetIndexBuffer(
                 self.index_buffer.as_ptr(),
-                dxgiformat::DXGI_FORMAT_R32_UINT,
+                self.index_format,
                 0,
             );
 

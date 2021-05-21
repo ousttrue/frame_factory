@@ -146,12 +146,12 @@ impl Loader {
                 let v = resource::VertexBuffer::create_vertices(d3d_device, positions)
                     .map_err(|e| Error::ComError(e))?;
 
-                let (indices, _, count) =
+                let (indices, index_stride, index_count) =
                     gltf.get_accessor_bytes(bin, prim.indices.unwrap()).unwrap();
                 let i = resource::VertexBuffer::create_indices(d3d_device, indices)
                     .map_err(|e| Error::ComError(e))?;
 
-                let vertex_buffer = resource::VertexBuffer::new(v, stride, i, count);
+                let vertex_buffer = resource::VertexBuffer::new(v, stride, i, index_stride, index_count);
                 let shader = resource::Shader::compile(d3d_device, source)
                     .map_err(|e| Error::ComError(e))?;
                 let model = scene::Model::new(vertex_buffer, shader);

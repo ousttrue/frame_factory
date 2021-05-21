@@ -5,6 +5,7 @@
         "cgmath",
         "dxgi",
         "dxgiformat",
+        "gltf",
         "hwnd",
         "rendertarget",
         "repr",

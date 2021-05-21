@@ -57,13 +57,12 @@ impl Loader {
 
     pub fn load(
         &mut self,
-        d3d_device: &d3d11::ID3D11Device,
         path: &std::path::Path,
     ) -> Result<(), Error> {
         if let Some(ext) = path.extension() {
             let ext = ext.to_string_lossy();
             match ext.to_lowercase().as_str() {
-                "glb" => return self.load_glb(d3d_device, path),
+                "glb" => return self.load_glb(path),
                 _ => (),
             }
         }
@@ -74,11 +73,7 @@ impl Loader {
     ///
     /// https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#glb-file-format-specification
     ///
-    pub fn load_glb(
-        &mut self,
-        _d3d_device: &d3d11::ID3D11Device,
-        path: &std::path::Path,
-    ) -> Result<(), Error> {
+    pub fn load_glb(&mut self, path: &std::path::Path) -> Result<(), Error> {
         let mut f = File::open(path).map_err(|e| Error::IOError(e))?;
         let mut buf = Vec::new();
         f.read_to_end(&mut buf).map_err(|e| Error::IOError(e))?;
@@ -118,7 +113,7 @@ impl Loader {
 
         if let Some(json) = json {
             if let Some(bin) = bin {
-                return self.load_gltf(_d3d_device, json, bin);
+                return self.load_gltf(json, bin);
             }
         }
 
@@ -136,12 +131,7 @@ impl Loader {
         }
     }
 
-    pub fn load_gltf(
-        &mut self,
-        d3d_device: &d3d11::ID3D11Device,
-        json: &str,
-        bin: &[u8],
-    ) -> Result<(), Error> {
+    pub fn load_gltf(&mut self, json: &str, bin: &[u8]) -> Result<(), Error> {
         let gltf: gltf2::glTF = serde_json::from_str(json).unwrap();
 
         for m in &gltf.meshes {

@@ -9,9 +9,7 @@ extern "C"
     auto FRAME_FACTORY_asset_path(const char *path) -> void;
 
     // new scene
-    auto FRAME_FACTORY_scene_sample(ID3D11Device *device,
-                                    const char *shader_path) -> uint32_t;
-    auto FRAME_FACTORY_scene_load(ID3D11Device *device, const char *path)
+    auto FRAME_FACTORY_scene_load(const char *path)
         -> uint32_t;
 
     // shutdown

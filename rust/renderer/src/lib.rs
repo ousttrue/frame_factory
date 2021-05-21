@@ -42,53 +42,15 @@ pub extern "C" fn FRAME_FACTORY_scene_destroy(scene: u32) {
     }
 }
 
-fn create_sample_scene(
-    d3d_device: &d3d11::ID3D11Device,
-    shader_path: *const i8,
-) -> Result<u32, Box<dyn Error>> {
-    let asset_manager = asset_manager::get().unwrap();
-    let shader_source = asset_manager.get_shader_source(&to_string(shader_path))?;
-    let scene_manager = scene::scene_manager::get().unwrap();
-    let mut scene = scene::Scene::new();
-
-    // if let Ok(vertex_buffer) = resource::VertexBuffer::create_triangle(d3d_device) {
-        if let Ok(shader) = resource::Shader::compile(d3d_device, &shader_source) {
-            let model = scene::Mesh::create_triangle();
-            scene.models.push(model);
-        }
-    // }
-
-    Ok(scene_manager.add(scene))
-}
-
 #[no_mangle]
-pub extern "C" fn FRAME_FACTORY_scene_sample(
-    device: *mut d3d11::ID3D11Device,
-    shader_path: *const i8,
-) -> u32 {
-    let d3d_device = unsafe { device.as_ref().unwrap() };
-
-    if let Ok(scene) = create_sample_scene(d3d_device, shader_path) {
-        scene
-    } else {
-        0
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn FRAME_FACTORY_scene_load(
-    device: *mut d3d11::ID3D11Device,
-    path: *const i8,
-) -> u32 {
-    let d3d_device = unsafe { device.as_ref().unwrap() };
-
+pub extern "C" fn FRAME_FACTORY_scene_load(path: *const i8) -> u32 {
     if let Some(scene_manager) = scene::scene_manager::get() {
         let path = unsafe { CStr::from_ptr(path) };
         if let Ok(path) = path.to_str() {
             let path = Path::new(path);
 
             let mut loader = scene::loader::Loader::new();
-            if let Ok(()) = loader.load(d3d_device, path) {
+            if let Ok(()) = loader.load(path) {
                 let mut scene = scene::Scene::new();
                 for m in loader.models {
                     scene.models.push(m);

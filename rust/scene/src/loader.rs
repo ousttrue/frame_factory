@@ -246,22 +246,15 @@ impl Loader {
                                              // let mut uv_buffer = AccessorBytes::create(vertex_stride, vertex_count);
 
         let index_stride = self.get_index_stride(&m.primitives[0]).unwrap_or(0) as u32;
-        let mut mesh = Mesh::new(AccessorBytes::create(index_stride, index_count));
+        let mut mesh = Mesh::new(AccessorBytes::create(index_stride, index_count), vertex_count);
 
         let mut submesh_offset = 0;
         for prim in &m.primitives {
             // vertices
-            for (k, v) in prim.attributes.iter() {}
-
-            // let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
-            // let (positions, position_stride, position_count) =
-            //     self.get_accessor_bytes(accessor_index).unwrap();
-            // mesh.vertex_buffer.copy(
-            //     vertex_byte_offset,
-            //     positions,
-            //     position_stride as u32,
-            //     position_count as u32,
-            // );
+            for (k, v) in prim.attributes.iter() {
+                let (bytes, stride, count) = self.get_accessor_bytes(*v).unwrap();
+                mesh.push_vertex_buffer(k, bytes, stride as u32, count as u32);
+            }
 
             // indices / submesh
             let (indices, indices_stride, indices_count) =

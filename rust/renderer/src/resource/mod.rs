@@ -132,14 +132,14 @@ impl ResourceManager {
         &self,
         d3d_device: &d3d11::ID3D11Device,
         mesh: &scene::Mesh,
-        elements: &[d3d11::D3D11_INPUT_ELEMENT_DESC],
+        semantics: &[String],
     ) -> Rc<BufferArray> {
         if !self.buffer_arrays.borrow().contains_key(&mesh.get_id()) {
             let vertex_buffer = BufferArray::from(
                 d3d_device,
                 &mesh.index_buffer,
                 &mesh.vertex_buffers,
-                elements,
+                semantics,
             )
             .unwrap();
             self.buffer_arrays
@@ -230,7 +230,7 @@ impl ResourceManager {
             }
 
             let vertex_buffer =
-                self.get_or_create_vertex_buffer(d3d_device, mesh, &material.shader.elements);
+                self.get_or_create_vertex_buffer(d3d_device, mesh, &material.shader.semantics);
             vertex_buffer.prepare(d3d_context);
             vertex_buffer.draw(d3d_context, submesh.index_count, submesh.offset)
         }

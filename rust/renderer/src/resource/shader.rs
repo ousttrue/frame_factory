@@ -94,13 +94,14 @@ unsafe fn create_input_layout(
     d3d_device: &d3d11::ID3D11Device,
     compiled_vertex_shader: &ComPtr<d3dcommon::ID3DBlob>,
     reflection: &ComPtr<d3d11shader::ID3D11ShaderReflection>,
+    semantics: &mut Vec<String>,
     input_layout: *mut *mut d3d11::ID3D11InputLayout,
 ) -> HRESULT {
     // Create InputLayout
     let mut shaderdesc = d3d11shader::D3D11_SHADER_DESC::default();
     reflection.GetDesc(&mut shaderdesc);
 
-    let mut elements: Vec<d3d11::D3D11_INPUT_ELEMENT_DESC> = vec![];
+    let mut elements = vec![];
     for i in 0..shaderdesc.InputParameters {
         let mut param_desc = d3d11shader::D3D11_SIGNATURE_PARAMETER_DESC::default();
         reflection.GetInputParameterDesc(i, &mut param_desc);
@@ -109,11 +110,13 @@ unsafe fn create_input_layout(
             SemanticName: param_desc.SemanticName,
             SemanticIndex: param_desc.SemanticIndex,
             Format: format,
-            InputSlot: 0,
+            InputSlot: i,
             AlignedByteOffset: d3d11::D3D11_APPEND_ALIGNED_ELEMENT,
             InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
             InstanceDataStepRate: 0,
         };
+        let semantic = unsafe{String::from(CStr::from_ptr(element.SemanticName).to_str().unwrap())};
+        semantics.push(semantic);
         elements.push(element);
     }
 
@@ -244,6 +247,7 @@ impl ShaderSource {
     ) -> Result<
         (
             ComPtr<d3d11::ID3D11VertexShader>,
+            Vec<String>,
             ComPtr<d3d11::ID3D11InputLayout>,
             ConstantBufferShader,
         ),
@@ -266,13 +270,20 @@ impl ShaderSource {
             create_reflection(&compiled_vertex_shader, pp)
         })?;
 
+        let mut semantics: Vec<String> = vec![];
         let input_layout = ComPtr::create_if_success(|pp| unsafe {
-            create_input_layout(d3d_device, &compiled_vertex_shader, &reflection, pp)
+            create_input_layout(
+                d3d_device,
+                &compiled_vertex_shader,
+                &reflection,
+                &mut semantics,
+                pp,
+            )
         })?;
 
         let constant_buffer = unsafe { ConstantBufferShader::new(d3d_device, &reflection)? };
 
-        Ok((shader, input_layout, constant_buffer))
+        Ok((shader, semantics, input_layout, constant_buffer))
     }
 
     pub fn compile_pixel_shader(
@@ -304,7 +315,7 @@ pub struct Shader {
     pub vs: ComPtr<d3d11::ID3D11VertexShader>,
     pub vs_constant_buffer: ConstantBufferShader,
     pub ps: ComPtr<d3d11::ID3D11PixelShader>,
-    pub elements: Vec<d3d11::D3D11_INPUT_ELEMENT_DESC>,
+    pub semantics: Vec<String>,
     pub input_layout: ComPtr<d3d11::ID3D11InputLayout>,
 }
 
@@ -313,13 +324,14 @@ impl Shader {
         vs: ComPtr<d3d11::ID3D11VertexShader>,
         vs_constant_buffer: ConstantBufferShader,
         ps: ComPtr<d3d11::ID3D11PixelShader>,
+        semantics: Vec<String>,
         input_layout: ComPtr<d3d11::ID3D11InputLayout>,
     ) -> Shader {
         Shader {
             vs,
             vs_constant_buffer,
             ps,
-            elements: Vec::new(),
+            semantics,
             input_layout,
         }
     }
@@ -328,10 +340,17 @@ impl Shader {
         d3d_device: &d3d11::ID3D11Device,
         source: &ShaderSource,
     ) -> Result<Shader, ComError> {
-        let (vs, input_layout, vs_constant_buffer) = source.compile_vertex_shader(&d3d_device)?;
+        let (vs, semantics, input_layout, vs_constant_buffer) =
+            source.compile_vertex_shader(&d3d_device)?;
         let ps = source.compile_pixel_shader(d3d_device)?;
 
-        Ok(Shader::new(vs, vs_constant_buffer, ps, input_layout))
+        Ok(Shader::new(
+            vs,
+            vs_constant_buffer,
+            ps,
+            semantics,
+            input_layout,
+        ))
     }
 
     pub fn set(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
@@ -348,4 +367,3 @@ impl Shader {
         }
     }
 }
-

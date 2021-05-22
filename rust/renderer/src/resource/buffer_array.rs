@@ -11,6 +11,15 @@ use winapi::{
 
 use crate::com_util::ComError;
 
+fn to_gltf(src: &str)->String
+{
+    match src
+    {
+        "TEXCOORD" => "TEXCOORD_0".to_owned(),
+        _ => src.to_owned(),
+    }
+}
+
 pub struct BufferArray {
     vertex_buffers: Vec<ComPtr<d3d11::ID3D11Buffer>>,
     vertex_strides: Vec<u32>,
@@ -76,18 +85,18 @@ impl BufferArray {
         d3d_device: &d3d11::ID3D11Device,
         indices: &AccessorBytes,
         vertices: &HashMap<String, AccessorBytes>,
-        elements: &[d3d11::D3D11_INPUT_ELEMENT_DESC],
+        semantics: &[String],
     ) -> Result<BufferArray, ComError> {
         let index_buffer = Self::create_indices(d3d_device, &indices.bytes)?;
 
         let mut buffer_array = Self::new(
             index_buffer,
-            Self::stride_to_format(indices.stride),
+            indices.stride,
             indices.count,
         );
 
-        for element in elements {
-            let v = &vertices[unsafe { CStr::from_ptr(element.SemanticName).to_str().unwrap() }];
+        for semantic in semantics {
+            let v = &vertices[&to_gltf(semantic)];
             let vertex_buffer = Self::create_vertices(d3d_device, &v.bytes)?;
             buffer_array.vertex_buffers.push(vertex_buffer);
             buffer_array.vertex_strides.push(v.stride);

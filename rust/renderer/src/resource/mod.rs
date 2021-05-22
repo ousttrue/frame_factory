@@ -194,6 +194,7 @@ impl ResourceManager {
         for submesh in &mesh.submeshes {
             let material = self.get_or_create_material(d3d_device, &submesh.material);
 
+            // update constant buffer
             material
                 .shader
                 .vs_constant_buffer
@@ -205,6 +206,15 @@ impl ResourceManager {
                 .update(d3d_context, 1, &mesh.transform);
 
             material.shader.set(d3d_context);
+
+            if let Some(texture) = &material.color_texture
+            {
+                let srvs = [texture.srv.as_ptr()];
+                unsafe {
+                    d3d_context.PSSetShaderResources(0, 1, srvs.as_ptr());
+                };
+            }
+
             vertex_buffer.draw(d3d_context, submesh.index_count, submesh.offset)
         }
     }

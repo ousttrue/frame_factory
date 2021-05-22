@@ -33,6 +33,7 @@ c++ frontend, rust d3d11 renderer
 * [ ] logger
 * [ ] SDL2
 * [x] separate crate dll, scene and resource
+* [ ] menu file open
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer
@@ -50,6 +51,9 @@ c++ frontend, rust d3d11 renderer
 * [ ] DepthBuffer
 * [ ] ColorTexture
 * [ ] NormalTexture
+
+## Shader
+* [x] Texture
 
 ## glTF loader
 * [x] parse JsonSchema

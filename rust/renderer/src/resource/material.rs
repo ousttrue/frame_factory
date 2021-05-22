@@ -1,4 +1,4 @@
-use std::{ptr, rc::Rc};
+use std::{io::Read, ptr, rc::Rc};
 
 use crate::com_util::{ComCreate, ComError};
 use com_ptr::ComPtr;
@@ -17,9 +17,7 @@ pub fn load_texture(
 ) -> Result<ComPtr<d3d11::ID3D11Texture2D>, Error> {
     let loaded = image::load_from_memory(buffer).map_err(|e| Error::ImageError(e))?;
 
-    let raw = loaded
-        .as_bgra8()
-        .ok_or_else(|| Error::StaticMessage("as_brga8"))?;
+    let raw = loaded.into_rgba8();
 
     let desc = d3d11::D3D11_TEXTURE2D_DESC {
         Width: raw.width(),
@@ -39,8 +37,8 @@ pub fn load_texture(
 
     let data = d3d11::D3D11_SUBRESOURCE_DATA {
         pSysMem: raw.as_ptr() as *const winapi::ctypes::c_void,
-        SysMemPitch: 0,
-        SysMemSlicePitch: 0,
+        SysMemPitch: raw.width() * 4,
+        SysMemSlicePitch: raw.width() * raw.height() * 4,
     };
 
     ComPtr::create_if_success(|pp| unsafe { d3d_device.CreateTexture2D(&desc, &data, pp) })

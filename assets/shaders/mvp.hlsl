@@ -3,6 +3,9 @@ struct VS_IN
     float3 Position: POSITION;
 };
 
+Texture2D diffuseTexture;
+SamplerState diffuseTextureSampler;
+
 
 cbuffer frame
 {
@@ -30,5 +33,6 @@ PS_IN vsMain(VS_IN input)
 
 float4 psMain(PS_IN input) : SV_TARGET
 {
-    return float4(1, 1, 1, 1);
+	float4 texel = diffuseTexture.Sample(diffuseTextureSampler, float2(0.5, 0.5));
+    return texel;
 }

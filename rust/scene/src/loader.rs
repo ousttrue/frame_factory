@@ -205,10 +205,7 @@ impl Loader {
                 color: RGBA::white(),
                 color_texture: texture,
             };
-            let material = Material {
-                name: m.name.clone(),
-                data: MaterialData::UnLight(unlit),
-            };
+            let material = Material::new(m.name.clone(), MaterialData::UnLight(unlit));
             self.materials.push(Rc::new(material));
         }
 

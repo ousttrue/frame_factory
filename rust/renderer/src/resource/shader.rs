@@ -3,7 +3,7 @@ use crate::{
     com_util::{ComCreate, ComError},
 };
 use com_ptr::ComPtr;
-use std::{ffi::CStr, ptr, str};
+use std::{ffi::CStr, ptr, rc::Rc, str};
 use winapi::{ctypes::c_void, shared::ntdef::HRESULT, Interface};
 use winapi::{
     shared::dxgiformat,
@@ -345,4 +345,11 @@ impl Shader {
             d3d_context.IASetInputLayout(self.input_layout.as_ptr());
         }
     }
+}
+
+pub struct Material
+{
+    pub name: String,
+    pub shader: Rc<Shader>,
+    pub color_texture: ComPtr<d3d11::ID3D11Texture2D>,
 }

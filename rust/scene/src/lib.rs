@@ -23,9 +23,6 @@ pub use mesh::*;
 pub mod node;
 pub use node::*;
 
-pub mod frame;
-pub use frame::*;
-
 pub mod loader;
 
 pub mod screen_state;

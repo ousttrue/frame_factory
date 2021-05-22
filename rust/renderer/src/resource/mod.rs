@@ -9,14 +9,22 @@ mod d3d_device;
 pub use d3d_device::*;
 mod render_target;
 pub use render_target::*;
+mod frame;
 use winapi::um::d3d11;
 
 use crate::{asset_manager, scene};
 
 pub struct ResourceManager {
     render_target: Option<RenderTarget>,
-    unlit: Option<Shader>,
-    vertex_buffer: HashMap<u32, Rc<VertexBuffer>>,
+    shaders: HashMap<String, Shader>,
+    materials: HashMap<u32, Material>,
+    vertex_buffers: HashMap<u32, Rc<VertexBuffer>>,
+}
+
+fn shader_asset_path(shader: &scene::MaterialData) -> &'static str {
+    match shader {
+        scene::MaterialData::UnLight(_) => "shaders/mvp.hlsl",
+    }
 }
 
 impl ResourceManager {
@@ -24,14 +32,19 @@ impl ResourceManager {
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         texture: *mut d3d11::ID3D11Texture2D,
-    ) {
-        if let Some(render_target) = &self.render_target {
+    ) -> &RenderTarget {
+        let mut create = true;
+        if let Some(render_target) = self.render_target.as_ref() {
             if render_target.texture == texture {
-                return;
+                create = false;
             }
         }
 
-        self.render_target = RenderTarget::create(d3d_device, texture).ok();
+        if create {
+            self.render_target = RenderTarget::create(d3d_device, texture).ok();
+        }
+
+        self.render_target.as_ref().unwrap()
     }
 
     pub fn get_or_create_shader(
@@ -39,65 +52,68 @@ impl ResourceManager {
         d3d_device: &d3d11::ID3D11Device,
         shader: &scene::Material,
     ) -> &Shader {
-        if self.unlit.is_none() {
+        let key = shader_asset_path(&shader.data);
+        if !self.shaders.contains_key(key) {
             if let Some(asset_manager) = asset_manager::get() {
-                let source = asset_manager.get_shader_source("shaders/mvp.hlsl").unwrap();
+                let source = asset_manager.get_shader_source(key).unwrap();
                 let shader = Shader::compile(d3d_device, source).unwrap();
-                self.unlit = Some(shader);
+                self.shaders.insert(String::from(key), shader);
             }
         }
 
-        &self.unlit.as_ref().unwrap()
+        &self.shaders[key]
+    }
+
+    pub fn get_or_create_material(&mut self, material: &scene::Material) -> &Material {
+        &self.materials[&material.get_id()]
     }
 
     pub fn get_or_create_vertex_buffer(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
-        model: &scene::Mesh,
+        mesh: &scene::Mesh,
     ) -> Rc<VertexBuffer> {
-        if !self.vertex_buffer.contains_key(&model.get_id()) {
+        if !self.vertex_buffers.contains_key(&mesh.get_id()) {
             let vertex_buffer =
-                VertexBuffer::from(d3d_device, &model.positions, &model.indices).unwrap();
-            self.vertex_buffer
-                .insert(model.get_id(), Rc::new(vertex_buffer));
+                VertexBuffer::from(d3d_device, &mesh.positions, &mesh.indices).unwrap();
+            self.vertex_buffers
+                .insert(mesh.get_id(), Rc::new(vertex_buffer));
         }
 
-        self.vertex_buffer.get(&model.get_id()).unwrap().clone()
+        self.vertex_buffers[&mesh.get_id()].clone()
     }
 
     pub fn render(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
-        texture: *mut d3d11::ID3D11Texture2D,
+        target_texture: *mut d3d11::ID3D11Texture2D,
         scene: &scene::Scene,
     ) {
-        // render
-        self.get_or_create_rtv(d3d_device, texture);
-        if let Some(render_target) = &self.render_target {
-            render_target.set_and_clear(d3d_context);
+        // render target
+        let render_target = self.get_or_create_rtv(d3d_device, target_texture);
+        render_target.set_and_clear(d3d_context);
 
-            // update constant buffer
-            let frame = scene::c0 {
-                view: Default::default(),
-                projection: Default::default(),
-            };
-            unsafe {
-                std::ptr::copy_nonoverlapping(
-                    scene.camera.view.as_ptr() as *const u8,
-                    frame.view.as_ptr() as *mut u8,
-                    64,
-                );
-                std::ptr::copy_nonoverlapping(
-                    scene.camera.projection.as_ptr() as *const u8,
-                    frame.projection.as_ptr() as *mut u8,
-                    64,
-                );
-            }
+        // update constant buffer
+        let frame = frame::c0 {
+            view: Default::default(),
+            projection: Default::default(),
+        };
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                scene.camera.view.as_ptr() as *const u8,
+                frame.view.as_ptr() as *mut u8,
+                64,
+            );
+            std::ptr::copy_nonoverlapping(
+                scene.camera.projection.as_ptr() as *const u8,
+                frame.projection.as_ptr() as *mut u8,
+                64,
+            );
+        }
 
-            for root in &scene.roots {
-                self.render_node(d3d_device, d3d_context, &frame, root);
-            }
+        for root in &scene.roots {
+            self.render_node(d3d_device, d3d_context, &frame, root);
         }
     }
 
@@ -105,7 +121,7 @@ impl ResourceManager {
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
-        frame: &scene::c0,
+        frame: &frame::c0,
         node: &Rc<scene::Node>,
     ) {
         if let Some(mesh) = &node.mesh {
@@ -121,7 +137,7 @@ impl ResourceManager {
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
-        frame: &scene::c0,
+        frame: &frame::c0,
         mesh: &scene::Mesh,
     ) {
         let vertex_buffer = self.get_or_create_vertex_buffer(d3d_device, mesh);
@@ -149,8 +165,9 @@ pub fn get() -> Option<&'static mut Box<ResourceManager>> {
         if G_MANAGER.is_none() {
             G_MANAGER = Some(Box::new(ResourceManager {
                 render_target: None,
-                unlit: None,
-                vertex_buffer: HashMap::new(),
+                shaders: HashMap::new(),
+                materials: HashMap::new(),
+                vertex_buffers: HashMap::new(),
             }))
         }
     }

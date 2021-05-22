@@ -18,12 +18,12 @@ pub struct Mesh {
     pub submeshes: Vec<Submesh>,
 }
 
-static mut g_next_id: u32 = 1;
+static mut G_NEXT_ID: u32 = 1;
 
 fn next_id() -> u32 {
     unsafe {
-        let id = g_next_id;
-        g_next_id += 1;
+        let id = G_NEXT_ID;
+        G_NEXT_ID += 1;
         id
     }
 }

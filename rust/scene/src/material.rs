@@ -35,6 +35,28 @@ pub enum MaterialData {
 }
 
 pub struct Material {
+    id: u32,
     pub name: String,
     pub data: MaterialData,
+}
+
+static mut G_NEXT_ID: u32 = 1;
+
+fn next_id() -> u32 {
+    unsafe {
+        let id = G_NEXT_ID;
+        G_NEXT_ID += 1;
+        id
+    }
+}
+
+impl Material {
+    pub fn new(name: String, data: MaterialData) -> Material {
+        let id = next_id();
+        Material { id, name, data }
+    }
+
+    pub fn get_id(&self) -> u32 {
+        self.id
+    }
 }

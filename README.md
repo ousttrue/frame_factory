@@ -47,6 +47,7 @@ c++ frontend, rust d3d11 renderer
 * [ ] Animation
 
 ## Renderer
+* [ ] DepthBuffer
 * [ ] ColorTexture
 * [ ] NormalTexture
 

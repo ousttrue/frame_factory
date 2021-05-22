@@ -1,4 +1,5 @@
 extern crate scene;
+extern crate image;
 pub mod asset_manager;
 pub mod com_util;
 pub mod error;

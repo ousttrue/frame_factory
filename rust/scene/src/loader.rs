@@ -167,11 +167,11 @@ impl Loader {
         let end = start + buffer_view.byteLength.unwrap() as usize;
         let bytes = &self.bin[start..end];
 
-        Image {
-            bytes: Vec::from(bytes),
-            name: String::from(&image.name),
-            mime: String::from(&image.mimeType),
-        }
+        Image::new(
+            Vec::from(bytes),
+            String::from(&image.name),
+            String::from(&image.mimeType),
+        )
     }
 
     pub fn load_textures(&mut self) -> Result<(), Error> {

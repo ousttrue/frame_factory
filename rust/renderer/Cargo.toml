@@ -18,4 +18,5 @@ winapi = { version = "0.3", features = [
 ] }
 com_ptr = "0.2.1"
 cgmath = "0.18.0"
+image = "0.23.14"
 scene = { path = "../scene" }

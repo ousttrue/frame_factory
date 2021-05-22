@@ -1,22 +1,24 @@
-mod shader;
-use std::{collections::HashMap, rc::Rc};
-
 use cgmath::Matrix;
-pub use shader::*;
-mod vertex_buffer;
-pub use vertex_buffer::*;
-mod d3d_device;
-pub use d3d_device::*;
-mod render_target;
-pub use render_target::*;
-mod frame;
+use com_ptr::ComPtr;
+use std::{collections::HashMap, rc::Rc};
 use winapi::um::d3d11;
+
+mod shader;
+use shader::*;
+mod vertex_buffer;
+use vertex_buffer::*;
+mod d3d_device;
+mod render_target;
+use render_target::*;
+mod frame;
+mod material;
+use material::*;
 
 use crate::{asset_manager, scene};
 
 pub struct ResourceManager {
     render_target: Option<RenderTarget>,
-    // textures: HashMap<u32, Texture>,
+    textures: HashMap<u32, Rc<Texture>>,
     shaders: HashMap<String, Rc<Shader>>,
     materials: HashMap<u32, Material>,
     vertex_buffers: HashMap<u32, Rc<VertexBuffer>>,
@@ -65,22 +67,53 @@ impl ResourceManager {
         self.shaders[key].clone()
     }
 
+    pub fn get_or_create_texture(
+        &mut self,
+        d3d_device: &d3d11::ID3D11Device,
+        texture: &scene::Image,
+    ) -> Option<Rc<Texture>> {
+        let id = texture.get_id();
+        if !self.textures.contains_key(&id) {
+            // load png/jpeg
+            if let Ok(buffer) = load_texture(d3d_device, &texture.bytes) {
+                // create texture
+                let texture = Texture::new(d3d_device, buffer).unwrap();
+                self.textures.insert(id, Rc::new(texture));
+            }
+        }
+
+        if let Some(texture) = self.textures.get(&id) {
+            Some(texture.clone())
+        } else {
+            None
+        }
+    }
+
     pub fn get_or_create_material(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
-        material: &scene::Material,
+        src: &scene::Material,
     ) -> &Material {
-        let id = material.get_id();
+        let id = src.get_id();
         if !self.materials.contains_key(&id) {
-            let material = Material {
-                name: material.name.clone(),
-                color_texture: None,
-                shader: self.get_or_create_shader(d3d_device, &material.data),
+            let material = match &src.data {
+                scene::MaterialData::UnLight(unlit) => {
+                    let mut material = Material {
+                        name: src.name.clone(),
+                        color_texture: None,
+                        shader: self.get_or_create_shader(d3d_device, &src.data),
+                    };
+                    if let Some(texture) = &unlit.color_texture {
+                        material.color_texture =
+                            self.get_or_create_texture(d3d_device, texture.as_ref());
+                    }
+                    material
+                }
             };
             self.materials.insert(id, material);
         }
 
-        &self.materials[&material.get_id()]
+        &self.materials[&src.get_id()]
     }
 
     pub fn get_or_create_vertex_buffer(
@@ -185,6 +218,7 @@ pub fn get() -> Option<&'static mut Box<ResourceManager>> {
             G_MANAGER = Some(Box::new(ResourceManager {
                 render_target: None,
                 shaders: HashMap::new(),
+                textures: HashMap::new(),
                 materials: HashMap::new(),
                 vertex_buffers: HashMap::new(),
             }))

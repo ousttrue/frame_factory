@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use crate::Image;
+
 #[repr(C)]
 pub struct RGBA {
     pub r: f32,
@@ -17,12 +19,6 @@ impl RGBA {
             a: 1f32,
         }
     }
-}
-
-pub struct Image {
-    pub bytes: Vec<u8>,
-    pub name: String,
-    pub mime: String,
 }
 
 pub struct UnLightMaterial {

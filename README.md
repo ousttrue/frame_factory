@@ -41,12 +41,12 @@ c++ frontend, rust d3d11 renderer
 * [x] SubMesh Material
 * [x] Node
 * [ ] generate tangent
-* [ ] TextureLoader image-rs
 * [ ] Skinning
 * [ ] MorphTarget
 * [ ] Animation
 
 ## Renderer
+* [x] TextureLoader image-rs
 * [ ] DepthBuffer
 * [ ] ColorTexture
 * [ ] NormalTexture

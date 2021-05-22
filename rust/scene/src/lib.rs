@@ -14,6 +14,9 @@ pub use camera::*;
 pub mod accessor_bytes;
 pub use accessor_bytes::*;
 
+pub mod image;
+pub use image::*;
+
 pub mod material;
 pub use material::*;
 

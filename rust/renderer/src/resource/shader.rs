@@ -351,5 +351,5 @@ pub struct Material
 {
     pub name: String,
     pub shader: Rc<Shader>,
-    pub color_texture: ComPtr<d3d11::ID3D11Texture2D>,
+    pub color_texture: Option<ComPtr<d3d11::ID3D11Texture2D>>,
 }

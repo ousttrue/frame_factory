@@ -57,11 +57,13 @@ c++ frontend, rust d3d11 renderer
 * [x] generate rust struct from JsonSchema
 * [x] glTF2
 * [x] textures
-* [ ] materials
+* [ ] vertex: normal
+* [ ] vertex: uv
+* [x] materials
     * [ ] unlit material
     * [ ] pbr material
 * [x] meshes
-* [ ] nodes
+* [x] nodes
 
 ## Gizmo
 * [ ] grid

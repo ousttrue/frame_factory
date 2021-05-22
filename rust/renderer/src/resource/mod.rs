@@ -16,7 +16,8 @@ use crate::{asset_manager, scene};
 
 pub struct ResourceManager {
     render_target: Option<RenderTarget>,
-    shaders: HashMap<String, Shader>,
+    // textures: HashMap<u32, Texture>,
+    shaders: HashMap<String, Rc<Shader>>,
     materials: HashMap<u32, Material>,
     vertex_buffers: HashMap<u32, Rc<VertexBuffer>>,
 }
@@ -50,21 +51,35 @@ impl ResourceManager {
     pub fn get_or_create_shader(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
-        shader: &scene::Material,
-    ) -> &Shader {
-        let key = shader_asset_path(&shader.data);
+        data: &scene::MaterialData,
+    ) -> Rc<Shader> {
+        let key = shader_asset_path(&data);
         if !self.shaders.contains_key(key) {
             if let Some(asset_manager) = asset_manager::get() {
                 let source = asset_manager.get_shader_source(key).unwrap();
                 let shader = Shader::compile(d3d_device, source).unwrap();
-                self.shaders.insert(String::from(key), shader);
+                self.shaders.insert(String::from(key), Rc::new(shader));
             }
         }
 
-        &self.shaders[key]
+        self.shaders[key].clone()
     }
 
-    pub fn get_or_create_material(&mut self, material: &scene::Material) -> &Material {
+    pub fn get_or_create_material(
+        &mut self,
+        d3d_device: &d3d11::ID3D11Device,
+        material: &scene::Material,
+    ) -> &Material {
+        let id = material.get_id();
+        if !self.materials.contains_key(&id) {
+            let material = Material {
+                name: material.name.clone(),
+                color_texture: None,
+                shader: self.get_or_create_shader(d3d_device, &material.data),
+            };
+            self.materials.insert(id, material);
+        }
+
         &self.materials[&material.get_id()]
     }
 
@@ -144,15 +159,19 @@ impl ResourceManager {
         vertex_buffer.prepare(d3d_context);
 
         for submesh in &mesh.submeshes {
-            let shader = self.get_or_create_shader(d3d_device, &submesh.material);
+            let material = self.get_or_create_material(d3d_device, &submesh.material);
 
-            shader.vs_constant_buffer.update(d3d_context, 0, frame);
+            material
+                .shader
+                .vs_constant_buffer
+                .update(d3d_context, 0, frame);
 
-            shader
+            material
+                .shader
                 .vs_constant_buffer
                 .update(d3d_context, 1, &mesh.transform);
 
-            shader.set(d3d_context);
+            material.shader.set(d3d_context);
             vertex_buffer.draw(d3d_context, submesh.index_count, submesh.offset)
         }
     }

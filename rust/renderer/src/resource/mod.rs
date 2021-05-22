@@ -1,12 +1,18 @@
 use cgmath::Matrix;
 use com_ptr::ComPtr;
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    borrow::Borrow,
+    cell::{Ref, RefCell},
+    collections::HashMap,
+    ops::Deref,
+    rc::Rc,
+};
 use winapi::um::d3d11;
 
 mod shader;
 use shader::*;
-mod vertex_buffer;
-use vertex_buffer::*;
+mod buffer_array;
+use buffer_array::*;
 mod d3d_device;
 mod render_target;
 use render_target::*;
@@ -17,11 +23,11 @@ use material::*;
 use crate::{asset_manager, scene};
 
 pub struct ResourceManager {
-    render_target: Option<RenderTarget>,
-    textures: HashMap<u32, Rc<Texture>>,
-    shaders: HashMap<String, Rc<Shader>>,
-    materials: HashMap<u32, Material>,
-    vertex_buffers: HashMap<u32, Rc<VertexBuffer>>,
+    render_target: RefCell<Option<RenderTarget>>,
+    textures: RefCell<HashMap<u32, Rc<Texture>>>,
+    shaders: RefCell<HashMap<String, Rc<Shader>>>,
+    materials: RefCell<HashMap<u32, Rc<Material>>>,
+    buffer_arrays: RefCell<HashMap<u32, Rc<BufferArray>>>,
 }
 
 fn shader_asset_path(shader: &scene::MaterialData) -> &'static str {
@@ -31,58 +37,64 @@ fn shader_asset_path(shader: &scene::MaterialData) -> &'static str {
 }
 
 impl ResourceManager {
-    pub fn get_or_create_rtv(
-        &mut self,
+    pub fn clear_render_target(
+        &self,
         d3d_device: &d3d11::ID3D11Device,
+        d3d_context: &d3d11::ID3D11DeviceContext,
         texture: *mut d3d11::ID3D11Texture2D,
-    ) -> &RenderTarget {
+    ) {
         let mut create = true;
-        if let Some(render_target) = self.render_target.as_ref() {
+        if let Some(render_target) = self.render_target.borrow().as_ref() {
             if render_target.texture == texture {
                 create = false;
             }
         }
 
         if create {
-            self.render_target = RenderTarget::create(d3d_device, texture).ok();
+            self.render_target
+                .replace(RenderTarget::create(d3d_device, texture).ok());
         }
 
-        self.render_target.as_ref().unwrap()
+        if let Some(render_target) = self.render_target.borrow().deref() {
+            render_target.set_and_clear(d3d_context);
+        }
     }
 
     pub fn get_or_create_shader(
-        &mut self,
+        &self,
         d3d_device: &d3d11::ID3D11Device,
         data: &scene::MaterialData,
     ) -> Rc<Shader> {
         let key = shader_asset_path(&data);
-        if !self.shaders.contains_key(key) {
+        if !self.shaders.borrow().contains_key(key) {
             if let Some(asset_manager) = asset_manager::get() {
                 let source = asset_manager.get_shader_source(key).unwrap();
                 let shader = Shader::compile(d3d_device, source).unwrap();
-                self.shaders.insert(String::from(key), Rc::new(shader));
+                self.shaders
+                    .borrow_mut()
+                    .insert(String::from(key), Rc::new(shader));
             }
         }
 
-        self.shaders[key].clone()
+        self.shaders.borrow()[key].clone()
     }
 
     pub fn get_or_create_texture(
-        &mut self,
+        &self,
         d3d_device: &d3d11::ID3D11Device,
         texture: &scene::Image,
     ) -> Option<Rc<Texture>> {
         let id = texture.get_id();
-        if !self.textures.contains_key(&id) {
+        if !self.textures.borrow().contains_key(&id) {
             // load png/jpeg
             if let Ok(buffer) = load_texture(d3d_device, &texture.bytes) {
                 // create texture
                 let texture = Texture::new(d3d_device, buffer).unwrap();
-                self.textures.insert(id, Rc::new(texture));
+                self.textures.borrow_mut().insert(id, Rc::new(texture));
             }
         }
 
-        if let Some(texture) = self.textures.get(&id) {
+        if let Some(texture) = self.textures.borrow().get(&id) {
             Some(texture.clone())
         } else {
             None
@@ -90,12 +102,12 @@ impl ResourceManager {
     }
 
     pub fn get_or_create_material(
-        &mut self,
+        &self,
         d3d_device: &d3d11::ID3D11Device,
         src: &scene::Material,
-    ) -> &Material {
+    ) -> Rc<Material> {
         let id = src.get_id();
-        if !self.materials.contains_key(&id) {
+        if !self.materials.borrow().contains_key(&id) {
             let material = match &src.data {
                 scene::MaterialData::UnLight(unlit) => {
                     let mut material = Material {
@@ -110,25 +122,32 @@ impl ResourceManager {
                     material
                 }
             };
-            self.materials.insert(id, material);
+            self.materials.borrow_mut().insert(id, Rc::new(material));
         }
 
-        &self.materials[&src.get_id()]
+        self.materials.borrow()[&src.get_id()].clone()
     }
 
     pub fn get_or_create_vertex_buffer(
-        &mut self,
+        &self,
         d3d_device: &d3d11::ID3D11Device,
         mesh: &scene::Mesh,
-    ) -> Rc<VertexBuffer> {
-        if !self.vertex_buffers.contains_key(&mesh.get_id()) {
-            let vertex_buffer =
-                VertexBuffer::from(d3d_device, &mesh.positions, &mesh.indices).unwrap();
-            self.vertex_buffers
+        elements: &[d3d11::D3D11_INPUT_ELEMENT_DESC],
+    ) -> Rc<BufferArray> {
+        if !self.buffer_arrays.borrow().contains_key(&mesh.get_id()) {
+            let vertex_buffer = BufferArray::from(
+                d3d_device,
+                &mesh.index_buffer,
+                &mesh.vertex_buffers,
+                elements,
+            )
+            .unwrap();
+            self.buffer_arrays
+                .borrow_mut()
                 .insert(mesh.get_id(), Rc::new(vertex_buffer));
         }
 
-        self.vertex_buffers[&mesh.get_id()].clone()
+        self.buffer_arrays.borrow()[&mesh.get_id()].clone()
     }
 
     pub fn render(
@@ -139,8 +158,7 @@ impl ResourceManager {
         scene: &scene::Scene,
     ) {
         // render target
-        let render_target = self.get_or_create_rtv(d3d_device, target_texture);
-        render_target.set_and_clear(d3d_context);
+        self.clear_render_target(d3d_device, d3d_context, target_texture);
 
         // update constant buffer
         let frame = frame::c0 {
@@ -188,9 +206,6 @@ impl ResourceManager {
         frame: &frame::c0,
         mesh: &scene::Mesh,
     ) {
-        let vertex_buffer = self.get_or_create_vertex_buffer(d3d_device, mesh);
-        vertex_buffer.prepare(d3d_context);
-
         for submesh in &mesh.submeshes {
             let material = self.get_or_create_material(d3d_device, &submesh.material);
 
@@ -207,14 +222,16 @@ impl ResourceManager {
 
             material.shader.set(d3d_context);
 
-            if let Some(texture) = &material.color_texture
-            {
+            if let Some(texture) = &material.color_texture {
                 let srvs = [texture.srv.as_ptr()];
                 unsafe {
                     d3d_context.PSSetShaderResources(0, 1, srvs.as_ptr());
                 };
             }
 
+            let vertex_buffer =
+                self.get_or_create_vertex_buffer(d3d_device, mesh, &material.shader.elements);
+            vertex_buffer.prepare(d3d_context);
             vertex_buffer.draw(d3d_context, submesh.index_count, submesh.offset)
         }
     }
@@ -226,11 +243,11 @@ pub fn get() -> Option<&'static mut Box<ResourceManager>> {
     unsafe {
         if G_MANAGER.is_none() {
             G_MANAGER = Some(Box::new(ResourceManager {
-                render_target: None,
-                shaders: HashMap::new(),
-                textures: HashMap::new(),
-                materials: HashMap::new(),
-                vertex_buffers: HashMap::new(),
+                render_target: RefCell::new(None),
+                shaders: RefCell::new(HashMap::new()),
+                textures: RefCell::new(HashMap::new()),
+                materials: RefCell::new(HashMap::new()),
+                buffer_arrays: RefCell::new(HashMap::new()),
             }))
         }
     }

@@ -304,6 +304,7 @@ pub struct Shader {
     pub vs: ComPtr<d3d11::ID3D11VertexShader>,
     pub vs_constant_buffer: ConstantBufferShader,
     pub ps: ComPtr<d3d11::ID3D11PixelShader>,
+    pub elements: Vec<d3d11::D3D11_INPUT_ELEMENT_DESC>,
     pub input_layout: ComPtr<d3d11::ID3D11InputLayout>,
 }
 
@@ -318,6 +319,7 @@ impl Shader {
             vs,
             vs_constant_buffer,
             ps,
+            elements: Vec::new(),
             input_layout,
         }
     }

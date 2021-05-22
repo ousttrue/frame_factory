@@ -1,4 +1,4 @@
-use std::{cell::Cell, fs::File, io::Read, rc::Rc, usize};
+use std::{cell::Cell, f32::MIN_POSITIVE, fs::File, io::Read, rc::Rc, u32, usize};
 
 use crate::*;
 
@@ -129,7 +129,10 @@ impl Loader {
     pub fn load(&mut self) -> Result<(), Error> {
         self.load_textures()?;
         self.load_materials()?;
-        self.load_meshes()?;
+        for m in &self.gltf.meshes {
+            let mesh = self.load_mesh(m)?;
+            self.meshes.push(Rc::new(mesh));
+        }
         self.load_nodes()?;
 
         Ok(())
@@ -174,6 +177,19 @@ impl Loader {
         )
     }
 
+    pub fn get_prim_vertex_count(&self, prim: &gltf2::MeshPrimitive) -> Option<i32> {
+        let position = prim.attributes.get("POSITION")?;
+        self.gltf.accessors[*position as usize].count
+    }
+
+    pub fn get_prim_index_count(&self, prim: &gltf2::MeshPrimitive) -> Option<i32> {
+        self.gltf.accessors[prim.indices? as usize].count
+    }
+
+    pub fn get_index_stride(&self, prim: &gltf2::MeshPrimitive) -> Option<i32> {
+        Some(self.gltf.accessors[prim.indices? as usize].stride())
+    }
+
     pub fn load_textures(&mut self) -> Result<(), Error> {
         for t in &self.gltf.textures {
             let image = self.get_image_bytes_from_texture(t);
@@ -212,64 +228,57 @@ impl Loader {
         Ok(())
     }
 
-    pub fn load_meshes(&mut self) -> Result<(), Error> {
-        for m in &self.gltf.meshes {
-            let mut vertex_buffer: Option<AccessorBytes> = None;
-            let mut index_buffer: Option<AccessorBytes> = None;
-            let mut index_count_list = Vec::new();
+    pub fn load_mesh(&self, m: &gltf2::Mesh) -> Result<Mesh, Error> {
+        let vertex_count: u32 = m
+            .primitives
+            .iter()
+            .map(|p| self.get_prim_vertex_count(p).unwrap_or(0) as u32)
+            .sum();
+        let index_count: u32 = m
+            .primitives
+            .iter()
+            .map(|p| self.get_prim_index_count(p).unwrap_or(0) as u32)
+            .sum();
 
-            for prim in &m.primitives {
-                let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
-                let (positions, position_stride, position_count) =
-                    self.get_accessor_bytes(accessor_index).unwrap();
-                if let Some(vertices) = &mut vertex_buffer {
-                    vertices.extends(positions, position_stride as u32, position_count as u32);
-                } else {
-                    vertex_buffer = Some(AccessorBytes::new(
-                        Vec::from(positions),
-                        position_stride as u32,
-                        position_count as u32,
-                    ));
-                }
+        let vertex_stride = (3 + 3 + 2) * 4; // pos nom uv
+                                             // let mut position_buffer = AccessorBytes::create(vertex_stride, vertex_count);
+                                             // let mut normal_buffer = AccessorBytes::create(vertex_stride, vertex_count);
+                                             // let mut uv_buffer = AccessorBytes::create(vertex_stride, vertex_count);
 
-                let (indices, indices_stride, indices_count) =
-                    self.get_accessor_bytes(prim.indices.unwrap()).unwrap();
-                index_count_list.push(indices_count as u32);
+        let index_stride = self.get_index_stride(&m.primitives[0]).unwrap_or(0) as u32;
+        let mut mesh = Mesh::new(AccessorBytes::create(index_stride, index_count));
 
-                if let Some(index_buffer) = &mut index_buffer {
-                    index_buffer.extends(indices, indices_stride as u32, indices_count as u32);
-                } else {
-                    index_buffer = Some(AccessorBytes::new(
-                        Vec::from(indices),
-                        indices_stride as u32,
-                        indices_count as u32,
-                    ));
-                }
-            }
+        let mut submesh_offset = 0;
+        for prim in &m.primitives {
+            // vertices
+            for (k, v) in prim.attributes.iter() {}
 
-            if let Some(vertex_buffer) = vertex_buffer {
-                if let Some(index_buffer) = index_buffer {
-                    let mut mesh = Mesh::new(vertex_buffer, index_buffer);
+            // let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
+            // let (positions, position_stride, position_count) =
+            //     self.get_accessor_bytes(accessor_index).unwrap();
+            // mesh.vertex_buffer.copy(
+            //     vertex_byte_offset,
+            //     positions,
+            //     position_stride as u32,
+            //     position_count as u32,
+            // );
 
-                    let mut offset = 0;
-                    for (i, prim) in m.primitives.iter().enumerate() {
-                        let material = &self.materials[prim.material.unwrap() as usize];
+            // indices / submesh
+            let (indices, indices_stride, indices_count) =
+                self.get_accessor_bytes(prim.indices.unwrap()).unwrap();
+            mesh.index_buffer
+                .push(indices, indices_stride as u32, indices_count as u32);
 
-                        let index_count = index_count_list[i];
-                        mesh.submeshes.push(Submesh {
-                            offset: offset,
-                            index_count: index_count,
-                            material: material.clone(),
-                        });
-                        offset += index_count;
-                    }
-
-                    self.meshes.push(Rc::new(mesh));
-                }
-            }
+            let material = &self.materials[prim.material.unwrap() as usize];
+            mesh.submeshes.push(Submesh {
+                offset: submesh_offset as u32,
+                index_count: indices_count as u32,
+                material: material.clone(),
+            });
+            submesh_offset += indices_count;
         }
 
-        Ok(())
+        Ok(mesh)
     }
 
     pub fn load_nodes(&mut self) -> Result<(), Error> {

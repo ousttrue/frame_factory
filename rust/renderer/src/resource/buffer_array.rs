@@ -1,23 +1,26 @@
+use std::{collections::HashMap, ffi::CStr};
+
 use crate::com_util::ComCreate;
 use crate::scene::AccessorBytes;
 use com_ptr::ComPtr;
 use winapi::{
     ctypes::c_void,
-    shared::{dxgiformat, minwindef::UINT},
+    shared::dxgiformat,
     um::{d3d11, d3dcommon},
 };
 
 use crate::com_util::ComError;
 
-pub struct VertexBuffer {
-    vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
-    stride: u32,
+pub struct BufferArray {
+    vertex_buffers: Vec<ComPtr<d3d11::ID3D11Buffer>>,
+    vertex_strides: Vec<u32>,
+    vertex_offsets: Vec<u32>,
     index_buffer: ComPtr<d3d11::ID3D11Buffer>,
     index_format: dxgiformat::DXGI_FORMAT,
-    index_count: u32,
+    _index_count: u32,
 }
 
-impl VertexBuffer {
+impl BufferArray {
     fn stride_to_format(stride: u32) -> dxgiformat::DXGI_FORMAT {
         match stride {
             2 => dxgiformat::DXGI_FORMAT_R16_UINT,
@@ -27,18 +30,17 @@ impl VertexBuffer {
     }
 
     pub fn new(
-        vertex_buffer: ComPtr<d3d11::ID3D11Buffer>,
-        stride: u32,
         index_buffer: ComPtr<d3d11::ID3D11Buffer>,
         index_stride: u32,
         index_count: u32,
-    ) -> VertexBuffer {
-        VertexBuffer {
-            vertex_buffer,
-            stride,
+    ) -> BufferArray {
+        BufferArray {
+            vertex_buffers: Vec::new(),
+            vertex_strides: Vec::new(),
+            vertex_offsets: Vec::new(),
             index_buffer,
             index_format: Self::stride_to_format(index_stride),
-            index_count,
+            _index_count: index_count,
         }
     }
 
@@ -72,33 +74,40 @@ impl VertexBuffer {
 
     pub fn from(
         d3d_device: &d3d11::ID3D11Device,
-        positions: &AccessorBytes,
         indices: &AccessorBytes,
-    ) -> Result<VertexBuffer, ComError> {
-        let vertex_buffer = Self::create_vertices(d3d_device, &positions.bytes)?;
+        vertices: &HashMap<String, AccessorBytes>,
+        elements: &[d3d11::D3D11_INPUT_ELEMENT_DESC],
+    ) -> Result<BufferArray, ComError> {
         let index_buffer = Self::create_indices(d3d_device, &indices.bytes)?;
 
-        Ok(VertexBuffer {
-            vertex_buffer,
-            stride: positions.stride,
+        let mut buffer_array = Self::new(
             index_buffer,
-            index_format: Self::stride_to_format(indices.stride),
-            index_count: indices.count,
-        })
+            Self::stride_to_format(indices.stride),
+            indices.count,
+        );
+
+        for element in elements {
+            let v = &vertices[unsafe { CStr::from_ptr(element.SemanticName).to_str().unwrap() }];
+            let vertex_buffer = Self::create_vertices(d3d_device, &v.bytes)?;
+            buffer_array.vertex_buffers.push(vertex_buffer);
+            buffer_array.vertex_strides.push(v.stride);
+            buffer_array.vertex_offsets.push(0);
+        }
+
+        Ok(buffer_array)
     }
 
     pub fn prepare(&self, d3d_context: &d3d11::ID3D11DeviceContext) {
-        let buffers = [self.vertex_buffer.as_ptr()];
-        let strides = [self.stride as UINT];
-        let offsets = [0 as UINT];
+        let buffers: Vec<*mut d3d11::ID3D11Buffer> =
+            self.vertex_buffers.iter().map(|p| p.as_ptr()).collect();
 
         unsafe {
             d3d_context.IASetVertexBuffers(
                 0,
-                1,
+                self.vertex_buffers.len() as u32,
                 buffers.as_ptr(),
-                strides.as_ptr(),
-                offsets.as_ptr(),
+                self.vertex_strides.as_ptr(),
+                self.vertex_offsets.as_ptr(),
             );
 
             d3d_context.IASetIndexBuffer(self.index_buffer.as_ptr(), self.index_format, 0);

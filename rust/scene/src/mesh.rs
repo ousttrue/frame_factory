@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 use cgmath::One;
 
@@ -13,8 +13,8 @@ pub struct Submesh {
 pub struct Mesh {
     id: u32,
     pub transform: cgmath::Matrix4<f32>,
-    pub positions: AccessorBytes,
-    pub indices: AccessorBytes,
+    pub vertex_buffers: HashMap<String, AccessorBytes>,
+    pub index_buffer: AccessorBytes,
     pub submeshes: Vec<Submesh>,
 }
 
@@ -29,27 +29,31 @@ fn next_id() -> u32 {
 }
 
 impl Mesh {
-    pub fn new(positions: AccessorBytes, indices: AccessorBytes) -> Mesh {
+    pub fn new(indices: AccessorBytes) -> Mesh {
         let id = next_id();
         Mesh {
             id,
             transform: cgmath::Matrix4::<f32>::one(),
-            positions,
-            indices,
+            vertex_buffers: HashMap::new(),
+            index_buffer: indices,
             submeshes: Vec::new(),
         }
     }
 
     pub fn create_triangle() -> Mesh {
         let size = 0.5f32;
-        Self::new(
+        let mut mesh = Self::new(AccessorBytes::from(&[0, 1, 2]));
+
+        mesh.vertex_buffers.insert(
+            String::from("POSITION"),
             AccessorBytes::from(&[
                 (size, -size, 0.0f32),
                 (-size, -size, 0.0f32),
                 (0.0f32, size, 0.0f32),
             ]),
-            AccessorBytes::from(&[0, 1, 2]),
-        )
+        );
+
+        mesh
     }
 
     pub fn get_id(&self) -> u32 {

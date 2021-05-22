@@ -11,10 +11,7 @@ mod render_target;
 pub use render_target::*;
 use winapi::um::d3d11;
 
-use crate::{
-    asset_manager,
-    scene::{self, c0, Mesh, Scene, Submesh},
-};
+use crate::{asset_manager, scene};
 
 pub struct ResourceManager {
     render_target: Option<RenderTarget>,
@@ -56,7 +53,7 @@ impl ResourceManager {
     pub fn get_or_create_vertex_buffer(
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
-        model: &Mesh,
+        model: &scene::Mesh,
     ) -> Rc<VertexBuffer> {
         if !self.vertex_buffer.contains_key(&model.get_id()) {
             let vertex_buffer =
@@ -73,7 +70,7 @@ impl ResourceManager {
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
         texture: *mut d3d11::ID3D11Texture2D,
-        scene: &Scene,
+        scene: &scene::Scene,
     ) {
         // render
         self.get_or_create_rtv(d3d_device, texture);
@@ -81,7 +78,7 @@ impl ResourceManager {
             render_target.set_and_clear(d3d_context);
 
             // update constant buffer
-            let frame = c0 {
+            let frame = scene::c0 {
                 view: Default::default(),
                 projection: Default::default(),
             };
@@ -98,9 +95,25 @@ impl ResourceManager {
                 );
             }
 
-            for model in &scene.models {
-                self.render_mesh(d3d_device, d3d_context, &frame, model);
+            for root in &scene.roots {
+                self.render_node(d3d_device, d3d_context, &frame, root);
             }
+        }
+    }
+
+    fn render_node(
+        &mut self,
+        d3d_device: &d3d11::ID3D11Device,
+        d3d_context: &d3d11::ID3D11DeviceContext,
+        frame: &scene::c0,
+        node: &Rc<scene::Node>,
+    ) {
+        if let Some(mesh) = &node.mesh {
+            self.render_mesh(d3d_device, d3d_context, frame, mesh.as_ref());
+        }
+
+        for child in node.get_children().iter() {
+            self.render_node(d3d_device, d3d_context, frame, child);
         }
     }
 
@@ -108,8 +121,8 @@ impl ResourceManager {
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
-        frame: &c0,
-        mesh: &Mesh,
+        frame: &scene::c0,
+        mesh: &scene::Mesh,
     ) {
         let vertex_buffer = self.get_or_create_vertex_buffer(d3d_device, mesh);
         vertex_buffer.prepare(d3d_context);

@@ -1,9 +1,11 @@
+use std::rc::Rc;
+
 use cgmath::One;
 
 use super::{AccessorBytes, Material};
 
 pub struct Submesh {
-    pub material: Material,
+    pub material: Rc<Material>,
     pub offset: u32,
     pub index_count: u32,
 }

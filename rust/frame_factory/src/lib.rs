@@ -38,11 +38,10 @@ pub extern "C" fn FRAME_FACTORY_scene_load(path: *const i8) -> u32 {
         if let Ok(path) = path.to_str() {
             let path = Path::new(path);
 
-            let mut loader = scene::loader::Loader::new();
-            if let Ok(()) = loader.load(path) {
+            if let Ok(loader) = scene::loader::load(path) {
                 let mut scene = scene::Scene::new();
-                for m in loader.models {
-                    scene.models.push(m);
+                for root in loader.nodes.iter().filter(|node| node.get_parent().is_none()) {
+                    scene.roots.push(root.clone());
                 }
                 return scene_manager.add(scene);
             }

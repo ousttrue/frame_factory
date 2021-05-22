@@ -26,11 +26,11 @@ pub struct UnLightMaterial {
     pub color_texture: Option<Texture>,
 }
 
-pub enum MaterialTypes {
+pub enum MaterialData {
     UnLight(UnLightMaterial),
 }
 
 pub struct Material {
     pub name: String,
-    pub material_type: MaterialTypes,
+    pub data: MaterialData,
 }

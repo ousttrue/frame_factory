@@ -3,7 +3,7 @@ rust 練習
 
 ```
 +------------------------+
-|rust renderer dll       |
+|rust frame_factory.dll  |
 |+-----+  +-------------+|
 ||Scene|->|D3D Resources||
 |+-----+  +-------------+|
@@ -17,6 +17,7 @@ Texture2DRenderTarget
 |c++ imgui|
 +---------+
 ```
+c++ frontend, rust d3d11 renderer
 
 # ToDo
 ## GUI
@@ -38,7 +39,7 @@ Texture2DRenderTarget
 * [x] Camera, Mouse
 * [ ] Teapot
 * [x] SubMesh Material
-* [ ] Node
+* [x] Node
 * [ ] generate tangent
 * [ ] TextureLoader image-rs
 * [ ] Skinning
@@ -54,8 +55,12 @@ Texture2DRenderTarget
 * [x] shared reference
 * [x] generate rust struct from JsonSchema
 * [x] glTF2
-* [ ] unlit material
-* [ ] pbr material
+* [ ] textures
+* [ ] materials
+    * [ ] unlit material
+    * [ ] pbr material
+* [x] meshes
+* [ ] nodes
 
 ## Gizmo
 * [ ] grid

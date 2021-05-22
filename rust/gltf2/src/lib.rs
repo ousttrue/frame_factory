@@ -2,7 +2,6 @@ extern crate serde;
 extern crate serde_json;
 
 pub mod generated;
-use std::usize;
 
 pub use generated::*;
 
@@ -30,31 +29,5 @@ impl Accessor {
         };
 
         c * t
-    }
-}
-
-impl glTF {
-    pub fn get_accessor_bytes<'a>(
-        &self,
-        bin: &'a [u8],
-        accessor_index: i32,
-    ) -> Option<(&'a [u8], i32, i32)> {
-        let accessor = &self.accessors[accessor_index as usize];
-        let buffer_view = &self.bufferViews[accessor.bufferView.unwrap() as usize];
-
-        if buffer_view.buffer? != 0 {
-            return None;
-        }
-
-        let start = buffer_view.byteOffset.unwrap_or(0) as usize;
-        let end = start + buffer_view.byteLength.unwrap() as usize;
-        let bytes = &bin[start..end];
-
-        let start = accessor.byteOffset.unwrap_or(0) as usize;
-        let stride = accessor.stride();
-        let count = accessor.count?;
-        let end = (start + count as usize * stride as usize) as usize;
-
-        Some((&bytes[start..end], stride, count))
     }
 }

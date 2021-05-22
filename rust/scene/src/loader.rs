@@ -119,7 +119,7 @@ pub fn load_glb(path: &std::path::Path) -> Result<Loader, Error> {
 pub struct Loader {
     gltf: gltf2::glTF,
     bin: Vec<u8>,
-    pub textures: Vec<Rc<Texture>>,
+    pub textures: Vec<Rc<Image>>,
     pub materials: Vec<Rc<Material>>,
     pub meshes: Vec<Rc<Mesh>>,
     pub nodes: Vec<Rc<Node>>,
@@ -135,17 +135,75 @@ impl Loader {
         Ok(())
     }
 
+    pub fn get_accessor_bytes(&self, accessor_index: i32) -> Option<(&[u8], i32, i32)> {
+        let accessor = &self.gltf.accessors[accessor_index as usize];
+        let buffer_view = &self.gltf.bufferViews[accessor.bufferView.unwrap() as usize];
+
+        if buffer_view.buffer? != 0 {
+            return None;
+        }
+
+        let start = buffer_view.byteOffset.unwrap_or(0) as usize;
+        let end = start + buffer_view.byteLength.unwrap() as usize;
+        let bytes = &self.bin[start..end];
+
+        let start = accessor.byteOffset.unwrap_or(0) as usize;
+        let stride = accessor.stride();
+        let count = accessor.count?;
+        let end = (start + count as usize * stride as usize) as usize;
+
+        Some((&bytes[start..end], stride, count))
+    }
+
+    pub fn get_image_bytes_from_texture(&self, texture: &gltf2::Texture) -> Image {
+        let image = &self.gltf.images[texture.source.unwrap() as usize];
+
+        if image.uri.len() > 0 {
+            todo!()
+        }
+
+        let buffer_view = &self.gltf.bufferViews[image.bufferView.unwrap() as usize];
+        let start = buffer_view.byteOffset.unwrap() as usize;
+        let end = start + buffer_view.byteLength.unwrap() as usize;
+        let bytes = &self.bin[start..end];
+
+        Image {
+            bytes: Vec::from(bytes),
+            name: String::from(&image.name),
+            mime: String::from(&image.mimeType),
+        }
+    }
+
     pub fn load_textures(&mut self) -> Result<(), Error> {
-        for t in &self.gltf.textures {}
+        for t in &self.gltf.textures {
+            let image = self.get_image_bytes_from_texture(t);
+            self.textures.push(Rc::new(image));
+        }
 
         Ok(())
     }
 
+    fn get_material_color_texture(&self, material: &gltf2::Material) -> Option<Rc<Image>> {
+        if let Some(texture_index) = material
+            .pbrMetallicRoughness
+            .as_ref()?
+            .baseColorTexture
+            .as_ref()?
+            .index
+        {
+            let texture = &self.textures[texture_index as usize];
+            Some(texture.clone())
+        } else {
+            None
+        }
+    }
+
     pub fn load_materials(&mut self) -> Result<(), Error> {
         for m in &self.gltf.materials {
+            let texture = self.get_material_color_texture(m);
             let unlit = UnLightMaterial {
                 color: RGBA::white(),
-                color_texture: None,
+                color_texture: texture,
             };
             let material = Material {
                 name: m.name.clone(),
@@ -165,10 +223,8 @@ impl Loader {
 
             for prim in &m.primitives {
                 let accessor_index = prim.attributes.get("POSITION").unwrap().clone();
-                let (positions, position_stride, position_count) = self
-                    .gltf
-                    .get_accessor_bytes(&self.bin, accessor_index)
-                    .unwrap();
+                let (positions, position_stride, position_count) =
+                    self.get_accessor_bytes(accessor_index).unwrap();
                 if let Some(vertices) = &mut vertex_buffer {
                     vertices.extends(positions, position_stride as u32, position_count as u32);
                 } else {
@@ -179,10 +235,8 @@ impl Loader {
                     ));
                 }
 
-                let (indices, indices_stride, indices_count) = self
-                    .gltf
-                    .get_accessor_bytes(&self.bin, prim.indices.unwrap())
-                    .unwrap();
+                let (indices, indices_stride, indices_count) =
+                    self.get_accessor_bytes(prim.indices.unwrap()).unwrap();
                 index_count_list.push(indices_count as u32);
 
                 if let Some(index_buffer) = &mut index_buffer {
@@ -222,13 +276,10 @@ impl Loader {
     }
 
     pub fn load_nodes(&mut self) -> Result<(), Error> {
-
-        for n in &self.gltf.nodes
-        {
+        for n in &self.gltf.nodes {
             let mut node = Node::new(&n.name);
 
-            if let Some(mesh_index) = n.mesh
-            {
+            if let Some(mesh_index) = n.mesh {
                 let mesh = &self.meshes[mesh_index as usize];
                 node.mesh = Some(mesh.clone());
             }
@@ -237,11 +288,9 @@ impl Loader {
         }
 
         // build tree
-        for (i, n) in self.gltf.nodes.iter().enumerate()
-        {
+        for (i, n) in self.gltf.nodes.iter().enumerate() {
             let node = &self.nodes[i];
-            for c in  &n.children
-            {
+            for c in &n.children {
                 let child = &self.nodes[*c as usize];
                 Node::add_child(node, child);
             }

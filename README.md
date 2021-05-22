@@ -55,7 +55,7 @@ c++ frontend, rust d3d11 renderer
 * [x] shared reference
 * [x] generate rust struct from JsonSchema
 * [x] glTF2
-* [ ] textures
+* [x] textures
 * [ ] materials
     * [ ] unlit material
     * [ ] pbr material

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 #[repr(C)]
 pub struct RGBA {
     pub r: f32,
@@ -17,13 +19,15 @@ impl RGBA {
     }
 }
 
-pub struct Texture {
-    pub image_path: String,
+pub struct Image {
+    pub bytes: Vec<u8>,
+    pub name: String,
+    pub mime: String,
 }
 
 pub struct UnLightMaterial {
     pub color: RGBA,
-    pub color_texture: Option<Texture>,
+    pub color_texture: Option<Rc<Image>>,
 }
 
 pub enum MaterialData {

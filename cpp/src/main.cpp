@@ -116,9 +116,11 @@ struct ImGuiApp
     bool m_show_demo_window = true;
     float m_clearColor[4] = {0.0f, 0.2f, 0.4f, 1.0f};
     std::list<std::unique_ptr<RustRenderer>> m_scenes;
+    HWND m_hwnd;
 
 public:
     ImGuiApp(HWND hwnd, ID3D11Device *device, ID3D11DeviceContext *context)
+        : m_hwnd(hwnd)
     {
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
@@ -193,30 +195,66 @@ public:
     void gui(ID3D11Device *device, ID3D11DeviceContext *context,
              const screenstate::ScreenState &state)
     {
-        ImGuiWindowFlags window_flags =
-            ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+        // docking space
         {
-            const ImGuiViewport *viewport = ImGui::GetMainViewport();
-            ImGui::SetNextWindowPos(viewport->WorkPos);
-            ImGui::SetNextWindowSize(viewport->WorkSize);
-            ImGui::SetNextWindowViewport(viewport->ID);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-            window_flags |= ImGuiWindowFlags_NoTitleBar |
-                            ImGuiWindowFlags_NoCollapse |
-                            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus |
-                            ImGuiWindowFlags_NoNavFocus;
+            ImGuiWindowFlags window_flags =
+                ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+            {
+                const ImGuiViewport *viewport = ImGui::GetMainViewport();
+                ImGui::SetNextWindowPos(viewport->WorkPos);
+                ImGui::SetNextWindowSize(viewport->WorkSize);
+                ImGui::SetNextWindowViewport(viewport->ID);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+                window_flags |=
+                    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                    ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+                window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus |
+                                ImGuiWindowFlags_NoNavFocus;
+            }
+            if (ImGui::Begin("Master Window", nullptr, window_flags))
+            {
+                // Declare Central dockspace
+                ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+                ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f),
+                                 ImGuiDockNodeFlags_None);
+            }
+
+            if (ImGui::BeginMenuBar())
+            {
+                if (ImGui::BeginMenu("File"))
+                {
+                    if (ImGui::MenuItem("Open", "Ctrl+O"))
+                    {
+                        char strCustom[256] = {0};
+                        char strFile[MAX_PATH] = {0};
+                        OPENFILENAMEA ofn = {0};
+                        ofn.lStructSize = sizeof(OPENFILENAME);
+                        ofn.hwndOwner = m_hwnd;
+                        ofn.lpstrFilter = "glb files {*.glb}\0*.glb\0"
+                                          "All files {*.*}\0*.*\0"
+                                          "\0";
+                        ofn.lpstrCustomFilter = strCustom;
+                        ofn.nMaxCustFilter = sizeof(strCustom);
+                        ofn.nFilterIndex = 0;
+                        ofn.lpstrFile = strFile;
+                        ofn.nMaxFile = MAX_PATH;
+                        ofn.Flags = OFN_FILEMUSTEXIST;
+                        if (GetOpenFileNameA(&ofn))
+                        {
+                            if (auto scene = RustRenderer::load_gltf(ofn.lpstrFile))
+                            {
+                                m_scenes.push_back(std::move(scene));
+                            }
+                        }
+                    }
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenuBar();
+            }
+            ImGui::End();
+            ImGui::PopStyleVar(2);
         }
-        if (ImGui::Begin("Master Window", nullptr, window_flags))
-        {
-            // Declare Central dockspace
-            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f),
-                             ImGuiDockNodeFlags_None);
-        }
-        ImGui::End();
-        ImGui::PopStyleVar(2);
 
         // demo
         if (m_show_demo_window)

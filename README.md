@@ -30,10 +30,11 @@ c++ frontend, rust d3d11 renderer
 * [x] save window state
 * [x] docking
 * [x] font
-* [ ] logger
+* [ ] logger 🔧
 * [ ] SDL2
 * [x] separate crate dll, scene and resource
-* [ ] menu file open
+* [x] menu file open
+* [ ] multi view 🔧
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer
@@ -50,7 +51,7 @@ c++ frontend, rust d3d11 renderer
 * [x] TextureLoader image-rs
 * [x] DepthBuffer
 * [x] ColorTexture
-* [ ] ccw
+* [x] ccw
 * [ ] NormalTexture
 
 ## Shader

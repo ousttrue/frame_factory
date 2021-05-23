@@ -15,6 +15,7 @@ pub struct RenderTarget {
     pub rtv: ComPtr<d3d11::ID3D11RenderTargetView>,
     pub depth: ComPtr<d3d11::ID3D11Texture2D>,
     pub dsv: ComPtr<d3d11::ID3D11DepthStencilView>,
+    pub rs: ComPtr<d3d11::ID3D11RasterizerState>,
 }
 
 impl RenderTarget {
@@ -62,6 +63,22 @@ impl RenderTarget {
             )
         })?;
 
+        let rs_desc = d3d11::D3D11_RASTERIZER_DESC {
+            FillMode: d3d11::D3D11_FILL_SOLID,
+            CullMode: d3d11::D3D11_CULL_BACK,
+            FrontCounterClockwise: 1,
+            DepthBias: 0,
+            DepthBiasClamp: 0f32,
+            SlopeScaledDepthBias: 0f32,
+            DepthClipEnable: 0,
+            ScissorEnable: 0,
+            MultisampleEnable: 0,
+            AntialiasedLineEnable: 0,
+        };
+        let rs = ComPtr::create_if_success(|pp| unsafe {
+            d3d_device.CreateRasterizerState(&rs_desc, pp)
+        })?;
+
         Ok(RenderTarget {
             width: desc.Width as f32,
             height: desc.Height as f32,
@@ -69,6 +86,7 @@ impl RenderTarget {
             rtv,
             depth,
             dsv,
+            rs,
         })
     }
 
@@ -76,10 +94,16 @@ impl RenderTarget {
         // clear
         unsafe {
             d3d_context.ClearRenderTargetView(self.rtv.as_ptr(), &[0.2f32, 0.2f32, 0.2f32, 1.0f32]);
-			d3d_context.ClearDepthStencilView(self.dsv.as_ptr()
-				, d3d11::D3D11_CLEAR_DEPTH | d3d11::D3D11_CLEAR_STENCIL, 1f32, 0);
-
+            d3d_context.ClearDepthStencilView(
+                self.dsv.as_ptr(),
+                d3d11::D3D11_CLEAR_DEPTH | d3d11::D3D11_CLEAR_STENCIL,
+                1f32,
+                0,
+            );
         };
+
+        // rs
+        unsafe { d3d_context.RSSetState(self.rs.as_ptr()) };
 
         // set backbuffer
         let rtv_list = [self.rtv.as_ptr()];

@@ -48,9 +48,8 @@ impl Camera {
 
     fn calc_view(&mut self) {
         self.view = cgmath::Matrix4::from_translation(-self.shift)
-            * cgmath::Matrix4::from_angle_y(self.yaw)
             * cgmath::Matrix4::from_angle_x(self.pitch)
-            ;
+            * cgmath::Matrix4::from_angle_y(self.yaw);
     }
 
     fn shift(&mut self, dx: f32, dy: f32) {

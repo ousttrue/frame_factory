@@ -36,10 +36,11 @@ class RustRenderer
     int m_height = 0;
     Microsoft::WRL::ComPtr<ID3D11Texture2D> m_texture;
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv;
+    std::string m_name;
 
-    RustRenderer(uint32_t scene)
+    RustRenderer(uint32_t scene, const std::string_view &name)
+        : m_scene(scene), m_name(name)
     {
-        m_scene = scene;
     }
 
 public:
@@ -55,7 +56,12 @@ public:
         {
             return nullptr;
         }
-        return std::unique_ptr<RustRenderer>(new RustRenderer(scene));
+        return std::unique_ptr<RustRenderer>(new RustRenderer(scene, path));
+    }
+
+    const std::string &name() const
+    {
+        return m_name;
     }
 
     ID3D11ShaderResourceView *render(ID3D11Device *device,
@@ -242,7 +248,8 @@ public:
                         ofn.Flags = OFN_FILEMUSTEXIST;
                         if (GetOpenFileNameA(&ofn))
                         {
-                            if (auto scene = RustRenderer::load_gltf(ofn.lpstrFile))
+                            if (auto scene =
+                                    RustRenderer::load_gltf(ofn.lpstrFile))
                             {
                                 m_scenes.push_back(std::move(scene));
                             }
@@ -266,7 +273,7 @@ public:
         for (auto &scene : m_scenes)
         {
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-            if (ImGui::Begin("render target", nullptr,
+            if (ImGui::Begin(scene->name().c_str(), nullptr,
                              ImGuiWindowFlags_NoScrollbar |
                                  ImGuiWindowFlags_NoScrollWithMouse))
             {

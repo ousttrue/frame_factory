@@ -34,7 +34,8 @@ c++ frontend, rust d3d11 renderer
 * [ ] SDL2
 * [x] separate crate dll, scene and resource
 * [x] menu file open
-* [ ] multi view 🔧
+* [x] multi view
+* [ ] multi view focus
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer

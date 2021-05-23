@@ -54,6 +54,7 @@ c++ frontend, rust d3d11 renderer
 * [x] ColorTexture
 * [x] ccw
 * [ ] NormalTexture
+* [ ] ErrorHandling 🔧
 
 ## Shader
 * [x] Texture

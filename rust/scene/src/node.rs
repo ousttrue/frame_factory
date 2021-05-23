@@ -7,11 +7,35 @@ use std::{
 
 use crate::Mesh;
 
+pub enum Transform {
+    Matrix(cgmath::Matrix4<f32>),
+    TRS(
+        cgmath::Vector3<f32>,
+        cgmath::Quaternion<f32>,
+        cgmath::Vector3<f32>,
+    ),
+}
+
+impl Transform {
+    pub fn matrix(&self) -> cgmath::Matrix4<f32> {
+        match self {
+            Self::Matrix(m) => m.clone(),
+            Self::TRS(t, r, s) => {
+                let t = cgmath::Matrix4::<f32>::from_translation(t.clone());
+                let r = cgmath::Matrix4::from(r.clone());
+                let s = cgmath::Matrix4::from_nonuniform_scale(s.x, s.y, s.z);
+
+                let m =t * r * s;
+
+                m
+            }
+        }
+    }
+}
+
 pub struct Node {
     pub name: String,
-    pub position: cgmath::Vector3<f32>,
-    pub rotation: cgmath::Quaternion<f32>,
-    pub scaling: cgmath::Vector3<f32>,
+    pub transform: Transform,
     parent: RefCell<Weak<Node>>,
     children: RefCell<Vec<Rc<Node>>>,
     //
@@ -22,9 +46,11 @@ impl Node {
     pub fn new(name: &str) -> Node {
         Node {
             name: String::from(name),
-            position: Zero::zero(),
-            rotation: One::one(),
-            scaling: cgmath::Vector3::new(1f32, 1f32, 1f32),
+            transform: Transform::TRS(
+                Zero::zero(),
+                One::one(),
+                cgmath::Vector3::new(1f32, 1f32, 1f32),
+            ),
             parent: Default::default(),
             children: Default::default(),
             mesh: None,

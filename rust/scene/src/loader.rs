@@ -1,5 +1,7 @@
 use std::{cell::Cell, fs::File, io::Read, rc::Rc, u32, usize};
 
+use cgmath::{One, Quaternion, Vector3, Zero};
+
 use crate::*;
 
 struct BytesReader<'a> {
@@ -241,7 +243,10 @@ impl Loader {
             .sum();
 
         let index_stride = self.get_index_stride(&m.primitives[0]).unwrap_or(0) as u32;
-        let mut mesh = Mesh::new(AccessorBytes::create(index_stride, index_count), vertex_count);
+        let mut mesh = Mesh::new(
+            AccessorBytes::create(index_stride, index_count),
+            vertex_count,
+        );
 
         let mut submesh_offset = 0;
         for prim in &m.primitives {
@@ -272,6 +277,48 @@ impl Loader {
     pub fn load_nodes(&mut self) -> Result<(), Error> {
         for n in &self.gltf.nodes {
             let mut node = Node::new(&n.name);
+
+            if n.matrix.len() == 16 {
+                node.transform = Transform::Matrix(cgmath::Matrix4::new(
+                    n.matrix[0],
+                    n.matrix[1],
+                    n.matrix[2],
+                    n.matrix[3],
+                    n.matrix[4],
+                    n.matrix[5],
+                    n.matrix[6],
+                    n.matrix[7],
+                    n.matrix[8],
+                    n.matrix[9],
+                    n.matrix[10],
+                    n.matrix[11],
+                    n.matrix[12],
+                    n.matrix[13],
+                    n.matrix[14],
+                    n.matrix[15],
+                ));
+            } else {
+                let mut t = Vector3::zero();
+                let mut r = Quaternion::one();
+                let mut s = Vector3::new(1f32, 1f32, 1f32);
+                if n.translation.len() == 3 {
+                    t.x = n.translation[0];
+                    t.y = n.translation[1];
+                    t.z = n.translation[2];
+                }
+                if n.rotation.len() == 4 {
+                    r.v.x = n.rotation[0];
+                    r.v.y = n.rotation[1];
+                    r.v.z = n.rotation[2];
+                    r.s = n.rotation[3];
+                }
+                if n.scale.len() == 3 {
+                    s.x = n.scale[0];
+                    s.y = n.scale[1];
+                    s.z = n.scale[2];
+                }
+                node.transform = Transform::TRS(t, r, s);
+            }
 
             if let Some(mesh_index) = n.mesh {
                 let mesh = &self.meshes[mesh_index as usize];

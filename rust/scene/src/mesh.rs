@@ -1,7 +1,5 @@
 use std::{collections::HashMap, rc::Rc};
 
-use cgmath::One;
-
 use super::{AccessorBytes, Material};
 
 pub struct Submesh {
@@ -13,7 +11,6 @@ pub struct Submesh {
 pub struct Mesh {
     id: u32,
     vertex_count: u32,
-    pub transform: cgmath::Matrix4<f32>,
     pub vertex_buffers: HashMap<String, AccessorBytes>,
     pub index_buffer: AccessorBytes,
     pub submeshes: Vec<Submesh>,
@@ -35,7 +32,6 @@ impl Mesh {
         Mesh {
             id,
             vertex_count,
-            transform: cgmath::Matrix4::<f32>::one(),
             vertex_buffers: HashMap::new(),
             index_buffer: indices,
             submeshes: Vec::new(),

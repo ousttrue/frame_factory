@@ -1,10 +1,7 @@
 use std::collections::HashMap;
-use std::{
-    cell::RefCell,
-    ops::Deref,
-    rc::Rc,
-};
+use std::{cell::RefCell, ops::Deref, rc::Rc};
 use winapi::um::d3d11;
+use cgmath::One;
 
 mod shader;
 use shader::*;
@@ -158,7 +155,7 @@ impl ResourceManager {
         self.clear_render_target(d3d_device, d3d_context, target_texture);
 
         for root in &scene.roots {
-            self.render_node(d3d_device, d3d_context, scene, root);
+            self.render_node(d3d_device, d3d_context, scene, root, &cgmath::Matrix4::one());
         }
     }
 
@@ -168,13 +165,16 @@ impl ResourceManager {
         d3d_context: &d3d11::ID3D11DeviceContext,
         scene: &scene::Scene,
         node: &Rc<scene::Node>,
+        world_matrix: &cgmath::Matrix4<f32>,
     ) {
+        let local_matrix = node.transform.matrix();
+        let matrix = world_matrix * local_matrix;
         if let Some(mesh) = &node.mesh {
-            self.render_mesh(d3d_device, d3d_context, scene, mesh.as_ref());
+            self.render_mesh(d3d_device, d3d_context, scene, &matrix, mesh.as_ref());
         }
 
         for child in node.get_children().iter() {
-            self.render_node(d3d_device, d3d_context, scene, child);
+            self.render_node(d3d_device, d3d_context, scene, child, &matrix);
         }
     }
 
@@ -183,6 +183,7 @@ impl ResourceManager {
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
         scene: &scene::Scene,
+        matrix: &cgmath::Matrix4<f32>,
         mesh: &scene::Mesh,
     ) {
         for submesh in &mesh.submeshes {
@@ -209,7 +210,7 @@ impl ResourceManager {
             material
                 .shader
                 .vs_constant_buffer
-                .update(0, "ModelMatrix", &mesh.transform);
+                .update(0, "ModelMatrix", matrix);
             match &submesh.material.data {
                 scene::MaterialData::UnLight(unlit) => {
                     material

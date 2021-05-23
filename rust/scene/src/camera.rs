@@ -33,7 +33,7 @@ impl Camera {
             //
             last_mouse_x: 0,
             last_mouse_y: 0,
-            shift: Vector3::new(0f32, 0f32, 1f32),
+            shift: Vector3::new(0f32, 0f32, 2f32),
             yaw: cgmath::Deg(0f32),
             pitch: cgmath::Deg(0f32),
         };

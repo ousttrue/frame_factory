@@ -1,7 +1,7 @@
+use cgmath::One;
 use std::collections::HashMap;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 use winapi::um::d3d11;
-use cgmath::One;
 
 mod shader;
 use shader::*;
@@ -155,7 +155,13 @@ impl ResourceManager {
         self.clear_render_target(d3d_device, d3d_context, target_texture);
 
         for root in &scene.roots {
-            self.render_node(d3d_device, d3d_context, scene, root, &cgmath::Matrix4::one());
+            self.render_node(
+                d3d_device,
+                d3d_context,
+                scene,
+                root,
+                &cgmath::Matrix4::one(),
+            );
         }
     }
 
@@ -189,42 +195,45 @@ impl ResourceManager {
         for submesh in &mesh.submeshes {
             let material = self.get_or_create_material(d3d_device, &submesh.material);
 
+            //
             // update constant buffer
-            material.shader.vs_constant_buffer.update(
-                0,
-                "ProjectionMatrix",
-                &scene.camera.projection,
-            );
+            //
             material
                 .shader
                 .vs_constant_buffer
-                .update(0, "ViewMatrix", &scene.camera.view);
+                .update("ProjectionMatrix", &scene.camera.projection);
+            material
+                .shader
+                .vs_constant_buffer
+                .update("ViewMatrix", &scene.camera.view);
             match scene.light {
                 scene::Light::DirectionalLight(dir) => {
                     material
                         .shader
                         .vs_constant_buffer
-                        .update(0, "LightDirection", &dir);
+                        .update("LightDirection", &dir);
                 }
             }
             material
                 .shader
                 .vs_constant_buffer
-                .update(0, "ModelMatrix", matrix);
+                .update("ModelMatrix", matrix);
             match &submesh.material.data {
                 scene::MaterialData::UnLight(unlit) => {
                     material
                         .shader
                         .vs_constant_buffer
-                        .update(0, "Color", &unlit.color);
+                        .update("Color", &unlit.color);
                 }
             };
             for slot in &material.shader.vs_constant_buffer.slots {
                 slot.commit(d3d_context);
             }
 
+            //
+            // shader setup
+            //
             material.shader.set(d3d_context);
-
             if let Some(texture) = &material.color_texture {
                 let srvs = [texture.srv.as_ptr()];
                 unsafe {
@@ -232,6 +241,9 @@ impl ResourceManager {
                 };
             }
 
+            //
+            // vertex buffer
+            //
             let vertex_buffer =
                 self.get_or_create_vertex_buffer(d3d_device, mesh, &material.shader.semantics);
             vertex_buffer.prepare(d3d_context);

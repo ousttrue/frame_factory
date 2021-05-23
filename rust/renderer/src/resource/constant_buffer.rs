@@ -50,7 +50,7 @@ impl ConstantBufferSlot {
         Ok(slot)
     }
 
-    fn update<T>(&self, key: &str, data: *const T) {
+    fn update<T>(&self, key: &str, data: *const T) -> bool {
         if let Some(var) = self.variables.get(key) {
             if std::mem::size_of::<T>() > var.length as usize {
                 panic!()
@@ -64,6 +64,9 @@ impl ConstantBufferSlot {
                     .offset(var.offset as isize);
                 std::ptr::copy_nonoverlapping(src, dst, std::mem::size_of::<T>())
             }
+            true
+        } else {
+            false
         }
     }
 
@@ -130,9 +133,11 @@ impl ConstantBufferShader {
         Ok(constant_buffer)
     }
 
-    pub fn update<T>(&self, slot_index: usize, key: &str, data: *const T) {
-        if let Some(slot) = self.slots.get(slot_index) {
-            slot.update(key, data);
+    pub fn update<T>(&self, key: &str, data: *const T) {
+        for slot in &self.slots {
+            if slot.update(key, data) {
+                return;
+            }
         }
     }
 

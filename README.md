@@ -48,10 +48,10 @@ c++ frontend, rust d3d11 renderer
 
 ## Renderer
 * [x] TextureLoader image-rs
-* [ ] DepthBuffer
-* [ ] ColorTexture
+* [x] DepthBuffer
+* [x] ColorTexture
+* [ ] ccw
 * [ ] NormalTexture
-
 ## Shader
 * [x] Texture
 

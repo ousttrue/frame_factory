@@ -16,7 +16,7 @@ use buffer_array::*;
 mod d3d_device;
 mod render_target;
 use render_target::*;
-mod frame;
+mod constant_buffer;
 mod material;
 use material::*;
 
@@ -160,26 +160,8 @@ impl ResourceManager {
         // render target
         self.clear_render_target(d3d_device, d3d_context, target_texture);
 
-        // update constant buffer
-        let frame = frame::c0 {
-            view: Default::default(),
-            projection: Default::default(),
-        };
-        unsafe {
-            std::ptr::copy_nonoverlapping(
-                scene.camera.view.as_ptr() as *const u8,
-                frame.view.as_ptr() as *mut u8,
-                64,
-            );
-            std::ptr::copy_nonoverlapping(
-                scene.camera.projection.as_ptr() as *const u8,
-                frame.projection.as_ptr() as *mut u8,
-                64,
-            );
-        }
-
         for root in &scene.roots {
-            self.render_node(d3d_device, d3d_context, &frame, root);
+            self.render_node(d3d_device, d3d_context, scene, root);
         }
     }
 
@@ -187,15 +169,15 @@ impl ResourceManager {
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
-        frame: &frame::c0,
+        scene: &scene::Scene,
         node: &Rc<scene::Node>,
     ) {
         if let Some(mesh) = &node.mesh {
-            self.render_mesh(d3d_device, d3d_context, frame, mesh.as_ref());
+            self.render_mesh(d3d_device, d3d_context, scene, mesh.as_ref());
         }
 
         for child in node.get_children().iter() {
-            self.render_node(d3d_device, d3d_context, frame, child);
+            self.render_node(d3d_device, d3d_context, scene, child);
         }
     }
 
@@ -203,22 +185,45 @@ impl ResourceManager {
         &mut self,
         d3d_device: &d3d11::ID3D11Device,
         d3d_context: &d3d11::ID3D11DeviceContext,
-        frame: &frame::c0,
+        scene: &scene::Scene,
         mesh: &scene::Mesh,
     ) {
         for submesh in &mesh.submeshes {
             let material = self.get_or_create_material(d3d_device, &submesh.material);
 
             // update constant buffer
+            material.shader.vs_constant_buffer.update(
+                0,
+                "ProjectionMatrix",
+                &scene.camera.projection,
+            );
             material
                 .shader
                 .vs_constant_buffer
-                .update(d3d_context, 0, frame);
-
+                .update(0, "ViewMatrix", &scene.camera.view);
+            match scene.light {
+                scene::Light::DirectionalLight(dir) => {
+                    material
+                        .shader
+                        .vs_constant_buffer
+                        .update(0, "LightDirection", &dir);
+                }
+            }
             material
                 .shader
                 .vs_constant_buffer
-                .update(d3d_context, 1, &mesh.transform);
+                .update(0, "ModelMatrix", &mesh.transform);
+            match &submesh.material.data {
+                scene::MaterialData::UnLight(unlit) => {
+                    material
+                        .shader
+                        .vs_constant_buffer
+                        .update(0, "Color", &unlit.color);
+                }
+            };
+            for slot in &material.shader.vs_constant_buffer.slots {
+                slot.commit(d3d_context);
+            }
 
             material.shader.set(d3d_context);
 

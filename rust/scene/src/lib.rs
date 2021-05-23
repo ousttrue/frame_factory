@@ -3,6 +3,7 @@ extern crate gltf2;
 pub mod error;
 use std::rc::Rc;
 
+use cgmath::InnerSpace;
 pub use error::*;
 
 pub mod scene_manager;
@@ -16,6 +17,9 @@ pub use accessor_bytes::*;
 
 pub mod image;
 pub use image::*;
+
+pub mod light;
+pub use light::*;
 
 pub mod material;
 pub use material::*;
@@ -34,6 +38,7 @@ pub use screen_state::*;
 
 pub struct Scene {
     pub camera: Camera,
+    pub light: Light,
     pub roots: Vec<Rc<Node>>,
 }
 
@@ -41,6 +46,7 @@ impl Scene {
     pub fn new() -> Scene {
         Scene {
             camera: Camera::new(),
+            light: Light::DirectionalLight(cgmath::Vector3::new(1f32, -1f32, 1f32).normalize()),
             roots: Vec::new(),
         }
     }

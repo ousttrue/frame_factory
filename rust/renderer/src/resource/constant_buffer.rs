@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, ffi::CStr, hash::Hash, ptr};
+use std::{cell::RefCell, collections::HashMap, ffi::CStr, ptr};
 
 use com_ptr::ComPtr;
 use winapi::um::{d3d11, d3d11shader};
@@ -64,9 +64,6 @@ impl ConstantBufferSlot {
                     .offset(var.offset as isize);
                 std::ptr::copy_nonoverlapping(src, dst, std::mem::size_of::<T>())
             }
-        }
-        else{
-            let a=0;
         }
     }
 

@@ -1,10 +1,10 @@
-use std::{io::Read, ptr, rc::Rc};
+use std::{ptr, rc::Rc};
 
 use crate::com_util::{ComCreate, ComError};
 use com_ptr::ComPtr;
 use winapi::{
-    shared::{dxgi, dxgiformat, dxgitype},
-    um::{d3d11, d3dcommon},
+    shared::{dxgiformat, dxgitype},
+    um::{d3d11},
 };
 
 use crate::error::Error;

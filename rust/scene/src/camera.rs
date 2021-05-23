@@ -58,7 +58,7 @@ impl Camera {
         self.shift.y += dy * self.shift.z * half_fovy.tan() * 2f32;
     }
 
-    fn yawpitch(&mut self, dx: cgmath::Deg<f32>, dy: cgmath::Deg<f32>) {
+    fn yaw_pitch(&mut self, dx: cgmath::Deg<f32>, dy: cgmath::Deg<f32>) {
         self.yaw += dx;
         self.pitch += dy;
     }
@@ -93,7 +93,7 @@ impl Camera {
 
         if state.mouse_flag.has(MouseButtonFlags::RightDown) {
             // yaw, pitch
-            self.yawpitch(cgmath::Deg(dx as f32), cgmath::Deg(dy as f32));
+            self.yaw_pitch(cgmath::Deg(dx as f32), cgmath::Deg(dy as f32));
         }
 
         if state.mouse_flag.has(MouseButtonFlags::WheelMinus) {

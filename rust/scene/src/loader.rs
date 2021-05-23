@@ -1,4 +1,4 @@
-use std::{cell::Cell, f32::MIN_POSITIVE, fs::File, io::Read, rc::Rc, u32, usize};
+use std::{cell::Cell, fs::File, io::Read, rc::Rc, u32, usize};
 
 use crate::*;
 
@@ -96,7 +96,7 @@ pub fn load_glb(path: &std::path::Path) -> Result<Loader, Error> {
     if let Some(json) = json {
         if let Some(bin) = bin {
             let gltf: gltf2::glTF =
-                serde_json::from_str(json).map_err(|e| Error::StaticMessage("serde_json"))?;
+                serde_json::from_str(json).map_err(|_| Error::StaticMessage("serde_json"))?;
 
             let mut loader = Loader {
                 gltf,
@@ -239,11 +239,6 @@ impl Loader {
             .iter()
             .map(|p| self.get_prim_index_count(p).unwrap_or(0) as u32)
             .sum();
-
-        let vertex_stride = (3 + 3 + 2) * 4; // pos nom uv
-                                             // let mut position_buffer = AccessorBytes::create(vertex_stride, vertex_count);
-                                             // let mut normal_buffer = AccessorBytes::create(vertex_stride, vertex_count);
-                                             // let mut uv_buffer = AccessorBytes::create(vertex_stride, vertex_count);
 
         let index_stride = self.get_index_stride(&m.primitives[0]).unwrap_or(0) as u32;
         let mut mesh = Mesh::new(AccessorBytes::create(index_stride, index_count), vertex_count);

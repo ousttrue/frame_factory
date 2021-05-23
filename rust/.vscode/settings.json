@@ -6,6 +6,7 @@
         "cgmath",
         "dxgi",
         "dxgiformat",
+        "fovy",
         "gltf",
         "hlsl",
         "hwnd",

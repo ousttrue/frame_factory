@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ffi::CStr};
+use std::{collections::HashMap};
 
 use crate::com_util::ComCreate;
 use crate::scene::AccessorBytes;

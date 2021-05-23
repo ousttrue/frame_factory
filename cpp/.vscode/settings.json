@@ -1,9 +1,13 @@
 {
     "cSpell.words": [
         "HRESULT",
+        "IMGUI",
+        "LPSTR",
         "dxgi",
         "dxgiformat",
-        "hwnd"
+        "gltf",
+        "hwnd",
+        "meiryo"
     ],
     "C_Cpp.clang_format_style": "file",
     "cmake.configureOnOpen": true,

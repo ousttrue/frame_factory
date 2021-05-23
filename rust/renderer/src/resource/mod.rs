@@ -1,9 +1,6 @@
-use cgmath::Matrix;
-use com_ptr::ComPtr;
+use std::collections::HashMap;
 use std::{
-    borrow::Borrow,
-    cell::{Ref, RefCell},
-    collections::HashMap,
+    cell::RefCell,
     ops::Deref,
     rc::Rc,
 };

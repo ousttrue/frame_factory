@@ -11,6 +11,10 @@
     ],
     "C_Cpp.clang_format_style": "file",
     "cmake.configureOnOpen": true,
+    "cmake.configureArgs": [
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=1",
+    ],
+    "cmake.generator": "Ninja",
     "[cpp]": {
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
     }

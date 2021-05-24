@@ -3,6 +3,7 @@ ADD_EXECUTABLE(${TARGET_NAME} WIN32
     main.cpp
     window_util.cpp
     dx11.cpp
+    imgui_app.cpp
 )
 
 TARGET_LINK_DIRECTORIES(${TARGET_NAME} PRIVATE

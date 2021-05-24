@@ -12,6 +12,6 @@
     "C_Cpp.clang_format_style": "file",
     "cmake.configureOnOpen": true,
     "[cpp]": {
-        "editor.defaultFormatter": "xaver.clang-format"
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
     }
 }

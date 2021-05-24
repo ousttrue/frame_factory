@@ -273,6 +273,7 @@ public:
         for (auto &scene : m_scenes)
         {
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+            ImGui::SetNextWindowSize(ImVec2(512, 512), ImGuiCond_Once);
             if (ImGui::Begin(scene->name().c_str(), nullptr,
                              ImGuiWindowFlags_NoScrollbar |
                                  ImGuiWindowFlags_NoScrollWithMouse))

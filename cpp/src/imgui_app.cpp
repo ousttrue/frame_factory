@@ -2,10 +2,19 @@
 #include "extern_renderer.h"
 #include <wrl/client.h>
 #include <string>
+#include <sstream>
 #include <string_view>
+#include <filesystem>
 #include <imgui.h>
 #include <backends/imgui_impl_win32.h>
 #include <backends/imgui_impl_dx11.h>
+
+static std::string get_file_name(std::string_view src)
+{
+    std::filesystem::path p = src;
+    auto name = p.filename().string();
+    return name;
+}
 
 class RustRenderer
 {
@@ -16,6 +25,8 @@ class RustRenderer
     Microsoft::WRL::ComPtr<ID3D11Texture2D> m_texture;
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_srv;
     std::string m_name;
+
+    static int s_next_id;
 
     RustRenderer(uint32_t scene, const std::string_view &name)
         : m_scene(scene), m_name(name)
@@ -35,7 +46,12 @@ public:
         {
             return nullptr;
         }
-        return std::unique_ptr<RustRenderer>(new RustRenderer(scene, path));
+
+        std::stringstream ss;
+
+        ss << get_file_name(path) << "##view:" << s_next_id++;
+
+        return std::unique_ptr<RustRenderer>(new RustRenderer(scene, ss.str()));
     }
 
     const std::string &name() const
@@ -95,6 +111,8 @@ public:
         return m_srv.Get();
     }
 };
+
+int RustRenderer::s_next_id = 1;
 
 ImGuiApp::ImGuiApp(HWND hwnd, ID3D11Device *device,
                    ID3D11DeviceContext *context)
@@ -252,7 +270,6 @@ void ImGuiApp::gui(ID3D11Device *device, ID3D11DeviceContext *context,
             auto size = ImGui::GetContentRegionAvail();
             auto pos = ImGui::GetWindowPos();
             auto frameHeight = ImGui::GetFrameHeight();
-            auto mouseXY = ImGui::GetMousePos();
 
             // render
             auto crop = state.Crop(

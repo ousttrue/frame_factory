@@ -36,6 +36,7 @@ c++ frontend, rust d3d11 renderer
 * [x] menu file open
 * [x] multi view
 * [ ] multi view focus
+* [ ] view close button
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer

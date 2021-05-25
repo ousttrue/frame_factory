@@ -4,7 +4,7 @@ use crate::com_util::{ComCreate, ComError};
 use com_ptr::ComPtr;
 use winapi::{
     shared::{dxgiformat, dxgitype},
-    um::{d3d11},
+    um::d3d11,
 };
 
 use crate::error::Error;
@@ -48,12 +48,14 @@ pub fn load_texture(
 pub struct Texture {
     pub buffer: ComPtr<d3d11::ID3D11Texture2D>,
     pub srv: ComPtr<d3d11::ID3D11ShaderResourceView>,
+    pub sampler: ComPtr<d3d11::ID3D11SamplerState>,
 }
 
 impl Texture {
     pub fn new(
         d3d_device: &d3d11::ID3D11Device,
         buffer: ComPtr<d3d11::ID3D11Texture2D>,
+        texture: &scene::Texture,
     ) -> Result<Texture, ComError> {
         let srv = ComPtr::create_if_success(|pp| unsafe {
             d3d_device.CreateShaderResourceView(
@@ -62,7 +64,28 @@ impl Texture {
                 pp,
             )
         })?;
-        Ok(Texture { buffer, srv })
+
+        let mut samplerDesc = d3d11::D3D11_SAMPLER_DESC {
+            Filter: d3d11::D3D11_FILTER_MIN_MAG_MIP_LINEAR,
+            AddressU: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+            AddressV: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+            AddressW: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+            MipLODBias: 0.0f32,
+            MaxAnisotropy: 1,
+            ComparisonFunc: d3d11::D3D11_COMPARISON_ALWAYS,
+            BorderColor: [0f32, 0f32, 0f32, 0f32],
+            MinLOD: 0f32,
+            MaxLOD: d3d11::D3D11_FLOAT32_MAX,
+        };
+        let sampler = ComPtr::create_if_success(|pp| unsafe {
+            d3d_device.CreateSamplerState(&samplerDesc, pp)
+        })?;
+
+        Ok(Texture {
+            buffer,
+            srv,
+            sampler,
+        })
     }
 }
 

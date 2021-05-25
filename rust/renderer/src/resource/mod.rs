@@ -83,7 +83,7 @@ impl ResourceManager {
             // load png/jpeg
             if let Ok(buffer) = load_texture(d3d_device, &texture.image.bytes) {
                 // create texture
-                let texture = Texture::new(d3d_device, buffer).unwrap();
+                let texture = Texture::new(d3d_device, buffer, texture).unwrap();
                 self.textures.borrow_mut().insert(id, Rc::new(texture));
             }
         }
@@ -236,7 +236,9 @@ impl ResourceManager {
             material.shader.set(d3d_context);
             if let Some(texture) = &material.color_texture {
                 let srvs = [texture.srv.as_ptr()];
+                let samplers = [texture.sampler.as_ptr()];
                 unsafe {
+                    d3d_context.PSSetSamplers(0, 1, samplers.as_ptr());
                     d3d_context.PSSetShaderResources(0, 1, srvs.as_ptr());
                 };
             }

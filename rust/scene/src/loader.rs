@@ -1,3 +1,4 @@
+use core::panic;
 use std::{cell::Cell, fs::File, io::Read, rc::Rc, u32, usize};
 
 use cgmath::{One, Quaternion, Vector3, Zero};
@@ -138,8 +139,39 @@ impl Loader {
         }
         for t in &self.gltf.textures {
             let image = &self.images[t.source.unwrap() as usize];
-            let texture = Texture::new(image.clone());
-            self.textures.push(Rc::new(texture));
+            if let Some(sampler) = self.get_sampler(t) {
+                let (filter, mipmap) = match &sampler.minFilter {
+                    Some(9728) => (Filter::Point, MipMap::None),
+                    Some(9729) => (Filter::Linear, MipMap::None),
+                    Some(9984) => (Filter::Point, MipMap::Use),
+                    Some(9985) => (Filter::Linear, MipMap::Use),
+                    Some(9986) => (Filter::Point, MipMap::Blend),
+                    Some(9987) => (Filter::Linear, MipMap::Blend),
+                    Some(_) => panic!(),
+                    None => (Filter::Linear, MipMap::Use),
+                };
+                let wrap_u = match sampler.wrapS {
+                    Some(33071) => Wrap::Clamp,
+                    Some(33648) => Wrap::Mirror,
+                    Some(10497) => Wrap::Repeat,
+                    Some(_) => panic!(),
+                    None => Wrap::Repeat,
+                };
+                let wrap_v = match sampler.wrapT {
+                    Some(33071) => Wrap::Clamp,
+                    Some(33648) => Wrap::Mirror,
+                    Some(10497) => Wrap::Repeat,
+                    Some(_) => panic!(),
+                    None => Wrap::Repeat,
+                };
+
+                let texture = Texture::new(image.clone(), mipmap, filter, wrap_u, wrap_v);
+                self.textures.push(Rc::new(texture));
+            } else {
+                // default sampler
+                let texture = Texture::default(image.clone());
+                self.textures.push(Rc::new(texture));
+            }
         }
         self.load_materials()?;
         for m in &self.gltf.meshes {
@@ -149,6 +181,14 @@ impl Loader {
         self.load_nodes()?;
 
         Ok(())
+    }
+
+    pub fn get_sampler(&self, texture: &gltf2::Texture) -> Option<&gltf2::Sampler> {
+        if let Some(sampler) = texture.sampler {
+            self.gltf.samplers.get(sampler as usize)
+        } else {
+            None
+        }
     }
 
     pub fn get_accessor_bytes(&self, accessor_index: i32) -> Option<(&[u8], i32, i32)> {

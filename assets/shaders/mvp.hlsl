@@ -39,7 +39,7 @@ PS_IN vsMain(VS_IN input) {
 }
 
 float4 psMain(PS_IN input) : SV_TARGET {
-  float2 tex = float2(input.Tex.x, 1 - input.Tex.y);
+  float2 tex = float2(input.Tex.x, input.Tex.y);
   float4 texel = diffuseTexture.Sample(diffuseTextureSampler, tex);
   return texel * input.Color;
 }

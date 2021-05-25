@@ -14,14 +14,6 @@
         }
     ],
     "settings": {
-        "files.associations": {
-            "memory": "cpp"
-        },
-        "cSpell.words": [
-            "Submesh",
-            "gltf",
-            "imgui",
-            "struct"
-        ]
+        "workbench.colorTheme": "Atom One Dark",
     }
 }

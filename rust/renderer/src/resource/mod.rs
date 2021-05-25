@@ -76,12 +76,12 @@ impl ResourceManager {
     pub fn get_or_create_texture(
         &self,
         d3d_device: &d3d11::ID3D11Device,
-        texture: &scene::Image,
+        texture: &scene::Texture,
     ) -> Option<Rc<Texture>> {
         let id = texture.get_id();
         if !self.textures.borrow().contains_key(&id) {
             // load png/jpeg
-            if let Ok(buffer) = load_texture(d3d_device, &texture.bytes) {
+            if let Ok(buffer) = load_texture(d3d_device, &texture.image.bytes) {
                 // create texture
                 let texture = Texture::new(d3d_device, buffer).unwrap();
                 self.textures.borrow_mut().insert(id, Rc::new(texture));

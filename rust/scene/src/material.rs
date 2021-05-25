@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::Image;
+use crate::Texture;
 
 #[repr(C)]
 pub struct RGBA {
@@ -23,7 +23,7 @@ impl RGBA {
 
 pub struct UnLightMaterial {
     pub color: RGBA,
-    pub color_texture: Option<Rc<Image>>,
+    pub color_texture: Option<Rc<Texture>>,
 }
 
 pub enum MaterialData {

@@ -103,6 +103,7 @@ pub fn load_glb(path: &std::path::Path) -> Result<Loader, Error> {
             let mut loader = Loader {
                 gltf,
                 bin: Vec::from(bin),
+                images: Vec::new(),
                 textures: Vec::new(),
                 materials: Vec::new(),
                 meshes: Vec::new(),
@@ -121,7 +122,8 @@ pub fn load_glb(path: &std::path::Path) -> Result<Loader, Error> {
 pub struct Loader {
     gltf: gltf2::glTF,
     bin: Vec<u8>,
-    pub textures: Vec<Rc<Image>>,
+    pub images: Vec<Rc<Image>>,
+    pub textures: Vec<Rc<Texture>>,
     pub materials: Vec<Rc<Material>>,
     pub meshes: Vec<Rc<Mesh>>,
     pub nodes: Vec<Rc<Node>>,
@@ -129,7 +131,16 @@ pub struct Loader {
 
 impl Loader {
     pub fn load(&mut self) -> Result<(), Error> {
-        self.load_textures()?;
+        // self.load_textures()?;
+        for i in &self.gltf.images {
+            let image = self.get_image_bytes(i);
+            self.images.push(Rc::new(image));
+        }
+        for t in &self.gltf.textures {
+            let image = &self.images[t.source.unwrap() as usize];
+            let texture = Texture::new(image.clone());
+            self.textures.push(Rc::new(texture));
+        }
         self.load_materials()?;
         for m in &self.gltf.meshes {
             let mesh = self.load_mesh(m)?;
@@ -160,9 +171,7 @@ impl Loader {
         Some((&bytes[start..end], stride, count))
     }
 
-    pub fn get_image_bytes_from_texture(&self, texture: &gltf2::Texture) -> Image {
-        let image = &self.gltf.images[texture.source.unwrap() as usize];
-
+    pub fn get_image_bytes(&self, image: &gltf2::Image) -> Image {
         if image.uri.len() > 0 {
             todo!()
         }
@@ -192,16 +201,7 @@ impl Loader {
         Some(self.gltf.accessors[prim.indices? as usize].stride())
     }
 
-    pub fn load_textures(&mut self) -> Result<(), Error> {
-        for t in &self.gltf.textures {
-            let image = self.get_image_bytes_from_texture(t);
-            self.textures.push(Rc::new(image));
-        }
-
-        Ok(())
-    }
-
-    fn get_material_color_texture(&self, material: &gltf2::Material) -> Option<Rc<Image>> {
+    fn get_material_color_texture(&self, material: &gltf2::Material) -> Option<Rc<Texture>> {
         if let Some(texture_index) = material
             .pbrMetallicRoughness
             .as_ref()?

@@ -18,6 +18,9 @@ pub use accessor_bytes::*;
 pub mod image;
 pub use image::*;
 
+pub mod texture;
+pub use texture::*;
+
 pub mod light;
 pub use light::*;
 

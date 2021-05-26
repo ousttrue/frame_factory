@@ -1,13 +1,33 @@
 extern crate renderer;
 extern crate scene;
 
-use std::{ffi::CStr, path::Path};
+use std::{ffi::CStr, path::Path, ptr};
 
 use renderer::{asset_manager, resource};
 use winapi::um::d3d11;
 
 fn to_string(p: *const i8) -> String {
     unsafe { CStr::from_ptr(p).to_str().unwrap().to_owned() }
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_message_peek(i: u32) -> *const u8 {
+    if let Some(message_manager) = scene::message::get() {
+        if let Some(message) = message_manager.queue.get(i as usize) {
+            message.as_ptr()
+        } else {
+            ptr::null() as *const u8
+        }
+    } else {
+        ptr::null() as *const u8
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn FRAME_FACTORY_message_clear() {
+    if let Some(message_manager) = scene::message::get() {
+        message_manager.queue.clear()
+    }
 }
 
 #[no_mangle]
@@ -40,7 +60,11 @@ pub extern "C" fn FRAME_FACTORY_scene_load(path: *const i8) -> u32 {
 
             if let Ok(loader) = scene::loader::load(path) {
                 let mut scene = scene::Scene::new();
-                for root in loader.nodes.iter().filter(|node| node.get_parent().is_none()) {
+                for root in loader
+                    .nodes
+                    .iter()
+                    .filter(|node| node.get_parent().is_none())
+                {
                     scene.roots.push(root.clone());
                 }
                 return scene_manager.add(scene);

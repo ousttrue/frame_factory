@@ -1,5 +1,7 @@
 extern crate gltf2;
 
+pub mod message;
+
 pub mod error;
 use std::rc::Rc;
 

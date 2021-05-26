@@ -5,12 +5,16 @@
 
 extern "C"
 {
+    // message
+    auto FRAME_FACTORY_message_peek(uint32_t index) -> const uint8_t *;
+
+    auto FRAME_FACTORY_message_clear() -> void;
+
     // asset
     auto FRAME_FACTORY_asset_path(const char *path) -> void;
 
     // new scene
-    auto FRAME_FACTORY_scene_load(const char *path)
-        -> uint32_t;
+    auto FRAME_FACTORY_scene_load(const char *path) -> uint32_t;
 
     // shutdown
     auto FRAME_FACTORY_scene_destroy() -> void;

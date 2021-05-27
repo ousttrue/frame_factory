@@ -37,6 +37,7 @@ c++ frontend, rust d3d11 renderer
 * [x] multi view
 * [ ] multi view focus
 * [ ] view close button
+* [ ] share imgui between c++ and rust
 
 ## Scene
 * [x] MVP Matrix, ConstantBuffer

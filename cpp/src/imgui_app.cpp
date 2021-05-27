@@ -1,5 +1,6 @@
 #include "imgui_app.h"
 #include "extern_renderer.h"
+#include <stdint.h>
 #include <wrl/client.h>
 #include <string>
 #include <sstream>
@@ -177,6 +178,19 @@ void ImGuiApp::load(ID3D11Device *device, int argc, char **argv)
 void ImGuiApp::update(ID3D11Device *device, ID3D11DeviceContext *context,
                       const screenstate::ScreenState &state)
 {
+    // log message
+    for (int i = 0; true; ++i)
+    {
+        uint32_t size;
+        auto msg = FRAME_FACTORY_message_peek(i, &size);
+        if (!msg)
+        {
+            FRAME_FACTORY_message_clear();
+            break;
+        }
+        m_messages.push_back(std::string(msg, msg + size));
+    }
+
     // Start the Dear ImGui frame
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
@@ -256,6 +270,16 @@ void ImGuiApp::gui(ID3D11Device *device, ID3D11DeviceContext *context,
     if (m_show_demo_window)
     {
         ImGui::ShowDemoWindow(&m_show_demo_window);
+    }
+
+    // log
+    if (ImGui::Begin("log messages"))
+    {
+        for (auto &msg : m_messages)
+        {
+            ImGui::TextUnformatted(msg.data(), msg.data() + msg.size());
+        }
+        ImGui::End();
     }
 
     // 3d view

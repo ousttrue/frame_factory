@@ -2,6 +2,7 @@
 #include "window_util.h"
 #include <memory>
 #include <list>
+#include <string>
 #include <d3d11.h>
 
 struct ImGuiApp
@@ -10,6 +11,7 @@ struct ImGuiApp
     float m_clearColor[4] = {0.0f, 0.2f, 0.4f, 1.0f};
     std::list<std::unique_ptr<class RustRenderer>> m_scenes;
     HWND m_hwnd;
+    std::list<std::string> m_messages;
 
 public:
     ImGuiApp(HWND hwnd, ID3D11Device *device, ID3D11DeviceContext *context);

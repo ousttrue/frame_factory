@@ -6,7 +6,8 @@
 extern "C"
 {
     // message
-    auto FRAME_FACTORY_message_peek(uint32_t index) -> const uint8_t *;
+    auto FRAME_FACTORY_message_peek(uint32_t index, uint32_t *size)
+        -> const uint8_t *;
 
     auto FRAME_FACTORY_message_clear() -> void;
 

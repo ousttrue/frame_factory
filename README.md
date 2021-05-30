@@ -6,18 +6,28 @@ rust 練習
 |rust frame_factory.dll  |
 |+-----+  +-------------+|
 ||Scene|->|D3D Resources||
-|+-----+  +-------------+|
-+------------------------+
-  A     |Render
-  |     |
-  |     v
-Texture2DRenderTarget
-+---------+
-| Window  |
-|c++ imgui|
-+---------+
+|+-----+  +-------------+|---+
++------------------------+   |
+  A     |Render              |
+  |     |                    |
+  |     v                    |
+Texture2DRenderTarget        v
++---------+              +--------+
+| Window  |------------->|imgui   |
+|c++      |              |dll c++ |
+|         |              |mangling|
++---------+              +--------+
 ```
 c++ frontend, rust d3d11 renderer
+
+# Tools
+## rust/from_jsonschema
+
+Read glTF's JsonSchema and generate rust code for serde_json.
+
+## rust/from_cpp_header 🔧
+
+Read imgui.h and generate rust code for c++ ffi. Shared the imgui.dll between c++ and rust.
 
 # ToDo
 ## GUI

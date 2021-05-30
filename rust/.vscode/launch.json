@@ -7,6 +7,30 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "from cpp header",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=from_cpp_header",
+                    "--bin=from_cpp_header"
+                ],
+                "filter": {
+                    "name": "from_cpp_header",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "${workspaceFolder}/../cpp/_external/imgui/imgui.h",
+                "${workspaceFolder}/imgui_shared/src/generated"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PATH": "${env:PATH};C:\\Program Files\\LLVM\\bin",
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "from jsonschema",
             "cargo": {
                 "args": [

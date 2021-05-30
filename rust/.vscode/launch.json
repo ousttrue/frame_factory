@@ -21,7 +21,6 @@
             },
             "args": [
                 "${workspaceFolder}/../cpp/_external/imgui/imgui.h",
-                "${workspaceFolder}/imgui_shared/src/generated"
             ],
             "cwd": "${workspaceFolder}",
             "env": {

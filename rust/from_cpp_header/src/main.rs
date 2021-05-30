@@ -1,22 +1,7 @@
-extern crate clang_sys;
-
-#[derive(Debug)]
-enum Error {
-    StaticMessage(&'static str),
-}
-
-fn run() -> Result<(), Error> {
-    // get translation unit
-    let index = unsafe { clang_sys::clang_createIndex(0, 1) };
-    if index.is_null() {
-        return Err(Error::StaticMessage("fail to clang_sys::clang_createIndex"));
-    }
-
-    Ok(())
-}
-
 fn main() {
-    match run() {
+    let args: Vec<String> = std::env::args().collect();
+
+    match from_cpp_header::run(&args[1..]) {
         Ok(_) => print!("ok"),
         Err(err) => print!("error: {:?}", err),
     }

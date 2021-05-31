@@ -9,8 +9,53 @@ pub use cxstring::*;
 mod cxsourcelocation;
 pub use cxsourcelocation::*;
 
+enum Kind {
+    None,
+    Namespace,
+}
+
+struct Value {
+    hash: u32,
+    parent_hash: Option<u32>,
+    kind: Kind,
+}
+
+impl Value {
+    pub fn new(cursor: clang_sys::CXCursor) -> Value {
+        let hash = unsafe { clang_sys::clang_hashCursor(cursor) };
+        Value {
+            hash,
+            parent_hash: None,
+            kind: Kind::None,
+        }
+    }
+}
+
 struct Data {
-    map: HashMap<u32, u32>,
+    map: HashMap<u32, Value>,
+}
+
+struct ParentIterator<'a> {
+    current: Option<&'a Value>,
+    data: &'a Data,
+}
+
+impl<'a> Iterator for ParentIterator<'a> {
+    type Item = &'a Value;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(current) = self.current {
+            if let Some(parent_hash) = current.parent_hash {
+                if let Some(value) = self.data.map.get(&parent_hash) {
+                    self.current = Some(value);
+                    return Some(&value);
+                }
+            }
+        }
+
+        self.current = None;
+        None
+    }
 }
 
 impl Data {
@@ -20,30 +65,38 @@ impl Data {
         }
     }
 
-    fn push_cursor_value(&mut self, cursor: clang_sys::CXCursor, value: u32) {
-        let hash = unsafe { clang_sys::clang_hashCursor(cursor) };
-        self.map.insert(hash, value);
-    }
+    // fn push_cursor_value(&mut self, cursor: clang_sys::CXCursor, value: Value) {
+    //     let hash = unsafe { clang_sys::clang_hashCursor(cursor) };
+    //     self.map.insert(hash, value);
+    // }
 
-    fn get_cursor_value(&self, cursor: clang_sys::CXCursor) -> Option<u32> {
+    fn get_cursor_value(&self, cursor: clang_sys::CXCursor) -> Option<&Value> {
         let hash = unsafe { clang_sys::clang_hashCursor(cursor) };
         if let Some(value) = self.map.get(&hash) {
-            Some(value.clone())
+            Some(value)
         } else {
             None
         }
     }
 
-    fn on_function(&mut self, cursor: clang_sys::CXCursor, parent: clang_sys::CXCursor) {
-        let spelling = CXString::from_cursor(cursor);
+    fn iter_parents(&self, cursor: clang_sys::CXCursor) -> ParentIterator {
+        ParentIterator {
+            current: self.get_cursor_value(cursor),
+            data: self,
+        }
+    }
+
+    fn on_function(&mut self, cursor: clang_sys::CXCursor) {
+        for parent in self.iter_parents(cursor) {}
 
         let location = CXSourceLocation::from_cursor(cursor);
         if !location.is_null() {
             let file = location.get_path();
+            let spelling = CXString::from_cursor(cursor);
             match file.file_name() {
                 Some(name) if name == "imgui.h" => {
                     println!("{}({})", spelling.to_string(), file.to_string_lossy())
-                },
+                }
                 _ => (),
             }
         }
@@ -55,7 +108,14 @@ impl Data {
             panic!();
         }
 
-        let value = self.get_cursor_value(parent).unwrap();
+        {
+            let mut value = Value::new(cursor);
+
+            let parent_value = self.get_cursor_value(parent).unwrap();
+            value.parent_hash = Some(parent_value.hash);
+
+            self.map.insert(value.hash, value);
+        }
 
         match cursor.kind {
             clang_sys::CXCursor_UnexposedDecl => (),
@@ -65,7 +125,7 @@ impl Data {
             clang_sys::CXCursor_EnumConstantDecl => (),
             clang_sys::CXCursor_FieldDecl => (),
             clang_sys::CXCursor_VarDecl => (),
-            clang_sys::CXCursor_FunctionDecl => self.on_function(cursor, parent),
+            clang_sys::CXCursor_FunctionDecl => self.on_function(cursor),
             clang_sys::CXCursor_ParmDecl => (),
             clang_sys::CXCursor_TypedefDecl => (),
             clang_sys::CXCursor_Namespace => (),
@@ -121,18 +181,7 @@ impl Data {
             clang_sys::CXCursor_StaticAssert => (),
             _ => println!("{:?}", cursor),
         };
-        self.push_cursor_value(cursor, value + 1);
     }
-}
-
-fn get_indent(level: u32) -> String {
-    let mut indent = String::new();
-
-    for _ in 0..level {
-        indent.push_str("  ");
-    }
-
-    indent
 }
 
 extern "C" fn visitor(
@@ -156,7 +205,15 @@ pub fn run(args: &[String]) -> Result<(), Error> {
 
     // traverse(&tu.get_cursor());
     let root = tu.get_cursor();
-    data.push_cursor_value(root, 0);
+    let hash = unsafe { clang_sys::clang_hashCursor(root) };
+    data.map.insert(
+        hash,
+        Value {
+            kind: Kind::None,
+            parent_hash: None,
+            hash,
+        },
+    );
 
     let p = Box::into_raw(data);
     unsafe { clang_sys::clang_visitChildren(root, visitor, p as *mut c_void) };

@@ -11,6 +11,12 @@ impl CXString {
         }
     }
 
+    pub fn from_file(file: clang_sys::CXFile) -> CXString {
+        CXString {
+            data: unsafe { clang_sys::clang_getFileName(file) },
+        }
+    }
+
     pub fn to_string(&self) -> String {
         unsafe {
             let ptr = clang_sys::clang_getCString(self.data);

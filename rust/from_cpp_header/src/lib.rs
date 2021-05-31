@@ -1,10 +1,13 @@
-use std::{collections::HashMap, ffi::c_void};
+use std::{collections::HashMap, ffi::c_void, ptr};
 
 mod translation_unit;
 pub use translation_unit::*;
 
 mod cxstring;
 pub use cxstring::*;
+
+mod cxsourcelocation;
+pub use cxsourcelocation::*;
 
 struct Data {
     map: HashMap<u32, u32>,
@@ -33,7 +36,17 @@ impl Data {
 
     fn on_function(&mut self, cursor: clang_sys::CXCursor, parent: clang_sys::CXCursor) {
         let spelling = CXString::from_cursor(cursor);
-        println!("{}", spelling.to_string())
+
+        let location = CXSourceLocation::from_cursor(cursor);
+        if !location.is_null() {
+            let file = location.get_path();
+            match file.file_name() {
+                Some(name) if name == "imgui.h" => {
+                    println!("{}({})", spelling.to_string(), file.to_string_lossy())
+                },
+                _ => (),
+            }
+        }
     }
 
     fn on_visit(&mut self, cursor: clang_sys::CXCursor, parent: clang_sys::CXCursor) {
@@ -91,6 +104,8 @@ impl Data {
             clang_sys::CXCursor_CompoundAssignOperator => (),
             clang_sys::CXCursor_CXXStaticCastExpr => (),
             clang_sys::CXCursor_CXXConstCastExpr => (),
+            clang_sys::CXCursor_CXXBoolLiteralExpr => (),
+            clang_sys::CXCursor_UnaryExpr => (),
             //
             clang_sys::CXCursor_CompoundStmt => (),
             clang_sys::CXCursor_ReturnStmt => (),

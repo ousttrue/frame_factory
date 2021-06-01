@@ -1,5 +1,5 @@
 {
-	"folders": [
+    "folders": [
         {
             "path": "rust"
         },
@@ -14,7 +14,12 @@
         }
     ],
     "settings": {
-        "workbench.colorTheme": "Crystal Cult Theme"
-
+        "workbench.colorTheme": "Crystal Cult Theme",
+        "extensions.ignoreRecommendations": false
+    },
+    "extensions": {
+        "recommendations": [
+            "evalapply.crystal-cult-colortheme"
+        ],
     }
 }

@@ -126,15 +126,27 @@ impl Data {
 
         {
             let parent_value = self.get_cursor_value(parent).unwrap();
-            let mut value = Value::new(cursor, parent_value.hash);
-
-            match &value.kind {
-                Kind::Function(name) => (),
-                Kind::Namespace(name) => println!("namespace {}", name),
-                _ => (),
-            }
-
+            let value = Value::new(cursor, parent_value.hash);
             self.map.insert(value.hash, value);
+        }
+
+        {
+            for parent in self.iter_parents(cursor) {
+                match &parent.kind {
+                    Kind::Namespace(ns) if ns == "ImGui" => {
+                        if let Some(value) = self.get_cursor_value(cursor) {
+                            match &value.kind {
+                                Kind::Function(name) => {
+                                    println!("fn {}", name);
+                                }
+                                Kind::Namespace(name) => (),
+                                _ => (),
+                            }
+                        }
+                    }
+                    _ => (),
+                }
+            }
         }
 
         match cursor.kind {
@@ -237,6 +249,11 @@ pub fn run(args: &[String]) -> Result<(), Error> {
 
     let p = Box::into_raw(data);
     unsafe { clang_visitChildren(root, visitor, p as *mut c_void) };
+    let data = unsafe { Box::from_raw(p) };
+
+    // find "SliderFloat2"
+
+    // traverse
 
     Ok(())
 }

@@ -1,48 +1,56 @@
-use std::{cell::{Ref, RefCell}, collections::HashMap};
+use std::{
+    cell::{Ref, RefCell},
+    collections::HashMap,
+};
 
 use clang_sys::*;
+
+use crate::Function;
+
+pub enum Decl {
+    Function(Function),
+}
 
 pub struct Type {
     hash: u32,
     count: u32,
+    pub decl: Option<Decl>,
 }
 
 impl Type {
     pub fn new(hash: u32) -> Type {
-        Type { hash, count: 0 }
+        Type {
+            hash,
+            count: 0,
+            decl: None,
+        }
     }
 }
 
 pub struct TypeMap {
-    map: HashMap<u32, RefCell<Type>>,
+    map: RefCell<HashMap<u32, Type>>,
 }
 
 impl TypeMap {
     pub fn new() -> TypeMap {
         TypeMap {
-            map: HashMap::new(),
+            map: RefCell::new(HashMap::new()),
         }
     }
 
-    fn get_or_create(&mut self, cursor: CXCursor) -> Ref<Type> {
+    pub fn get_or_create<T: FnOnce(&mut Type)>(&self, cursor: CXCursor, f: T) {
         let hash = unsafe { clang_hashCursor(cursor) };
 
-        if let Some(t) = self.map.get_mut(&hash) {
+        if let Some(t) = self.map.borrow_mut().get_mut(&hash) {
+            // 前方参照で hash は登録済み
             // この型がTypedefなどから参照されている回数
-            t.borrow_mut().count += 1;
-        } else {
-            let t = Type::new(hash);
-            self.map.insert(hash, RefCell::new(t));
+            t.count += 1;
+            f(t);
+            return;
         }
 
-        self.map.get(&hash).unwrap().borrow()
-    }
-
-    pub fn parse_function(&mut self, cursor: CXCursor) {
-        let t = self.get_or_create(cursor);
-
-        let result = unsafe { clang_getCursorResultType(cursor) };
-
-       
+        let mut t = Type::new(hash);
+        f(&mut t);
+        self.map.borrow_mut().insert(hash, t);
     }
 }

@@ -7,14 +7,17 @@ use std::{
 mod translation_unit;
 pub use translation_unit::*;
 
+mod cx_source_location;
+mod cx_string;
+
 mod visitor;
 pub use visitor::*;
 
 mod type_map;
 pub use type_map::*;
 
-mod cx_source_location;
-mod cx_string;
+mod function;
+pub use function::*;
 
 pub struct Root {
     stack: Vec<u32>,
@@ -80,9 +83,10 @@ impl OnVisit<Root> for Root
             }
     
             CXCursor_FunctionDecl => {
-                // var reference = m_typeMap.GetOrCreate(cursor);
-                // reference.Type = FunctionType.Parse(cursor, m_typeMap);
-                self.type_map.parse_function(cursor)
+                self.type_map.get_or_create(cursor, |t|{
+                    let f = Function::parse(cursor, &self.type_map);
+                    t.decl = Some(Decl::Function(f));   
+                });
             }
     
             CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {

@@ -14,12 +14,13 @@
         }
     ],
     "settings": {
-        "workbench.colorTheme": "Crystal Cult Theme",
+        "workbench.colorTheme": "Andromeda Colorizer",
         "extensions.ignoreRecommendations": false
     },
     "extensions": {
         "recommendations": [
-            "evalapply.crystal-cult-colortheme"
+            // "evalapply.crystal-cult-colortheme",
+            "eliverlara.andromeda",
         ],
     }
 }

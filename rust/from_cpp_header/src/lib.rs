@@ -55,6 +55,13 @@ struct Data {
     stack: Vec<u32>,
 }
 
+impl Drop for Data
+{
+    fn drop(&mut self) {
+        println!("drop Data");
+    }
+}
+
 struct ParentIterator<'a> {
     current: Option<&'a Value>,
     data: &'a Data,

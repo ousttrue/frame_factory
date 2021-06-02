@@ -13,51 +13,7 @@ pub use translation_unit::*;
 mod cxsourcelocation;
 mod cxstring;
 
-enum Kind {
-    None,
-    Namespace(String),
-    Function(String),
-}
-
-struct Value {
-    hash: u32,
-    parent_hash: u32,
-    kind: Kind,
-}
-
-#[allow(non_upper_case_globals)]
-impl Value {
-    pub fn new(cursor: CXCursor, parent_hash: u32) -> Value {
-        let hash = unsafe { clang_hashCursor(cursor) };
-
-        match cursor.kind {
-            CXCursor_Namespace => {
-                let spelling = cxstring::CXString::from_cursor(cursor);
-                Value {
-                    hash,
-                    parent_hash,
-                    kind: Kind::Namespace(spelling.to_string()),
-                }
-            }
-            CXCursor_FunctionDecl => {
-                let spelling = cxstring::CXString::from_cursor(cursor);
-                Value {
-                    hash,
-                    parent_hash,
-                    kind: Kind::Function(spelling.to_string()),
-                }
-            }
-            _ => Value {
-                hash,
-                parent_hash,
-                kind: Kind::None,
-            },
-        }
-    }
-}
-
-struct Data {
-    map: HashMap<u32, Value>,
+pub struct Data {
     stack: Vec<u32>,
     ns: Vec<String>,
 }
@@ -104,27 +60,6 @@ impl NoDropData {
     }
 }
 
-struct ParentIterator<'a> {
-    current: Option<&'a Value>,
-    data: &'a Data,
-}
-
-impl<'a> Iterator for ParentIterator<'a> {
-    type Item = &'a Value;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(current) = self.current {
-            if let Some(value) = self.data.map.get(&current.parent_hash) {
-                self.current = Some(value);
-                return Some(&value);
-            }
-        }
-
-        self.current = None;
-        None
-    }
-}
-
 extern "C" fn visitor(
     cursor: CXCursor,
     parent: CXCursor,
@@ -147,16 +82,6 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
 
     let spelling = cxstring::CXString::from_cursor(cursor);
     let location = cxsourcelocation::CXSourceLocation::from_cursor(cursor);
-
-    //
-    // process current
-    //
-    {
-        let parent_value = data.get_cursor_value(parent).unwrap();
-        let value = Value::new(cursor, parent_value.hash);
-        data.stack.push(value.hash);
-        data.map.insert(value.hash, value);
-    }
 
     match (cursor.kind) {
         // skip
@@ -284,7 +209,6 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
 impl Data {
     fn new() -> Data {
         Data {
-            map: HashMap::new(),
             stack: Vec::new(),
             ns: Vec::new(),
         }
@@ -298,63 +222,17 @@ impl Data {
         }
         s
     }
-
-    // fn push_cursor_value(&mut self, cursor: CXCursor, value: Value) {
-    //     let hash = unsafe { clang_hashCursor(cursor) };
-    //     self.map.insert(hash, value);
-    // }
-
-    fn get_cursor_value(&self, cursor: CXCursor) -> Option<&Value> {
-        let hash = unsafe { clang_hashCursor(cursor) };
-        if let Some(value) = self.map.get(&hash) {
-            Some(value)
-        } else {
-            None
-        }
-    }
-
-    fn iter_parents(&self, cursor: CXCursor) -> ParentIterator {
-        ParentIterator {
-            current: self.get_cursor_value(cursor),
-            data: self,
-        }
-    }
-
-    fn on_function(&mut self, cursor: CXCursor) {
-        for parent in self.iter_parents(cursor) {}
-
-        let location = cxsourcelocation::CXSourceLocation::from_cursor(cursor);
-        if !location.is_null() {
-            let file = location.get_path();
-            let spelling = cxstring::CXString::from_cursor(cursor);
-            match file.file_name() {
-                Some(name) if name == "imgui.h" => {
-                    println!("{}({})", spelling.to_string(), file.to_string_lossy())
-                }
-                _ => (),
-            }
-        }
-    }
 }
 
-pub fn run(args: &[String]) -> Result<(), Error> {
+pub fn run(args: &[String]) -> Result<Box<Data>, Error> {
     let tu = TranslationUnit::parse(args[0].as_str())?;
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 
-    let mut data = Box::new(Data::new());
+    let data = Box::new(Data::new());
 
     // traverse(&tu.get_cursor());
     let root = tu.get_cursor();
-    let hash = unsafe { clang_hashCursor(root) };
-    data.map.insert(
-        hash,
-        Value {
-            kind: Kind::None,
-            parent_hash: 0,
-            hash,
-        },
-    );
 
     let p = Box::into_raw(data);
     visit_children(p, root);
@@ -364,5 +242,5 @@ pub fn run(args: &[String]) -> Result<(), Error> {
 
     // traverse
 
-    Ok(())
+    Ok(data)
 }

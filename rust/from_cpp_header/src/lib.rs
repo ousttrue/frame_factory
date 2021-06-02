@@ -148,7 +148,9 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
     let spelling = cxstring::CXString::from_cursor(cursor);
     let location = cxsourcelocation::CXSourceLocation::from_cursor(cursor);
 
+    //
     // process current
+    //
     {
         let parent_value = data.get_cursor_value(parent).unwrap();
         let value = Value::new(cursor, parent_value.hash);
@@ -156,133 +158,121 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
         data.map.insert(value.hash, value);
     }
 
-    if let Some(filename) = location.get_path().file_name() {
-        if filename == "imgui.h" {
-            match cursor.kind {
-                CXCursor_UnexposedDecl => (),
-                CXCursor_StructDecl => {
-                    // 2
-                    println!(
-                        "{:02}:{} struct {}{}",
-                        data.stack.len(),
-                        location.get_path().to_string_lossy(),
-                        data.get_namespace(),
-                        spelling.to_string()
-                    );
-                }
-                // CXCursor_UnionDecl => (),
-                CXCursor_EnumDecl => {
-                    // 5
-                    println!(
-                        "{:02}:{} enum {}{}",
-                        data.stack.len(),
-                        location.get_path().to_string_lossy(),
-                        data.get_namespace(),
-                        spelling.to_string()
-                    );
-                }
-                // CXCursor_EnumConstantDecl => (),
-                // CXCursor_FieldDecl => (),
-                CXCursor_VarDecl => {
-                    // 9
-                    println!(
-                        "{:02}:{} var {}{}",
-                        data.stack.len(),
-                        location.get_path().to_string_lossy(),
-                        data.get_namespace(),
-                        spelling.to_string()
-                    );
-                }
-                CXCursor_FunctionDecl => {
-                    // 8
-                    println!(
-                        "{:02}:{} fn {}{}",
-                        data.stack.len(),
-                        location.get_path().to_string_lossy(),
-                        data.get_namespace(),
-                        spelling.to_string()
-                    );
-                }
-                // CXCursor_ParmDecl => (),
-                CXCursor_TypedefDecl => {
-                    // 20
-                    println!(
-                        "{:02}:{} typedef {}{}",
-                        data.stack.len(),
-                        location.get_path().to_string_lossy(),
-                        data.get_namespace(),
-                        spelling.to_string()
-                    );
-                }
-                CXCursor_Namespace => {
-                    // 22
-                    println!(
-                        "{:02}:{} namespace {}{}",
-                        data.stack.len(),
-                        location.get_path().to_string_lossy(),
-                        data.get_namespace(),
-                        spelling.to_string()
-                    );
-                    data.ns.push(spelling.to_string());
-                    visit_children(data.ptr, cursor);
-                    data.ns.pop();
-                }
-                // CXCursor_NamespaceRef => (),
-                // CXCursor_ConversionFunction => (),
-                // CXCursor_CXXMethod => (),
-                // CXCursor_Constructor => (),
-                // CXCursor_Destructor => (),
-                CXCursor_FunctionTemplate => (),
-                CXCursor_ClassTemplate => (),
-                // CXCursor_TypeRef => (),
-                // CXCursor_TemplateRef => (),
-                // CXCursor_TemplateTypeParameter => (),
-                // CXCursor_OverloadedDeclRef => (),
-                // CXCursor_NonTypeTemplateParameter => (),
-                // CXCursor_ClassTemplatePartialSpecialization => (),
-                // CXCursor_UsingDeclaration => (),
-                // //
-                // CXCursor_ArraySubscriptExpr => (),
-                // CXCursor_UnexposedExpr => (),
-                // CXCursor_MemberRefExpr => (),
-                // CXCursor_CStyleCastExpr => (),
-                // CXCursor_StringLiteral => (),
-                // CXCursor_CallExpr => (),
-                // CXCursor_CXXThisExpr => (),
-                // CXCursor_DeclRefExpr => (),
-                // CXCursor_UnaryOperator => (),
-                // CXCursor_BinaryOperator => (),
-                // CXCursor_ConditionalOperator => (),
-                // CXCursor_ParenExpr => (),
-                // CXCursor_IntegerLiteral => (),
-                // CXCursor_FloatingLiteral => (),
-                // CXCursor_CXXThrowExpr => (),
-                // CXCursor_ObjCStringLiteral => (),
-                // CXCursor_CXXNullPtrLiteralExpr => (),
-                // CXCursor_CompoundAssignOperator => (),
-                // CXCursor_CXXStaticCastExpr => (),
-                // CXCursor_CXXConstCastExpr => (),
-                // CXCursor_CXXBoolLiteralExpr => (),
-                // CXCursor_UnaryExpr => (),
-                // //
-                // CXCursor_CompoundStmt => (),
-                // CXCursor_ReturnStmt => (),
-                // CXCursor_DeclStmt => (),
-                // CXCursor_IfStmt => (),
-                // CXCursor_NullStmt => (),
-                // //
-                // CXCursor_UnexposedAttr => (),
-                // 501
-                CXCursor_MacroDefinition => (),
-                // 502
-                CXCursor_MacroExpansion => (),
-                // 503
-                CXCursor_InclusionDirective => (),
-                // CXCursor_WarnUnusedResultAttr => (),
-                // CXCursor_StaticAssert => (),
-                _ => println!("{:?}", cursor),
-            };
+    match (cursor.kind) {
+        // skip
+        CXCursor_InclusionDirective
+        | CXCursor_ClassTemplate
+        | CXCursor_ClassTemplatePartialSpecialization
+        | CXCursor_FunctionTemplate
+        | CXCursor_UsingDeclaration
+        | CXCursor_StaticAssert
+        // | CXCursor_FirstExpr
+        | CXCursor_AlignedAttr
+        | CXCursor_CXXAccessSpecifier
+        | CXCursor_Constructor
+        | CXCursor_Destructor
+        | CXCursor_ConversionFunction => (),
+
+        CXCursor_MacroDefinition => {
+            // m_typeMap.ParseMacroDefinition(cursor);
         }
+
+        CXCursor_MacroExpansion => {
+            //
+        }
+
+        CXCursor_Namespace => {
+            data.ns.push(spelling.to_string());
+            visit_children(data.ptr, cursor);
+            data.ns.pop();
+        }
+
+        CXCursor_UnexposedDecl => {
+            data.ns.push(spelling.to_string());
+            visit_children(data.ptr, cursor);
+            data.ns.pop();
+        }
+
+        CXCursor_TypedefDecl => {
+            // var reference = m_typeMap.GetOrCreate(cursor);
+            // reference.Type = TypedefType.Parse(cursor, m_typeMap);
+        }
+
+        CXCursor_FunctionDecl => {
+            // var reference = m_typeMap.GetOrCreate(cursor);
+            // reference.Type = FunctionType.Parse(cursor, m_typeMap);
+        }
+
+        CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {
+            // var reference = m_typeMap.GetOrCreate(cursor);
+            // var structType = StructType.Parse(cursor, m_typeMap);
+            // reference.Type = structType;
+            data.ns.push(spelling.to_string());
+            visit_children(data.ptr, cursor);
+            data.ns.pop();
+            // // if (libclang.clang_Cursor_isAnonymousRecordDecl(cursor) != 0)
+            // if (libclang.clang_Cursor_isAnonymous(cursor) != 0)
+            // {
+            //     // anonymous type decl add field to current struct.
+            //     structType.AnonymousParent = context.Current;
+            //     var fieldOffset = (uint)libclang.clang_Cursor_getOffsetOfField(cursor);
+            //     var current = context.Current;
+            //     // var fieldName = cursor.Spelling();
+            //     // FIXME: anonymous type field offset ?
+            //     if (current != null)
+            //     {
+            //         current.Fields.Add(new StructField(current.Fields.Count, "", reference, 0));
+            //     }
+            //     else
+            //     {
+            //         var a = 0;
+            //     }
+            // }
+        }
+
+        CXCursor_FieldDecl => {
+            // var fieldName = cursor.Spelling();
+            // var fieldOffset = (uint)libclang.clang_Cursor_getOffsetOfField(cursor);
+            // var fieldType = libclang.clang_getCursorType(cursor);
+            // var current = context.Current;
+            // if (!string.IsNullOrEmpty(fieldName) && current.Fields.Any(x => x.Name == fieldName))
+            // {
+            //     throw new Exception();
+            // }
+            // current.Fields.Add(new StructField(current.Fields.Count, fieldName, m_typeMap.CxTypeToType(fieldType, cursor).Item1, fieldOffset));
+            // break;
+        }
+
+        CXCursor_CXXBaseSpecifier => {
+            // var referenced = libclang.clang_getCursorReferenced(cursor);
+            // var baseClass = m_typeMap.GetOrCreate(referenced);
+            // context.Current.BaseClass = baseClass;
+        }
+
+        CXCursor_UnexposedAttr => {
+            // var src = m_typeMap.GetSource(cursor);
+            // if (StructType.TryGetIID(src, out Guid iid))
+            // {
+            //     context.Current.IID = iid;
+            // }
+        }
+
+        CXCursor_CXXMethod => {
+            // var method = FunctionType.Parse(cursor, m_typeMap);
+            // if (!method.HasBody)
+            // {
+            //     context.Current.Methods.Add(method);
+            // }
+        }
+
+        CXCursor_EnumDecl => {
+            // var reference = m_typeMap.GetOrCreate(cursor);
+            // reference.Type = EnumType.Parse(cursor);
+        }
+
+        CXCursor_VarDecl => (),
+
+        _ => panic!("unknown CXCursorKind"),
     }
 
     // processc children

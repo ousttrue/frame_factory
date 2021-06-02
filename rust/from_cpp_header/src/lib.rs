@@ -1,5 +1,13 @@
 use clang_sys::*;
-use std::{collections::HashMap, ffi::c_void, io::{Write, stderr}, io::stdout};
+use std::{
+    borrow::{Borrow, BorrowMut},
+    cell::{Cell, Ref, RefCell},
+    collections::HashMap,
+    ffi::c_void,
+    io::stdout,
+    io::{stderr, Write},
+    ops::{Deref, DerefMut},
+};
 
 mod translation_unit;
 pub use translation_unit::*;
@@ -55,10 +63,45 @@ struct Data {
     stack: Vec<u32>,
 }
 
-impl Drop for Data
-{
+impl Drop for Data {
     fn drop(&mut self) {
         println!("drop Data");
+    }
+}
+
+struct NoDropData {
+    data: *mut Data,
+    box_data: Option<Box<Data>>,
+}
+
+impl Drop for NoDropData {
+    fn drop(&mut self) {
+        if let Some(box_data) = self.box_data.take() {
+            Box::into_raw(box_data);
+        }
+    }
+}
+
+impl Deref for NoDropData {
+    type Target = Data;
+
+    fn deref(&self) -> &Self::Target {
+        self.box_data.as_ref().unwrap()
+    }
+}
+
+impl DerefMut for NoDropData {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.box_data.as_mut().unwrap()
+    }
+}
+
+impl NoDropData {
+    pub fn new(data: *mut Data) -> NoDropData {
+        NoDropData {
+            data,
+            box_data: Some(unsafe { Box::from_raw(data) }),
+        }
     }
 }
 
@@ -88,12 +131,7 @@ extern "C" fn visitor(
     parent: CXCursor,
     data: CXClientData,
 ) -> CXChildVisitResult {
-    let data: Box<Data> = unsafe { Box::from_raw(data as *mut Data) };
-
-    let data = on_visit(data, cursor, parent);
-
-    // avoid drop
-    Box::into_raw(data);
+    on_visit(NoDropData::new(data as *mut Data), cursor, parent);
 
     CXChildVisit_Continue
 }
@@ -105,10 +143,13 @@ fn visit_children(data: Box<Data>, cursor: CXCursor) -> Box<Data> {
 }
 
 #[allow(non_upper_case_globals)]
-fn on_visit(mut data: Box<Data>, cursor: CXCursor, parent: CXCursor) -> Box<Data> {
+fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
     let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
     assert!(!parent_is_null);
-    assert!(data.stack.len() == 0);
+    // assert!(data.stack.len() == 0);
+
+    let spelling = cxstring::CXString::from_cursor(cursor);
+    let location = cxsourcelocation::CXSourceLocation::from_cursor(cursor);
 
     // process current
     {
@@ -117,28 +158,6 @@ fn on_visit(mut data: Box<Data>, cursor: CXCursor, parent: CXCursor) -> Box<Data
         data.stack.push(value.hash);
         data.map.insert(value.hash, value);
     }
-
-    // {
-    //     for parent in self.iter_parents(cursor) {
-    //         match &parent.kind {
-    //             Kind::Namespace(ns) if ns == "ImGui" => {
-    //                 if let Some(value) = self.get_cursor_value(cursor) {
-    //                     match &value.kind {
-    //                         Kind::Function(name) => {
-    //                             println!("fn {}", name);
-    //                         }
-    //                         Kind::Namespace(name) => (),
-    //                         _ => (),
-    //                     }
-    //                 }
-    //             }
-    //             _ => (),
-    //         }
-    //     }
-    // }
-
-    let spelling = cxstring::CXString::from_cursor(cursor);
-    let location = cxsourcelocation::CXSourceLocation::from_cursor(cursor);
 
     if let Some(filename) = location.get_path().file_name() {
         if filename == "imgui.h" {
@@ -258,8 +277,6 @@ fn on_visit(mut data: Box<Data>, cursor: CXCursor, parent: CXCursor) -> Box<Data
     // let mut data = visit_children(data, cursor);
 
     data.stack.pop();
-
-    data
 }
 
 #[allow(non_upper_case_globals)]
@@ -311,8 +328,8 @@ impl Data {
 
 pub fn run(args: &[String]) -> Result<(), Error> {
     let tu = TranslationUnit::parse(args[0].as_str())?;
-    stderr().flush().unwrap();    
-    stdout().flush().unwrap();    
+    stderr().flush().unwrap();
+    stdout().flush().unwrap();
 
     let mut data = Box::new(Data::new());
 

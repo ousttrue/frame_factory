@@ -1,4 +1,4 @@
-use std::{cell::Ref, collections::HashMap};
+use std::{cell::{Ref, RefCell}, collections::HashMap};
 
 use clang_sys::*;
 
@@ -14,7 +14,7 @@ impl Type {
 }
 
 pub struct TypeMap {
-    map: HashMap<u32, Type>,
+    map: HashMap<u32, RefCell<Type>>,
 }
 
 impl TypeMap {
@@ -24,18 +24,18 @@ impl TypeMap {
         }
     }
 
-    fn get_or_create(&mut self, cursor: CXCursor) -> &Type {
+    fn get_or_create(&mut self, cursor: CXCursor) -> Ref<Type> {
         let hash = unsafe { clang_hashCursor(cursor) };
 
         if let Some(t) = self.map.get_mut(&hash) {
             // この型がTypedefなどから参照されている回数
-            t.count += 1;
+            t.borrow_mut().count += 1;
         } else {
             let t = Type::new(hash);
-            self.map.insert(hash, t);
+            self.map.insert(hash, RefCell::new(t));
         }
 
-        self.map.get(&hash).unwrap()
+        self.map.get(&hash).unwrap().borrow()
     }
 
     pub fn parse_function(&mut self, cursor: CXCursor) {

@@ -20,8 +20,12 @@ impl CXString {
     pub fn to_string(&self) -> String {
         unsafe {
             let ptr = clang_sys::clang_getCString(self.data);
-            let str = CStr::from_ptr(ptr).to_owned();
-            str.to_string_lossy().into_owned()
+            if ptr.is_null() {
+                "".to_owned()
+            } else {
+                let str = CStr::from_ptr(ptr).to_owned();
+                str.to_string_lossy().into_owned()
+            }
         }
     }
 }

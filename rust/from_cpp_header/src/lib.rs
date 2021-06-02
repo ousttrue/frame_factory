@@ -1,5 +1,5 @@
 use clang_sys::*;
-use std::{collections::HashMap, ffi::c_void, ptr};
+use std::{collections::HashMap, ffi::c_void, io::{Write, stderr}, io::stdout};
 
 mod translation_unit;
 pub use translation_unit::*;
@@ -19,6 +19,7 @@ struct Value {
     kind: Kind,
 }
 
+#[allow(non_upper_case_globals)]
 impl Value {
     pub fn new(cursor: CXCursor, parent_hash: u32) -> Value {
         let hash = unsafe { clang_hashCursor(cursor) };
@@ -51,6 +52,7 @@ impl Value {
 
 struct Data {
     map: HashMap<u32, Value>,
+    stack: Vec<u32>,
 }
 
 struct ParentIterator<'a> {
@@ -74,10 +76,191 @@ impl<'a> Iterator for ParentIterator<'a> {
     }
 }
 
+extern "C" fn visitor(
+    cursor: CXCursor,
+    parent: CXCursor,
+    data: CXClientData,
+) -> CXChildVisitResult {
+    let data: Box<Data> = unsafe { Box::from_raw(data as *mut Data) };
+
+    let data = on_visit(data, cursor, parent);
+
+    // avoid drop
+    Box::into_raw(data);
+
+    CXChildVisit_Continue
+}
+
+fn visit_children(data: Box<Data>, cursor: CXCursor) -> Box<Data> {
+    let p = Box::into_raw(data);
+    unsafe { clang_visitChildren(cursor, visitor, p as *mut c_void) };
+    unsafe { Box::from_raw(p) }
+}
+
+#[allow(non_upper_case_globals)]
+fn on_visit(mut data: Box<Data>, cursor: CXCursor, parent: CXCursor) -> Box<Data> {
+    let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
+    assert!(!parent_is_null);
+    assert!(data.stack.len() == 0);
+
+    // process current
+    {
+        let parent_value = data.get_cursor_value(parent).unwrap();
+        let value = Value::new(cursor, parent_value.hash);
+        data.stack.push(value.hash);
+        data.map.insert(value.hash, value);
+    }
+
+    // {
+    //     for parent in self.iter_parents(cursor) {
+    //         match &parent.kind {
+    //             Kind::Namespace(ns) if ns == "ImGui" => {
+    //                 if let Some(value) = self.get_cursor_value(cursor) {
+    //                     match &value.kind {
+    //                         Kind::Function(name) => {
+    //                             println!("fn {}", name);
+    //                         }
+    //                         Kind::Namespace(name) => (),
+    //                         _ => (),
+    //                     }
+    //                 }
+    //             }
+    //             _ => (),
+    //         }
+    //     }
+    // }
+
+    let spelling = cxstring::CXString::from_cursor(cursor);
+    let location = cxsourcelocation::CXSourceLocation::from_cursor(cursor);
+
+    if let Some(filename) = location.get_path().file_name() {
+        if filename == "imgui.h" {
+            match cursor.kind {
+                CXCursor_UnexposedDecl => (),
+                CXCursor_StructDecl => {
+                    // 2
+                    println!(
+                        "{} struct {}",
+                        location.get_path().to_string_lossy(),
+                        spelling.to_string()
+                    );
+                }
+                // CXCursor_UnionDecl => (),
+                CXCursor_EnumDecl => {
+                    // 5
+                    println!(
+                        "{} enum {}",
+                        location.get_path().to_string_lossy(),
+                        spelling.to_string()
+                    );
+                }
+                // CXCursor_EnumConstantDecl => (),
+                // CXCursor_FieldDecl => (),
+                CXCursor_VarDecl => {
+                    // 9
+                    println!(
+                        "{} var {}",
+                        location.get_path().to_string_lossy(),
+                        spelling.to_string()
+                    );
+                }
+                CXCursor_FunctionDecl => {
+                    // 8
+                    println!(
+                        "{} fn {}",
+                        location.get_path().to_string_lossy(),
+                        spelling.to_string()
+                    );
+                }
+                // CXCursor_ParmDecl => (),
+                CXCursor_TypedefDecl => {
+                    // 20
+                    println!(
+                        "{} typedef {}",
+                        location.get_path().to_string_lossy(),
+                        spelling.to_string()
+                    );
+                }
+                CXCursor_Namespace => {
+                    // 22
+                    println!(
+                        "{} namespace {}",
+                        location.get_path().to_string_lossy(),
+                        spelling.to_string()
+                    );
+                }
+                // CXCursor_NamespaceRef => (),
+                // CXCursor_ConversionFunction => (),
+                // CXCursor_CXXMethod => (),
+                // CXCursor_Constructor => (),
+                // CXCursor_Destructor => (),
+                CXCursor_FunctionTemplate => (),
+                CXCursor_ClassTemplate => (),
+                // CXCursor_TypeRef => (),
+                // CXCursor_TemplateRef => (),
+                // CXCursor_TemplateTypeParameter => (),
+                // CXCursor_OverloadedDeclRef => (),
+                // CXCursor_NonTypeTemplateParameter => (),
+                // CXCursor_ClassTemplatePartialSpecialization => (),
+                // CXCursor_UsingDeclaration => (),
+                // //
+                // CXCursor_ArraySubscriptExpr => (),
+                // CXCursor_UnexposedExpr => (),
+                // CXCursor_MemberRefExpr => (),
+                // CXCursor_CStyleCastExpr => (),
+                // CXCursor_StringLiteral => (),
+                // CXCursor_CallExpr => (),
+                // CXCursor_CXXThisExpr => (),
+                // CXCursor_DeclRefExpr => (),
+                // CXCursor_UnaryOperator => (),
+                // CXCursor_BinaryOperator => (),
+                // CXCursor_ConditionalOperator => (),
+                // CXCursor_ParenExpr => (),
+                // CXCursor_IntegerLiteral => (),
+                // CXCursor_FloatingLiteral => (),
+                // CXCursor_CXXThrowExpr => (),
+                // CXCursor_ObjCStringLiteral => (),
+                // CXCursor_CXXNullPtrLiteralExpr => (),
+                // CXCursor_CompoundAssignOperator => (),
+                // CXCursor_CXXStaticCastExpr => (),
+                // CXCursor_CXXConstCastExpr => (),
+                // CXCursor_CXXBoolLiteralExpr => (),
+                // CXCursor_UnaryExpr => (),
+                // //
+                // CXCursor_CompoundStmt => (),
+                // CXCursor_ReturnStmt => (),
+                // CXCursor_DeclStmt => (),
+                // CXCursor_IfStmt => (),
+                // CXCursor_NullStmt => (),
+                // //
+                // CXCursor_UnexposedAttr => (),
+                // 501
+                CXCursor_MacroDefinition => (),
+                // 502
+                CXCursor_MacroExpansion => (),
+                // 503
+                CXCursor_InclusionDirective => (),
+                // CXCursor_WarnUnusedResultAttr => (),
+                // CXCursor_StaticAssert => (),
+                _ => println!("{:?}", cursor),
+            };
+        }
+    }
+
+    // processc children
+    // let mut data = visit_children(data, cursor);
+
+    data.stack.pop();
+
+    data
+}
+
+#[allow(non_upper_case_globals)]
 impl Data {
     fn new() -> Data {
         Data {
             map: HashMap::new(),
+            stack: Vec::new(),
         }
     }
 
@@ -117,121 +300,12 @@ impl Data {
             }
         }
     }
-
-    fn on_visit(&mut self, cursor: CXCursor, parent: CXCursor) {
-        let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
-        if parent_is_null {
-            panic!();
-        }
-
-        {
-            let parent_value = self.get_cursor_value(parent).unwrap();
-            let value = Value::new(cursor, parent_value.hash);
-            self.map.insert(value.hash, value);
-        }
-
-        {
-            for parent in self.iter_parents(cursor) {
-                match &parent.kind {
-                    Kind::Namespace(ns) if ns == "ImGui" => {
-                        if let Some(value) = self.get_cursor_value(cursor) {
-                            match &value.kind {
-                                Kind::Function(name) => {
-                                    println!("fn {}", name);
-                                }
-                                Kind::Namespace(name) => (),
-                                _ => (),
-                            }
-                        }
-                    }
-                    _ => (),
-                }
-            }
-        }
-
-        match cursor.kind {
-            CXCursor_UnexposedDecl => (),
-            CXCursor_StructDecl => (),
-            CXCursor_UnionDecl => (),
-            CXCursor_EnumDecl => (),
-            CXCursor_EnumConstantDecl => (),
-            CXCursor_FieldDecl => (),
-            CXCursor_VarDecl => (),
-            CXCursor_FunctionDecl => (),
-            CXCursor_ParmDecl => (),
-            CXCursor_TypedefDecl => (),
-            CXCursor_Namespace => (),
-            CXCursor_NamespaceRef => (),
-            CXCursor_ConversionFunction => (),
-            CXCursor_CXXMethod => (),
-            CXCursor_Constructor => (),
-            CXCursor_Destructor => (),
-            CXCursor_FunctionTemplate => (),
-            CXCursor_ClassTemplate => (),
-            CXCursor_TypeRef => (),
-            CXCursor_TemplateRef => (),
-            CXCursor_TemplateTypeParameter => (),
-            CXCursor_OverloadedDeclRef => (),
-            CXCursor_NonTypeTemplateParameter => (),
-            CXCursor_ClassTemplatePartialSpecialization => (),
-            CXCursor_UsingDeclaration => (),
-            //
-            CXCursor_ArraySubscriptExpr => (),
-            CXCursor_UnexposedExpr => (),
-            CXCursor_MemberRefExpr => (),
-            CXCursor_CStyleCastExpr => (),
-            CXCursor_StringLiteral => (),
-            CXCursor_CallExpr => (),
-            CXCursor_CXXThisExpr => (),
-            CXCursor_DeclRefExpr => (),
-            CXCursor_UnaryOperator => (),
-            CXCursor_BinaryOperator => (),
-            CXCursor_ConditionalOperator => (),
-            CXCursor_ParenExpr => (),
-            CXCursor_IntegerLiteral => (),
-            CXCursor_FloatingLiteral => (),
-            CXCursor_CXXThrowExpr => (),
-            CXCursor_ObjCStringLiteral => (),
-            CXCursor_CXXNullPtrLiteralExpr => (),
-            CXCursor_CompoundAssignOperator => (),
-            CXCursor_CXXStaticCastExpr => (),
-            CXCursor_CXXConstCastExpr => (),
-            CXCursor_CXXBoolLiteralExpr => (),
-            CXCursor_UnaryExpr => (),
-            //
-            CXCursor_CompoundStmt => (),
-            CXCursor_ReturnStmt => (),
-            CXCursor_DeclStmt => (),
-            CXCursor_IfStmt => (),
-            CXCursor_NullStmt => (),
-            //
-            CXCursor_UnexposedAttr => (),
-            CXCursor_MacroDefinition => (),
-            CXCursor_MacroExpansion => (),
-            CXCursor_InclusionDirective => (),
-            CXCursor_WarnUnusedResultAttr => (),
-            CXCursor_StaticAssert => (),
-            _ => println!("{:?}", cursor),
-        };
-    }
-}
-
-extern "C" fn visitor(
-    cursor: CXCursor,
-    parent: CXCursor,
-    data: CXClientData,
-) -> CXChildVisitResult {
-    let mut data: Box<Data> = unsafe { Box::from_raw(data as *mut Data) };
-    data.on_visit(cursor, parent);
-
-    // avoid drop
-    Box::into_raw(data);
-
-    CXChildVisit_Recurse
 }
 
 pub fn run(args: &[String]) -> Result<(), Error> {
     let tu = TranslationUnit::parse(args[0].as_str())?;
+    stderr().flush().unwrap();    
+    stdout().flush().unwrap();    
 
     let mut data = Box::new(Data::new());
 
@@ -247,9 +321,7 @@ pub fn run(args: &[String]) -> Result<(), Error> {
         },
     );
 
-    let p = Box::into_raw(data);
-    unsafe { clang_visitChildren(root, visitor, p as *mut c_void) };
-    let data = unsafe { Box::from_raw(p) };
+    let data = visit_children(data, root);
 
     // find "SliderFloat2"
 

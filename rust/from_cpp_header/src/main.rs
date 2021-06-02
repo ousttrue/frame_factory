@@ -1,3 +1,7 @@
+use std::io::stderr;
+use std::io::stdout;
+use std::io::Write;
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
@@ -5,4 +9,7 @@ fn main() {
         Ok(_) => print!("ok"),
         Err(err) => print!("error: {:?}", err),
     }
+
+    stderr().flush().unwrap();    
+    stdout().flush().unwrap();    
 }

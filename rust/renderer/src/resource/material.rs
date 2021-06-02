@@ -55,7 +55,7 @@ impl Texture {
     pub fn new(
         d3d_device: &d3d11::ID3D11Device,
         buffer: ComPtr<d3d11::ID3D11Texture2D>,
-        texture: &scene::Texture,
+        _texture: &scene::Texture,
     ) -> Result<Texture, ComError> {
         let srv = ComPtr::create_if_success(|pp| unsafe {
             d3d_device.CreateShaderResourceView(
@@ -65,7 +65,7 @@ impl Texture {
             )
         })?;
 
-        let mut samplerDesc = d3d11::D3D11_SAMPLER_DESC {
+        let sampler_desc = d3d11::D3D11_SAMPLER_DESC {
             Filter: d3d11::D3D11_FILTER_MIN_MAG_MIP_LINEAR,
             AddressU: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
             AddressV: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
@@ -78,7 +78,7 @@ impl Texture {
             MaxLOD: d3d11::D3D11_FLOAT32_MAX,
         };
         let sampler = ComPtr::create_if_success(|pp| unsafe {
-            d3d_device.CreateSamplerState(&samplerDesc, pp)
+            d3d_device.CreateSamplerState(&sampler_desc, pp)
         })?;
 
         Ok(Texture {

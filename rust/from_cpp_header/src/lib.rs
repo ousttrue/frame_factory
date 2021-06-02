@@ -1,7 +1,5 @@
 use clang_sys::*;
 use std::{
-    borrow::{Borrow, BorrowMut},
-    cell::{Cell, Ref, RefCell},
     collections::HashMap,
     ffi::c_void,
     io::stdout,
@@ -61,6 +59,7 @@ impl Value {
 struct Data {
     map: HashMap<u32, Value>,
     stack: Vec<u32>,
+    ns: Vec<String>,
 }
 
 impl Drop for Data {
@@ -70,13 +69,13 @@ impl Drop for Data {
 }
 
 struct NoDropData {
-    data: *mut Data,
-    box_data: Option<Box<Data>>,
+    ptr: *mut Data,
+    data: Option<Box<Data>>,
 }
 
 impl Drop for NoDropData {
     fn drop(&mut self) {
-        if let Some(box_data) = self.box_data.take() {
+        if let Some(box_data) = self.data.take() {
             Box::into_raw(box_data);
         }
     }
@@ -86,21 +85,21 @@ impl Deref for NoDropData {
     type Target = Data;
 
     fn deref(&self) -> &Self::Target {
-        self.box_data.as_ref().unwrap()
+        self.data.as_ref().unwrap()
     }
 }
 
 impl DerefMut for NoDropData {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.box_data.as_mut().unwrap()
+        self.data.as_mut().unwrap()
     }
 }
 
 impl NoDropData {
     pub fn new(data: *mut Data) -> NoDropData {
         NoDropData {
-            data,
-            box_data: Some(unsafe { Box::from_raw(data) }),
+            ptr: data,
+            data: Some(unsafe { Box::from_raw(data) }),
         }
     }
 }
@@ -136,10 +135,8 @@ extern "C" fn visitor(
     CXChildVisit_Continue
 }
 
-fn visit_children(data: Box<Data>, cursor: CXCursor) -> Box<Data> {
-    let p = Box::into_raw(data);
-    unsafe { clang_visitChildren(cursor, visitor, p as *mut c_void) };
-    unsafe { Box::from_raw(p) }
+fn visit_children(data: *mut Data, cursor: CXCursor) {
+    unsafe { clang_visitChildren(cursor, visitor, data as *mut c_void) };
 }
 
 #[allow(non_upper_case_globals)]
@@ -166,8 +163,10 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
                 CXCursor_StructDecl => {
                     // 2
                     println!(
-                        "{} struct {}",
+                        "{:02}:{} struct {}{}",
+                        data.stack.len(),
                         location.get_path().to_string_lossy(),
+                        data.get_namespace(),
                         spelling.to_string()
                     );
                 }
@@ -175,8 +174,10 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
                 CXCursor_EnumDecl => {
                     // 5
                     println!(
-                        "{} enum {}",
+                        "{:02}:{} enum {}{}",
+                        data.stack.len(),
                         location.get_path().to_string_lossy(),
+                        data.get_namespace(),
                         spelling.to_string()
                     );
                 }
@@ -185,16 +186,20 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
                 CXCursor_VarDecl => {
                     // 9
                     println!(
-                        "{} var {}",
+                        "{:02}:{} var {}{}",
+                        data.stack.len(),
                         location.get_path().to_string_lossy(),
+                        data.get_namespace(),
                         spelling.to_string()
                     );
                 }
                 CXCursor_FunctionDecl => {
                     // 8
                     println!(
-                        "{} fn {}",
+                        "{:02}:{} fn {}{}",
+                        data.stack.len(),
                         location.get_path().to_string_lossy(),
+                        data.get_namespace(),
                         spelling.to_string()
                     );
                 }
@@ -202,18 +207,25 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
                 CXCursor_TypedefDecl => {
                     // 20
                     println!(
-                        "{} typedef {}",
+                        "{:02}:{} typedef {}{}",
+                        data.stack.len(),
                         location.get_path().to_string_lossy(),
+                        data.get_namespace(),
                         spelling.to_string()
                     );
                 }
                 CXCursor_Namespace => {
                     // 22
                     println!(
-                        "{} namespace {}",
+                        "{:02}:{} namespace {}{}",
+                        data.stack.len(),
                         location.get_path().to_string_lossy(),
+                        data.get_namespace(),
                         spelling.to_string()
                     );
+                    data.ns.push(spelling.to_string());
+                    visit_children(data.ptr, cursor);
+                    data.ns.pop();
                 }
                 // CXCursor_NamespaceRef => (),
                 // CXCursor_ConversionFunction => (),
@@ -274,7 +286,6 @@ fn on_visit(mut data: NoDropData, cursor: CXCursor, parent: CXCursor) {
     }
 
     // processc children
-    // let mut data = visit_children(data, cursor);
 
     data.stack.pop();
 }
@@ -285,7 +296,17 @@ impl Data {
         Data {
             map: HashMap::new(),
             stack: Vec::new(),
+            ns: Vec::new(),
         }
+    }
+
+    fn get_namespace(&self) -> String {
+        let mut s = String::with_capacity(self.ns.iter().map(|x| x.len() + 2).sum());
+        for x in &self.ns {
+            s.push_str(x.as_str());
+            s.push_str("::");
+        }
+        s
     }
 
     // fn push_cursor_value(&mut self, cursor: CXCursor, value: Value) {
@@ -345,7 +366,9 @@ pub fn run(args: &[String]) -> Result<(), Error> {
         },
     );
 
-    let data = visit_children(data, root);
+    let p = Box::into_raw(data);
+    visit_children(p, root);
+    let data = unsafe { Box::from_raw(p) };
 
     // find "SliderFloat2"
 

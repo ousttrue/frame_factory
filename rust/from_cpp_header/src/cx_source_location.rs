@@ -1,6 +1,6 @@
 use std::{ffi::{c_void}, path::{Path, PathBuf}, ptr};
 
-use crate::{cxstring};
+use crate::{cx_string};
 
 pub struct CXSourceLocation {
     data: clang_sys::CXSourceLocation,
@@ -35,7 +35,7 @@ impl CXSourceLocation {
             )
         }
 
-        let file = cxstring::CXString::from_file(file);
+        let file = cx_string::CXString::from_file(file);
 
         Path::new(&file.to_string()).to_owned()
     }

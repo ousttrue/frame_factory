@@ -13,31 +13,31 @@ pub use visitor::*;
 mod type_map;
 pub use type_map::*;
 
-mod cxsourcelocation;
-mod cxstring;
+mod cx_source_location;
+mod cx_string;
 
-pub struct Data {
+pub struct Root {
     stack: Vec<u32>,
     ns: Vec<String>,
     type_map: TypeMap,
 }
 
-impl Drop for Data {
+impl Drop for Root {
     fn drop(&mut self) {
         println!("drop Data");
     }
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit<Data> for Data
+impl OnVisit<Root> for Root
 {
-    fn on_visit(&mut self, t: *mut Data, cursor: CXCursor, parent: CXCursor) {
+    fn on_visit(&mut self, t: *mut Root, cursor: CXCursor, parent: CXCursor) {
         let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
         assert!(!parent_is_null);
         // assert!(data.stack.len() == 0);
     
-        let spelling = cxstring::CXString::from_cursor(cursor);
-        let location = cxsourcelocation::CXSourceLocation::from_cursor(cursor);
+        let spelling = cx_string::CXString::from_cursor(cursor);
+        // let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
     
         match (cursor.kind) {
             // skip
@@ -164,9 +164,9 @@ impl OnVisit<Data> for Data
 }
 
 #[allow(non_upper_case_globals)]
-impl Data {
-    fn new() -> Data {
-        Data {
+impl Root {
+    fn new() -> Root {
+        Root {
             stack: Vec::new(),
             ns: Vec::new(),
             type_map: TypeMap::new(),
@@ -174,12 +174,12 @@ impl Data {
     }
 }
 
-pub fn run(args: &[String]) -> Result<Box<Data>, Error> {
+pub fn run(args: &[String]) -> Result<Box<Root>, Error> {
     let tu = TranslationUnit::parse(args[0].as_str())?;
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 
-    let data = Box::new(Data::new());
+    let data = Box::new(Root::new());
 
     // traverse(&tu.get_cursor());
     let root = tu.get_cursor();

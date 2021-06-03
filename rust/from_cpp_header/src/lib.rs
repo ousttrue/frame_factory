@@ -83,9 +83,9 @@ impl OnVisit<Root> for Root
             }
     
             CXCursor_FunctionDecl => {
-                self.type_map.get_or_create(cursor, |t|{
+                self.type_map.get_or_create_user_type(cursor, |hash|{
                     let f = Function::parse(cursor, &self.type_map);
-                    t.decl = Some(Decl::Function(f));   
+                    UserType::new(hash, Decl::Function(f))
                 });
             }
     

@@ -6,7 +6,7 @@ pub struct Function {
     pub name: String,
 }
 
-pub struct FunctionVisitor<'a> {
+struct FunctionVisitor<'a> {
     function: &'a mut Function
 }
 

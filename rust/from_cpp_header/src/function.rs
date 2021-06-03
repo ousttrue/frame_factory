@@ -2,20 +2,32 @@ use std::rc::Rc;
 
 use clang_sys::*;
 
-use crate::{OnVisit, Type, TypeMap, cx_string, visit_children, visit_children_with};
+use crate::{cx_string, visit_children, visit_children_with, OnVisit, Type, TypeMap};
 
 pub struct Function {
     pub name: String,
     pub result: Rc<Type>,
 }
 
-struct FunctionVisitor<'a> {
-    function: &'a mut Function
+struct FunctionVisitor {
+    function: Option<Function>,
+}
+
+impl FunctionVisitor {
+    fn new(cursor: CXCursor, type_map: &TypeMap) -> FunctionVisitor {
+        let result = type_map.type_from_cx_cursor(cursor);
+        let name = cx_string::CXString::cursor_spelling(cursor).to_string();
+        let function = Function { name, result };
+
+        FunctionVisitor {
+            function: Some(function),
+        }
+    }
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit<FunctionVisitor<'a>> for FunctionVisitor<'a> {
-    fn on_visit(&mut self, ptr: *mut FunctionVisitor, cursor: CXCursor, parent: CXCursor) {
+impl OnVisit<FunctionVisitor> for FunctionVisitor {
+    fn on_visit(&mut self, ptr: *mut FunctionVisitor, cursor: CXCursor, parent: CXCursor) -> bool {
         match cursor.kind {
             CXCursor_CompoundStmt => {
                 // type.HasBody = true;
@@ -42,24 +54,18 @@ impl<'a> OnVisit<FunctionVisitor<'a>> for FunctionVisitor<'a> {
                 panic!("unknown param type");
             }
         }
+        true
+    }
+
+    type Result = Function;
+
+    fn result(&mut self) -> Self::Result {
+        self.function.take().unwrap()
     }
 }
 
 impl Function {
     pub fn parse<'a>(cursor: CXCursor, type_map: &TypeMap) -> Function {
-        let result = type_map.type_from_cx_cursor(cursor);
-        let name = cx_string::CXString::cursor_spelling(cursor).to_string();
-        let mut function = Function {
-            name,
-            result,
-        };
-
-        visit_children_with(cursor, ||{
-            FunctionVisitor {
-                function: &mut function
-            }
-        });
-
-        function
+        visit_children_with(cursor, || FunctionVisitor::new(cursor, type_map))
     }
 }

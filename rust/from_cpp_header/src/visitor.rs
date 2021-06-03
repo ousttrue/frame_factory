@@ -40,7 +40,11 @@ impl<T> NoDrop<T> {
 }
 
 pub trait OnVisit<T> {
-    fn on_visit(&mut self, ptr: *mut T, cursor: CXCursor, parent: CXCursor);
+    type Result;
+
+    fn on_visit(&mut self, ptr: *mut T, cursor: CXCursor, parent: CXCursor) -> bool;
+
+    fn result(&mut self) -> Self::Result;
 }
 
 extern "C" fn visitor<T: OnVisit<T>>(
@@ -51,19 +55,22 @@ extern "C" fn visitor<T: OnVisit<T>>(
     let t = data as *mut T;
     let mut no_drop = NoDrop::new(t);
 
-    no_drop.on_visit(t, cursor, parent);
-
-    CXChildVisit_Continue
+    if no_drop.on_visit(t, cursor, parent) {
+        CXChildVisit_Continue
+    } else {
+        CXChildVisit_Break
+    }
 }
 
 pub fn visit_children<T: OnVisit<T>>(cursor: CXCursor, ptr: *mut T) {
     unsafe { clang_visitChildren(cursor, visitor::<T>, ptr as *mut c_void) };
 }
 
-pub fn visit_children_with<T: OnVisit<T>, F: FnOnce() -> T>(cursor: CXCursor, f: F) {
+pub fn visit_children_with<T: OnVisit<T>, F: FnOnce() -> T>(cursor: CXCursor, f: F) -> T::Result {
     let visitor = Box::new(f());
     let ptr = Box::into_raw(visitor);
     visit_children(cursor, ptr);
     // for drop
-    unsafe { Box::from_raw(ptr) };
+    let mut visitor = unsafe { Box::from_raw(ptr) };
+    visitor.result()
 }

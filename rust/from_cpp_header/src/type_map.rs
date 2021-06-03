@@ -1,25 +1,27 @@
-use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc};
+use std::borrow::BorrowMut;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use clang_sys::*;
 
-use crate::Function;
+use crate::{visit_children_with, Function, OnVisit};
 
 pub enum Decl {
+    None,
     Function(Function),
 }
 
 pub struct UserType {
     hash: u32,
     count: RefCell<u32>,
-    decl: Decl,
+    pub decl: RefCell<Decl>,
 }
 
 impl UserType {
-    pub fn new(hash: u32, decl: Decl) -> UserType {
+    pub fn new(hash: u32) -> UserType {
         UserType {
             hash,
             count: RefCell::new(0),
-            decl,
+            decl: RefCell::new(Decl::None),
         }
     }
 
@@ -66,6 +68,38 @@ pub struct TypeMap {
     F80: Rc<Type>,
 }
 
+struct ReferenceVisitor<'a> {
+    type_map: &'a TypeMap,
+    reference: Option<Rc<Type>>,
+}
+
+#[allow(non_upper_case_globals)]
+impl<'a> OnVisit<ReferenceVisitor<'a>> for ReferenceVisitor<'a> {
+    fn on_visit(
+        &mut self,
+        _ptr: *mut ReferenceVisitor,
+        cursor: CXCursor,
+        _parent: CXCursor,
+    ) -> bool {
+        match cursor.kind {
+            CXCursor_TypeRef => {
+                let referenced = unsafe { clang_getCursorReferenced(cursor) };
+                self.reference = Some(self.type_map.get_or_create_user_type(referenced));
+                false
+            }
+
+            _ => true,
+        }
+    }
+
+    type Result = Rc<Type>;
+
+    fn result(&mut self) -> Self::Result {
+        self.reference.take().unwrap()
+    }
+}
+
+#[allow(non_upper_case_globals)]
 impl TypeMap {
     pub fn new() -> TypeMap {
         TypeMap {
@@ -86,7 +120,7 @@ impl TypeMap {
         }
     }
 
-    pub fn get_or_create_user_type<T: FnOnce(u32) -> UserType>(&self, cursor: CXCursor, f: T) {
+    pub fn get_or_create_user_type(&self, cursor: CXCursor) -> Rc<Type> {
         let hash = unsafe { clang_hashCursor(cursor) };
 
         if let Some(t) = self.map.borrow_mut().get_mut(&hash) {
@@ -96,17 +130,12 @@ impl TypeMap {
             if let Type::UserType(t) = &*t {
                 t.increment();
             }
-            return;
+            return t;
         }
 
-        let t = Type::UserType(f(hash));
-        // match &mut t {
-        //     Type::UserType(d) => {
-        //         ;
-        //     }
-        //     _ => panic!(),
-        // };
-        self.map.borrow_mut().insert(hash, Rc::new(t));
+        let t = Rc::new(Type::UserType(UserType::new(hash)));
+        self.map.borrow_mut().insert(hash, t.clone());
+        t
     }
 
     pub fn type_from_cx_type(&self, cx_type: CXType, cursor: CXCursor) -> Rc<Type> {
@@ -132,8 +161,105 @@ impl TypeMap {
             CXType_Float => self.F32.clone(),
             CXType_Double => self.F64.clone(),
             CXType_LongDouble => self.F80.clone(),
-            _ => panic!(),
+            CXType_Typedef | CXType_Record => {
+                // find reference from child cursors
+                visit_children_with(cursor, || ReferenceVisitor {
+                    type_map: self,
+                    reference: None,
+                })
+            }
+            _ => todo!(),
         }
+
+        // if (cxType.kind == CXTypeKind._Unexposed)
+        // {
+        //     // nullptr_t
+        //     return TypeReference.FromPointer(new PointerType(TypeReference.FromPrimitive(VoidType.Instance)));
+        // }
+
+        // if (cxType.kind == CXTypeKind._Pointer)
+        // {
+        //     return TypeReference.FromPointer(new PointerType(CxTypeToType(libclang.clang_getPointeeType(cxType), cursor)));
+        // }
+
+        // if (cxType.kind == CXTypeKind._LValueReference)
+        // {
+        //     return TypeReference.FromPointer(new PointerType(CxTypeToType(libclang.clang_getPointeeType(cxType), cursor)));
+        // }
+
+        // if (cxType.kind == CXTypeKind._IncompleteArray)
+        // {
+        //     return TypeReference.FromPointer(new PointerType(CxTypeToType(libclang.clang_getArrayElementType(cxType), cursor)));
+        // }
+
+        // if (cxType.kind == CXTypeKind._ConstantArray)
+        // {
+        //     var arraySize = (int)libclang.clang_getArraySize(cxType);
+        //     var elementType = CxTypeToType(libclang.clang_getArrayElementType(cxType), cursor);
+        //     return TypeReference.FromArray(new ArrayType(elementType, arraySize));
+        // }
+
+        // if (cxType.kind == CXTypeKind._Elaborated)
+        // {
+        //     // typedef struct {} Hoge;
+        //     TypeReference reference = default;
+        //     ClangVisitor.ProcessChildren(cursor, (in CXCursor child) =>
+        //     {
+        //         switch (child.kind)
+        //         {
+        //             case CXCursorKind._StructDecl:
+        //             case CXCursorKind._UnionDecl:
+        //                 {
+        //                     reference = GetOrCreate(child);
+        //                     var structType = reference.Type as StructType;
+        //                     if (structType is null)
+        //                     {
+        //                         throw new NotImplementedException();
+        //                     }
+
+        //                     // if (!StructType.IsForwardDeclaration(child))
+        //                     // {
+        //                     //     structType.ParseFields(child, this);
+        //                     // }
+
+        //                     return CXChildVisitResult._Break;
+        //                 }
+
+        //             case CXCursorKind._EnumDecl:
+        //                 {
+        //                     reference = GetOrCreate(child);
+        //                     if (reference.Type is null)
+        //                     {
+        //                         throw new NotImplementedException();
+        //                     }
+        //                     return CXChildVisitResult._Break;
+        //                 }
+
+        //             case CXCursorKind._TypeRef:
+        //                 {
+        //                     var referenced = libclang.clang_getCursorReferenced(child);
+        //                     reference = GetOrCreate(referenced);
+        //                     return CXChildVisitResult._Break;
+        //                 }
+
+        //             default:
+        //                 return CXChildVisitResult._Continue;
+        //         }
+        //     });
+        //     if (reference is null)
+        //     {
+        //         var children = cursor.Children();
+        //         throw new NotImplementedException("Elaborated not found");
+        //     }
+        //     return reference;
+        // }
+
+        // if (cxType.kind == CXTypeKind._FunctionProto)
+        // {
+        //     var resultType = libclang.clang_getResultType(cxType);
+        //     var functionType = FunctionType.Parse(cursor, this, resultType);
+        //     return new TypeReference(cursor.CursorHashLocation(), functionType);
+        // }
     }
 
     pub fn type_from_cx_cursor(&self, cursor: CXCursor) -> Rc<Type> {

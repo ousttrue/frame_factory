@@ -22,7 +22,15 @@ pub use function::*;
 pub struct Root {
     stack: Vec<u32>,
     ns: Vec<String>,
-    type_map: TypeMap,
+    type_map: Option<TypeMap>,
+}
+
+impl Root
+{
+    pub fn get(&self)->&TypeMap
+    {
+        self.type_map.as_ref().unwrap()
+    }    
 }
 
 impl Drop for Root {
@@ -34,7 +42,7 @@ impl Drop for Root {
 #[allow(non_upper_case_globals)]
 impl OnVisit<Root> for Root
 {
-    fn on_visit(&mut self, t: *mut Root, cursor: CXCursor, parent: CXCursor) {
+    fn on_visit(&mut self, t: *mut Root, cursor: CXCursor, parent: CXCursor)->bool {
         let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
         assert!(!parent_is_null);
         // assert!(data.stack.len() == 0);
@@ -83,10 +91,12 @@ impl OnVisit<Root> for Root
             }
     
             CXCursor_FunctionDecl => {
-                self.type_map.get_or_create_user_type(cursor, |hash|{
-                    let f = Function::parse(cursor, &self.type_map);
-                    UserType::new(hash, Decl::Function(f))
-                });
+                let t =self.get().get_or_create_user_type(cursor);                
+                if let Type::UserType(t) = &*t
+                {
+                    let f = Function::parse(cursor, self.get());
+                    t.decl.replace(Decl::Function(f));
+                }              
             }
     
             CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {
@@ -164,6 +174,14 @@ impl OnVisit<Root> for Root
         // processc children
     
         self.stack.pop();
+
+        true
+    }
+
+    type Result = TypeMap;
+
+    fn result(&mut self) -> Self::Result {
+        self.type_map.take().unwrap()
     }
 }
 
@@ -173,7 +191,7 @@ impl Root {
         Root {
             stack: Vec::new(),
             ns: Vec::new(),
-            type_map: TypeMap::new(),
+            type_map: Some(TypeMap::new()),
         }
     }
 }

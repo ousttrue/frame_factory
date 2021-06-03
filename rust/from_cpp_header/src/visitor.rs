@@ -48,7 +48,6 @@ extern "C" fn visitor<T: OnVisit<T>>(
     parent: CXCursor,
     data: CXClientData,
 ) -> CXChildVisitResult {
-
     let t = data as *mut T;
     let mut no_drop = NoDrop::new(t);
 
@@ -57,6 +56,6 @@ extern "C" fn visitor<T: OnVisit<T>>(
     CXChildVisit_Continue
 }
 
-pub fn visit_children<T: OnVisit<T>>(data: *mut T, cursor: CXCursor) {
-    unsafe { clang_visitChildren(cursor, visitor::<T>, data as *mut c_void) };
+pub fn visit_children<T: OnVisit<T>>(ptr: *mut T, cursor: CXCursor) {
+    unsafe { clang_visitChildren(cursor, visitor::<T>, ptr as *mut c_void) };
 }

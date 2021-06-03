@@ -39,7 +39,7 @@ impl OnVisit<Root> for Root
         assert!(!parent_is_null);
         // assert!(data.stack.len() == 0);
     
-        let spelling = cx_string::CXString::from_cursor(cursor);
+        let spelling = cx_string::CXString::cursor_spelling(cursor);
         // let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
     
         match (cursor.kind) {

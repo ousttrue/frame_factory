@@ -5,7 +5,7 @@ pub struct CXString {
 }
 
 impl CXString {
-    pub fn from_cursor(cursor: clang_sys::CXCursor) -> CXString {
+    pub fn cursor_spelling(cursor: clang_sys::CXCursor) -> CXString {
         CXString {
             data: unsafe { clang_sys::clang_getCursorSpelling(cursor) },
         }

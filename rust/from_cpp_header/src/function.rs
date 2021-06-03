@@ -1,9 +1,12 @@
+use std::rc::Rc;
+
 use clang_sys::*;
 
-use crate::{OnVisit, TypeMap, cx_string, visit_children, visit_children_with};
+use crate::{OnVisit, Type, TypeMap, cx_string, visit_children, visit_children_with};
 
 pub struct Function {
     pub name: String,
+    pub result: Rc<Type>,
 }
 
 struct FunctionVisitor<'a> {
@@ -43,11 +46,12 @@ impl<'a> OnVisit<FunctionVisitor<'a>> for FunctionVisitor<'a> {
 }
 
 impl Function {
-    pub fn parse(cursor: CXCursor, type_map: &TypeMap) -> Function {
-        let result = unsafe { clang_getCursorResultType(cursor) };
-        let spelling = cx_string::CXString::cursor_spelling(cursor);
+    pub fn parse<'a>(cursor: CXCursor, type_map: &TypeMap) -> Function {
+        let result = type_map.type_from_cx_cursor(cursor);
+        let name = cx_string::CXString::cursor_spelling(cursor).to_string();
         let mut function = Function {
-            name: spelling.to_string(),
+            name,
+            result,
         };
 
         visit_children_with(cursor, ||{

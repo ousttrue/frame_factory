@@ -10,6 +10,7 @@
         "gltf",
         "hlsl",
         "hwnd",
+        "pointee",
         "rendertarget",
         "repr",
         "screenstate",

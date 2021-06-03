@@ -48,6 +48,7 @@ pub enum Primitives {
 
 pub enum Type {
     UserType(UserType),
+    Pointer(Rc<Type>),
     Primitive(Primitives),
 }
 
@@ -161,6 +162,14 @@ impl TypeMap {
             CXType_Float => self.F32.clone(),
             CXType_Double => self.F64.clone(),
             CXType_LongDouble => self.F80.clone(),
+
+            CXType_Pointer => {
+                let pointee=unsafe{clang_getPointeeType(cx_type)};
+                let pointee_type = self.type_from_cx_type(pointee, cursor);                    
+                let t = Type::Pointer(pointee_type);
+                Rc::new(t)
+            }
+
             CXType_Typedef | CXType_Record => {
                 // find reference from child cursors
                 visit_children_with(cursor, || ReferenceVisitor {
@@ -175,11 +184,6 @@ impl TypeMap {
         // {
         //     // nullptr_t
         //     return TypeReference.FromPointer(new PointerType(TypeReference.FromPrimitive(VoidType.Instance)));
-        // }
-
-        // if (cxType.kind == CXTypeKind._Pointer)
-        // {
-        //     return TypeReference.FromPointer(new PointerType(CxTypeToType(libclang.clang_getPointeeType(cxType), cursor)));
         // }
 
         // if (cxType.kind == CXTypeKind._LValueReference)

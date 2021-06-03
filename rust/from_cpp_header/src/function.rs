@@ -5,7 +5,6 @@ use clang_sys::*;
 use crate::{cx_string, visit_children, visit_children_with, OnVisit, Type, TypeMap};
 
 pub struct Function {
-    pub name: String,
     pub result: Rc<Type>,
 }
 
@@ -16,8 +15,7 @@ struct FunctionVisitor {
 impl FunctionVisitor {
     fn new(cursor: CXCursor, type_map: &TypeMap) -> FunctionVisitor {
         let result = type_map.type_from_cx_cursor(cursor);
-        let name = cx_string::CXString::cursor_spelling(cursor).to_string();
-        let function = Function { name, result };
+        let function = Function { result };
 
         FunctionVisitor {
             function: Some(function),

@@ -19,6 +19,9 @@ pub use type_map::*;
 mod function;
 pub use function::*;
 
+mod typedef;
+pub use typedef::*;
+
 pub struct Root {
     stack: Vec<u32>,
     ns: Vec<String>,
@@ -46,11 +49,11 @@ impl OnVisit<Root> for Root
         let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
         assert!(!parent_is_null);
         // assert!(data.stack.len() == 0);
-    
+
         let spelling = cx_string::CXString::cursor_spelling(cursor);
         // let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
     
-        match (cursor.kind) {
+        match cursor.kind {
             // skip
             CXCursor_InclusionDirective
             | CXCursor_ClassTemplate
@@ -86,8 +89,12 @@ impl OnVisit<Root> for Root
             }
     
             CXCursor_TypedefDecl => {
-                // var reference = m_typeMap.GetOrCreate(cursor);
-                // reference.Type = TypedefType.Parse(cursor, m_typeMap);
+                let t = self.get().get_or_create_user_type(cursor);
+                if let Type::UserType(t) = &*t
+                {
+                    let def = Typedef::parse(cursor, self.get());
+                    t.decl.replace(Decl::Typedef(def));
+                }
             }
     
             CXCursor_FunctionDecl => {

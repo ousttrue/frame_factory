@@ -1,25 +1,27 @@
-use std::borrow::BorrowMut;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc};
 
 use clang_sys::*;
 
-use crate::{visit_children_with, Function, OnVisit};
+use crate::{Function, OnVisit, Typedef, cx_string, visit_children_with};
 
 pub enum Decl {
     None,
     Function(Function),
+    Typedef(Typedef),
 }
 
 pub struct UserType {
     hash: u32,
+    pub name: String,
     count: RefCell<u32>,
     pub decl: RefCell<Decl>,
 }
 
 impl UserType {
-    pub fn new(hash: u32) -> UserType {
+    pub fn new(hash: u32, name: String) -> UserType {
         UserType {
             hash,
+            name,
             count: RefCell::new(0),
             decl: RefCell::new(Decl::None),
         }
@@ -134,13 +136,14 @@ impl TypeMap {
             return t;
         }
 
-        let t = Rc::new(Type::UserType(UserType::new(hash)));
+        let name = cx_string::CXString::cursor_spelling(cursor).to_string();
+        let t = Rc::new(Type::UserType(UserType::new(hash, name)));
         self.map.borrow_mut().insert(hash, t.clone());
         t
     }
 
     pub fn type_from_cx_type(&self, cx_type: CXType, cursor: CXCursor) -> Rc<Type> {
-        let isConst = unsafe { clang_isConstQualifiedType(cx_type) } != 0;
+        // let isConst = unsafe { clang_isConstQualifiedType(cx_type) } != 0;
 
         match cx_type.kind {
             CXType_Void => self.VOID.clone(),

@@ -163,9 +163,9 @@ impl TypeMap {
             CXType_Double => self.F64.clone(),
             CXType_LongDouble => self.F80.clone(),
 
-            CXType_Pointer => {
-                let pointee=unsafe{clang_getPointeeType(cx_type)};
-                let pointee_type = self.type_from_cx_type(pointee, cursor);                    
+            CXType_Pointer | CXType_LValueReference => {
+                let pointee = unsafe { clang_getPointeeType(cx_type) };
+                let pointee_type = self.type_from_cx_type(pointee, cursor);
                 let t = Type::Pointer(pointee_type);
                 Rc::new(t)
             }

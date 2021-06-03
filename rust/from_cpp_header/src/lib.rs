@@ -67,13 +67,13 @@ impl OnVisit<Root> for Root
     
             CXCursor_Namespace => {
                 self.ns.push(spelling.to_string());
-                visit_children(t, cursor);
+                visit_children(cursor, t);
                 self.ns.pop();
             }
     
             CXCursor_UnexposedDecl => {
                 self.ns.push(spelling.to_string());
-                visit_children(t, cursor);
+                visit_children(cursor, t);
                 self.ns.pop();
             }
     
@@ -94,7 +94,7 @@ impl OnVisit<Root> for Root
                 // var structType = StructType.Parse(cursor, m_typeMap);
                 // reference.Type = structType;
                 self.ns.push(spelling.to_string());
-                visit_children(t, cursor);
+                visit_children(cursor, t);
                 self.ns.pop();
                 // // if (libclang.clang_Cursor_isAnonymousRecordDecl(cursor) != 0)
                 // if (libclang.clang_Cursor_isAnonymous(cursor) != 0)
@@ -189,7 +189,7 @@ pub fn run(args: &[String]) -> Result<Box<Root>, Error> {
     let root = tu.get_cursor();
 
     let p = Box::into_raw(data);
-    visit_children(p, root);
+    visit_children(root, p);
     let data = unsafe { Box::from_raw(p) };
 
     // find "SliderFloat2"

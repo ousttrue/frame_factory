@@ -1,17 +1,17 @@
 use clang_sys::*;
 
-use crate::{cx_string, visit_children, OnVisit, TypeMap};
+use crate::{OnVisit, TypeMap, cx_string, visit_children, visit_children_with};
 
 pub struct Function {
     pub name: String,
 }
 
-pub struct FunctionVisitor {
-    function: Function
+pub struct FunctionVisitor<'a> {
+    function: &'a mut Function
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit<FunctionVisitor> for FunctionVisitor {
+impl<'a> OnVisit<FunctionVisitor<'a>> for FunctionVisitor<'a> {
     fn on_visit(&mut self, ptr: *mut FunctionVisitor, cursor: CXCursor, parent: CXCursor) {
         match cursor.kind {
             CXCursor_CompoundStmt => {
@@ -50,14 +50,12 @@ impl Function {
             name: spelling.to_string(),
         };
 
-        let visitor = Box::new(FunctionVisitor {
-            function
+        visit_children_with(cursor, ||{
+            FunctionVisitor {
+                function: &mut function
+            }
         });
-        let ptr = Box::into_raw(visitor);
-        visit_children(ptr, cursor);
-        // for drop
-        let visitor = unsafe { Box::from_raw(ptr) };
 
-        visitor.function
+        function
     }
 }

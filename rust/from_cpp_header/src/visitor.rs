@@ -56,6 +56,14 @@ extern "C" fn visitor<T: OnVisit<T>>(
     CXChildVisit_Continue
 }
 
-pub fn visit_children<T: OnVisit<T>>(ptr: *mut T, cursor: CXCursor) {
+pub fn visit_children<T: OnVisit<T>>(cursor: CXCursor, ptr: *mut T) {
     unsafe { clang_visitChildren(cursor, visitor::<T>, ptr as *mut c_void) };
+}
+
+pub fn visit_children_with<T: OnVisit<T>, F: FnOnce() -> T>(cursor: CXCursor, f: F) {
+    let visitor = Box::new(f());
+    let ptr = Box::into_raw(visitor);
+    visit_children(cursor, ptr);
+    // for drop
+    unsafe { Box::from_raw(ptr) };
 }

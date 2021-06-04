@@ -2,7 +2,7 @@ use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc};
 
 use clang_sys::*;
 
-use crate::{Function, OnVisit, Typedef, cx_string, visit_children_with};
+use crate::{cx_string, visit_children_with, Function, OnVisit, Typedef};
 
 pub enum Decl {
     None,
@@ -102,6 +102,70 @@ impl<'a> OnVisit<ReferenceVisitor<'a>> for ReferenceVisitor<'a> {
     }
 }
 
+struct ElaboratedVisitor<'a> {
+    type_map: &'a TypeMap,
+    reference: Option<Rc<Type>>,
+}
+
+#[allow(non_upper_case_globals)]
+impl<'a> OnVisit<ElaboratedVisitor<'a>> for ElaboratedVisitor<'a> {
+    type Result = Rc<Type>;
+
+    fn on_visit(
+        &mut self,
+        ptr: *mut ElaboratedVisitor<'a>,
+        cursor: CXCursor,
+        parent: CXCursor,
+    ) -> bool {
+        match cursor.kind {
+            CXCursor_StructDecl | CXCursor_UnionDecl => {
+                let t = self.type_map.get_or_create_user_type(cursor);
+
+                // var structType = reference.Type as StructType;
+                // if (structType is null)
+                // {
+                //     throw new NotImplementedException();
+                // }
+
+                // // if (!StructType.IsForwardDeclaration(child))
+                // // {
+                // //     structType.ParseFields(child, this);
+                // // }
+
+                self.reference = Some(t);
+
+                false
+            }
+
+            CXCursor_EnumDecl => {
+                let t = self.type_map.get_or_create_user_type(cursor);
+
+                // if (reference.Type is null)
+                // {
+                //     throw new NotImplementedException();
+                // }
+
+                self.reference = Some(t);
+
+                false
+            }
+
+            CXCursor_TypeRef => {
+                let referenced = unsafe { clang_getCursorReferenced(cursor) };
+                let t = self.type_map.get_or_create_user_type(referenced);
+                self.reference = Some(t);
+                false
+            }
+
+            _ => true,
+        }
+    }
+
+    fn result(&mut self) -> Self::Result {
+        self.reference.take().unwrap()
+    }
+}
+
 #[allow(non_upper_case_globals)]
 impl TypeMap {
     pub fn new() -> TypeMap {
@@ -180,6 +244,12 @@ impl TypeMap {
                     reference: None,
                 })
             }
+
+            CXType_Elaborated => visit_children_with(cursor, || ElaboratedVisitor {
+                type_map: self,
+                reference: None,
+            }),
+
             _ => todo!(),
         }
 
@@ -204,61 +274,6 @@ impl TypeMap {
         //     var arraySize = (int)libclang.clang_getArraySize(cxType);
         //     var elementType = CxTypeToType(libclang.clang_getArrayElementType(cxType), cursor);
         //     return TypeReference.FromArray(new ArrayType(elementType, arraySize));
-        // }
-
-        // if (cxType.kind == CXTypeKind._Elaborated)
-        // {
-        //     // typedef struct {} Hoge;
-        //     TypeReference reference = default;
-        //     ClangVisitor.ProcessChildren(cursor, (in CXCursor child) =>
-        //     {
-        //         switch (child.kind)
-        //         {
-        //             case CXCursorKind._StructDecl:
-        //             case CXCursorKind._UnionDecl:
-        //                 {
-        //                     reference = GetOrCreate(child);
-        //                     var structType = reference.Type as StructType;
-        //                     if (structType is null)
-        //                     {
-        //                         throw new NotImplementedException();
-        //                     }
-
-        //                     // if (!StructType.IsForwardDeclaration(child))
-        //                     // {
-        //                     //     structType.ParseFields(child, this);
-        //                     // }
-
-        //                     return CXChildVisitResult._Break;
-        //                 }
-
-        //             case CXCursorKind._EnumDecl:
-        //                 {
-        //                     reference = GetOrCreate(child);
-        //                     if (reference.Type is null)
-        //                     {
-        //                         throw new NotImplementedException();
-        //                     }
-        //                     return CXChildVisitResult._Break;
-        //                 }
-
-        //             case CXCursorKind._TypeRef:
-        //                 {
-        //                     var referenced = libclang.clang_getCursorReferenced(child);
-        //                     reference = GetOrCreate(referenced);
-        //                     return CXChildVisitResult._Break;
-        //                 }
-
-        //             default:
-        //                 return CXChildVisitResult._Continue;
-        //         }
-        //     });
-        //     if (reference is null)
-        //     {
-        //         var children = cursor.Children();
-        //         throw new NotImplementedException("Elaborated not found");
-        //     }
-        //     return reference;
         // }
 
         // if (cxType.kind == CXTypeKind._FunctionProto)

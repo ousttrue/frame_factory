@@ -204,23 +204,17 @@ impl Root {
     }
 }
 
-pub fn run(args: &[String]) -> Result<Box<Root>, Error> {
+pub fn run(args: &[String]) -> Result<TypeMap, Error> {
     let tu = TranslationUnit::parse(args[0].as_str())?;
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 
-    let data = Box::new(Root::new());
+    // aggregate
+    let type_map = visit_children_with(tu.get_cursor(), ||{
+        Root::new()
+    });
 
-    // traverse(&tu.get_cursor());
-    let root = tu.get_cursor();
+    // generate
 
-    let p = Box::into_raw(data);
-    visit_children(root, p);
-    let data = unsafe { Box::from_raw(p) };
-
-    // find "SliderFloat2"
-
-    // traverse
-
-    Ok(data)
+    Ok(type_map)
 }

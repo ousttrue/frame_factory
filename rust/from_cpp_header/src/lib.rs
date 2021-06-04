@@ -204,8 +204,57 @@ impl Root {
     }
 }
 
+struct Export
+{
+    header: String,
+    dll: String,
+}
+
+struct Args
+{
+    exports: Vec<Export>,
+    dst: String,
+}
+
+impl Args
+{
+    fn parse(args: &[String])->Args
+    {
+        let mut exports: Vec<Export> = Vec::new();
+        let mut dst = String::new();
+
+        for arg in args
+        {
+            if arg.starts_with("-E")
+            {
+                let split: Vec<&str> = arg[2..].rsplitn(2, ",").collect();
+                exports.push(Export{
+                    header: split[1].to_owned(),
+                    dll: split[0].to_owned(),
+                });
+            }
+            else if arg.starts_with("-D")
+            {
+                dst = arg[2..].to_owned();
+            }
+            else{
+                panic!()
+            }
+        }
+
+        Args
+        {
+            exports,
+            dst
+        }
+    }
+}
+
 pub fn run(args: &[String]) -> Result<TypeMap, Error> {
-    let tu = TranslationUnit::parse(args[0].as_str())?;
+    let args= Args::parse(args);
+
+    // parse
+    let tu = TranslationUnit::parse(&args.exports[0].header)?;
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 

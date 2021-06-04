@@ -20,7 +20,10 @@
                 }
             },
             "args": [
-                "${workspaceFolder}/../cpp/_external/imgui/imgui.h",
+                // Export
+                "-E${workspaceFolder}/../cpp/_external/imgui/imgui.h,ImGui.dll",
+                // Dst
+                "-D${workspaceFolder}/imgui_raw/src/generated/imgui.rs",
             ],
             "cwd": "${workspaceFolder}",
             "env": {

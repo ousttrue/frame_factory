@@ -250,6 +250,16 @@ impl TypeMap {
                 reference: None,
             }),
 
+            CXType_FunctionProto => {
+                let t = self.get_or_create_user_type(cursor);
+                if let Type::UserType(t) = &*t {
+                    // let resultType = unsafe { clang_getResultType(cx_type)};
+                    let function = Function::parse(cursor, self);
+                    t.decl.replace(Decl::Function(function));
+                }
+                t
+            }
+
             _ => todo!(),
         }
 
@@ -257,11 +267,6 @@ impl TypeMap {
         // {
         //     // nullptr_t
         //     return TypeReference.FromPointer(new PointerType(TypeReference.FromPrimitive(VoidType.Instance)));
-        // }
-
-        // if (cxType.kind == CXTypeKind._LValueReference)
-        // {
-        //     return TypeReference.FromPointer(new PointerType(CxTypeToType(libclang.clang_getPointeeType(cxType), cursor)));
         // }
 
         // if (cxType.kind == CXTypeKind._IncompleteArray)
@@ -274,13 +279,6 @@ impl TypeMap {
         //     var arraySize = (int)libclang.clang_getArraySize(cxType);
         //     var elementType = CxTypeToType(libclang.clang_getArrayElementType(cxType), cursor);
         //     return TypeReference.FromArray(new ArrayType(elementType, arraySize));
-        // }
-
-        // if (cxType.kind == CXTypeKind._FunctionProto)
-        // {
-        //     var resultType = libclang.clang_getResultType(cxType);
-        //     var functionType = FunctionType.Parse(cursor, this, resultType);
-        //     return new TypeReference(cursor.CursorHashLocation(), functionType);
         // }
     }
 

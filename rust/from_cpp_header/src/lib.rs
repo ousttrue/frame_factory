@@ -1,8 +1,5 @@
 use clang_sys::*;
-use std::{
-    io::stdout,
-    io::{stderr, Write},
-};
+use std::{fs, io::{BufWriter, stdout}, io::{stderr, Write}};
 
 mod translation_unit;
 pub use translation_unit::*;
@@ -251,6 +248,7 @@ impl Args
 }
 
 pub fn run(args: &[String]) -> Result<TypeMap, Error> {
+    // args
     let args= Args::parse(args);
 
     // parse
@@ -264,13 +262,18 @@ pub fn run(args: &[String]) -> Result<TypeMap, Error> {
     });
 
     // generate
+    let dst = std::path::Path::new(&args.dst);
+    fs::create_dir_all(dst.parent().unwrap()).unwrap();
+
+    let mut f = BufWriter::new(fs::File::create(dst).unwrap());     
+
     for (k, v) in type_map.get().iter()
     {
         if let Type::UserType(t) = &**v
         {
             if t.file.ends_with("/imgui.h")
             {
-                println!("{:?}", v);
+                f.write_fmt(format_args!("// {:?}\n", v));
             }
         }
     }

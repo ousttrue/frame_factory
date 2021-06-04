@@ -52,7 +52,7 @@ impl OnVisit<Root> for Root
 
         let spelling = cx_string::CXString::cursor_spelling(cursor);
         // let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
-    
+   
         match cursor.kind {
             // skip
             CXCursor_InclusionDirective
@@ -101,7 +101,8 @@ impl OnVisit<Root> for Root
                 let t =self.get().get_or_create_user_type(cursor);                
                 if let Type::UserType(t) = &*t
                 {
-                    let f = Function::parse(cursor, self.get());
+                    let result_type = unsafe{clang_getCursorResultType(cursor)};
+                    let f = Function::parse(result_type, cursor, self.get());
                     t.decl.replace(Decl::Function(f));
                 }              
             }

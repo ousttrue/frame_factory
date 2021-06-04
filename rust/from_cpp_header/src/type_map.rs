@@ -2,7 +2,7 @@ use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc};
 
 use clang_sys::*;
 
-use crate::{cx_string, visit_children_with, Function, OnVisit, Typedef};
+use crate::{cx_source_location, cx_string, visit_children_with, Function, OnVisit, Typedef};
 
 pub enum Decl {
     None,
@@ -69,6 +69,8 @@ pub struct TypeMap {
     F32: Rc<Type>,
     F64: Rc<Type>,
     F80: Rc<Type>,
+
+    NULL_PTR: Rc<Type>,
 }
 
 struct ReferenceVisitor<'a> {
@@ -169,9 +171,10 @@ impl<'a> OnVisit<ElaboratedVisitor<'a>> for ElaboratedVisitor<'a> {
 #[allow(non_upper_case_globals)]
 impl TypeMap {
     pub fn new() -> TypeMap {
+        let void = Rc::new(Type::Primitive(Primitives::Void));
         TypeMap {
             map: RefCell::new(HashMap::new()),
-            VOID: Rc::new(Type::Primitive(Primitives::Void)),
+            VOID: void.clone(),
             BOOL: Rc::new(Type::Primitive(Primitives::Bool)),
             I8: Rc::new(Type::Primitive(Primitives::I8)),
             I16: Rc::new(Type::Primitive(Primitives::I16)),
@@ -184,6 +187,7 @@ impl TypeMap {
             F32: Rc::new(Type::Primitive(Primitives::F32)),
             F64: Rc::new(Type::Primitive(Primitives::F64)),
             F80: Rc::new(Type::Primitive(Primitives::F80)),
+            NULL_PTR: Rc::new(Type::Pointer(void)),
         }
     }
 
@@ -230,6 +234,9 @@ impl TypeMap {
             CXType_Double => self.F64.clone(),
             CXType_LongDouble => self.F80.clone(),
 
+            // null_ptr ?
+            CXType_Unexposed => self.NULL_PTR.clone(),
+
             CXType_Pointer | CXType_LValueReference => {
                 let pointee = unsafe { clang_getPointeeType(cx_type) };
                 let pointee_type = self.type_from_cx_type(pointee, cursor);
@@ -253,21 +260,20 @@ impl TypeMap {
             CXType_FunctionProto => {
                 let t = self.get_or_create_user_type(cursor);
                 if let Type::UserType(t) = &*t {
-                    // let resultType = unsafe { clang_getResultType(cx_type)};
-                    let function = Function::parse(cursor, self);
+                    let result_type = unsafe { clang_getResultType(cx_type) };
+                    let function = Function::parse(result_type, cursor, self);
                     t.decl.replace(Decl::Function(function));
                 }
                 t
             }
 
-            _ => todo!(),
+            _ => {
+                let spelling = cx_string::CXString::cursor_spelling(cursor).to_string();
+                let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
+                let file = location.get_path();
+                todo!()
+            }
         }
-
-        // if (cxType.kind == CXTypeKind._Unexposed)
-        // {
-        //     // nullptr_t
-        //     return TypeReference.FromPointer(new PointerType(TypeReference.FromPrimitive(VoidType.Instance)));
-        // }
 
         // if (cxType.kind == CXTypeKind._IncompleteArray)
         // {

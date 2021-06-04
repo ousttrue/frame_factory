@@ -1,27 +1,36 @@
-use std::{borrow::BorrowMut, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{
+    borrow::BorrowMut,
+    cell::{Ref, RefCell},
+    collections::HashMap,
+    rc::Rc,
+};
 
 use clang_sys::*;
 
 use crate::{cx_source_location, cx_string, visit_children_with, Function, OnVisit, Typedef};
 
+#[derive(Debug)]
 pub enum Decl {
     None,
     Function(Function),
     Typedef(Typedef),
 }
 
+#[derive(Debug)]
 pub struct UserType {
     hash: u32,
     pub name: String,
+    pub file: String,
     count: RefCell<u32>,
     pub decl: RefCell<Decl>,
 }
 
 impl UserType {
-    pub fn new(hash: u32, name: String) -> UserType {
+    pub fn new(hash: u32, name: String, file: String) -> UserType {
         UserType {
             hash,
             name,
+            file,
             count: RefCell::new(0),
             decl: RefCell::new(Decl::None),
         }
@@ -32,6 +41,7 @@ impl UserType {
     }
 }
 
+#[derive(Debug)]
 pub enum Primitives {
     Void,
     Bool,
@@ -48,6 +58,7 @@ pub enum Primitives {
     F80,
 }
 
+#[derive(Debug)]
 pub enum Type {
     UserType(UserType),
     Pointer(Rc<Type>),
@@ -205,7 +216,12 @@ impl TypeMap {
         }
 
         let name = cx_string::CXString::cursor_spelling(cursor).to_string();
-        let t = Rc::new(Type::UserType(UserType::new(hash, name)));
+        let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
+        let t = Rc::new(Type::UserType(UserType::new(
+            hash,
+            name,
+            location.get_path().to_string_lossy().to_string(),
+        )));
         self.map.borrow_mut().insert(hash, t.clone());
         t
     }
@@ -291,5 +307,9 @@ impl TypeMap {
     pub fn type_from_cx_cursor(&self, cursor: CXCursor) -> Rc<Type> {
         let t = unsafe { clang_getCursorResultType(cursor) };
         self.type_from_cx_type(t, cursor)
+    }
+
+    pub fn get(&self) -> Ref<HashMap<u32, Rc<Type>>> {
+        self.map.borrow()
     }
 }

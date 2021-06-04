@@ -215,6 +215,16 @@ pub fn run(args: &[String]) -> Result<TypeMap, Error> {
     });
 
     // generate
+    for (k, v) in type_map.get().iter()
+    {
+        if let Type::UserType(t) = &**v
+        {
+            if t.file.ends_with("/imgui.h")
+            {
+                println!("{:?}", v);
+            }
+        }
+    }
 
     Ok(type_map)
 }

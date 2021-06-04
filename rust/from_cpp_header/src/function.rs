@@ -1,11 +1,17 @@
+use clang_sys::*;
+use std::fmt::Debug;
 use std::rc::Rc;
 
-use clang_sys::*;
-
-use crate::{cx_string, visit_children, visit_children_with, OnVisit, Type, TypeMap};
+use crate::{cx_string, visit_children_with, OnVisit, Type, TypeMap};
 
 pub struct Function {
     pub result: Rc<Type>,
+}
+
+impl Debug for Function {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Ok(())
+    }
 }
 
 struct FunctionVisitor {

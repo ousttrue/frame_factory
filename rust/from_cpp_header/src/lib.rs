@@ -18,11 +18,14 @@ pub use types::*;
 mod type_map;
 pub use type_map::*;
 
-mod function;
-pub use function::*;
+mod type_function;
+pub use type_function::*;
 
-mod typedef;
-pub use typedef::*;
+mod type_typedef;
+pub use type_typedef::*;
+
+mod type_enum;
+pub use type_enum::*;
 
 mod generator;
 
@@ -174,8 +177,14 @@ impl OnVisit<Root> for Root
             }
     
             CXCursor_EnumDecl => {
-                // var reference = m_typeMap.GetOrCreate(cursor);
-                // reference.Type = EnumType.Parse(cursor);
+                let t = self.get().get_or_create_user_type(cursor);
+                if let Type::UserType(t) = &*t
+                {
+                    let cx_type = unsafe{clang_getEnumDeclIntegerType(cursor)};
+                    let base_type = self.get().type_from_cx_type(cx_type, cursor);            
+                    let e = Enum::parse(cursor, base_type);
+                    t.decl.replace(Decl::Enum(e));
+                }              
             }
     
             CXCursor_VarDecl => (),

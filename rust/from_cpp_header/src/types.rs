@@ -1,10 +1,11 @@
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
-use crate::{Function, Typedef};
+use crate::{Enum, Function, Typedef};
 
 #[derive(Debug)]
 pub enum Decl {
     None,
+    Enum(Enum),
     Function(Function),
     Typedef(Typedef),
 }

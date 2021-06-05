@@ -1,6 +1,16 @@
-use std::io::{BufWriter, Write};
+use std::{
+    io::{BufWriter, Write},
+    rc::Rc,
+};
 
-use crate::{Args, Decl, Error, Type, TypeMap, UserType};
+use crate::{Args, Decl, Error, Primitives, Type, TypeMap, UserType};
+
+fn repr_type(t: &Type) -> &'static str {
+    match t {
+        Type::Primitive(Primitives::I32) => "i32",
+        _ => panic!(),
+    }
+}
 
 pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), Error> {
     let dir = args.out.parent().unwrap();
@@ -11,23 +21,61 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), Error> {
 
     let export = &args.exports[0];
 
-    w.write_fmt(format_args!(
-        "#[link(name=\"{}\", kind=\"dylib\")]
-extern {{
+    // enums
+    let mut enums: Vec<&UserType> = type_map
+        .map
+        .iter()
+        .filter_map(|(k, v)| {
+            if let Type::UserType(t) = &**v {
+                if let Some(_) = args.find_export(&t.file) {
+                    if let Decl::Enum(e) = &*t.decl.borrow() {
+                        return Some(t);
+                    }
+                }
+            }
+
+            None
+        })
+        .collect();
+
+    enums.sort_by(|a, b| a.line.cmp(&b.line));
+
+    for t in enums {
+        if let Decl::Enum(e) = &*t.decl.borrow() {
+            w.write_fmt(format_args!(
+                "
+#[repr({})]
+enum {} {{
 ",
-        export.dll
-    ));
+                repr_type(&*e.base_type), t.name,
+            ));
+
+            for entry in &e.entries {
+                w.write_fmt(format_args!("    {} = 0x{:x},\n", entry.name, entry.value as i32));
+            }
+
+            w.write("}\n".as_bytes());
+        }
+    }
 
     //
     // functions
     //
+
+    w.write_fmt(format_args!(
+        "
+#[link(name=\"{}\", kind=\"dylib\")]
+extern {{
+",
+        export.dll
+    ));
 
     let mut functions: Vec<&UserType> = type_map
         .map
         .iter()
         .filter_map(|(k, v)| {
             if let Type::UserType(t) = &**v {
-                if let Some(_) = args.find_export(&t.file) {
+                if t.file == export.header {
                     if let Decl::Function(f) = &*t.decl.borrow() {
                         return Some(t);
                     }
@@ -41,17 +89,15 @@ extern {{
     functions.sort_by(|a, b| a.line.cmp(&b.line));
 
     for t in functions {
-        if t.file == export.header {
-            if let Decl::Function(f) = &*t.decl.borrow() {
-                if let Some(export_name) = &f.export_name {
-                    w.write_fmt(format_args!(
-                        "
+        if let Decl::Function(f) = &*t.decl.borrow() {
+            if let Some(export_name) = &f.export_name {
+                w.write_fmt(format_args!(
+                    "
     #[link_name=\"{}\"]
     pub fn {}();
 ",
-                        export_name, t.name
-                    ));
-                }
+                    export_name, t.name
+                ));
             }
         }
     }

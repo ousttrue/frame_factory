@@ -13,12 +13,12 @@ pub struct Namespace {
 
 impl Namespace
 {
-    pub fn print(&self, parent: &str)
+    pub fn debug_print(&self, parent: &str)
     {
         println!("{}::{}[{}]", parent, self.name, self.members.len());
         for child in &self.children
         {
-            child.print(&format!("{}::{}", parent, self.name));
+            child.debug_print(&format!("{}::{}", parent, self.name));
         }
     }
 }

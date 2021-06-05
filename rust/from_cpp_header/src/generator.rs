@@ -1,14 +1,36 @@
 use std::{
+    borrow::Cow,
     io::{BufWriter, Write},
     path::Path,
 };
 
 use crate::{Args, Decl, Primitives, Type, TypeMap, UserType};
 
-fn repr_type(t: &Type) -> &'static str {
+fn get_rust_type(t: &Type) -> Cow<'static, str> {
     match t {
-        Type::Primitive(Primitives::I32) => "i32",
-        _ => panic!(),
+        Type::Primitive(Primitives::Bool) => "bool".into(),
+        Type::Primitive(Primitives::I8) => "i8".into(),
+        Type::Primitive(Primitives::I16) => "i16".into(),
+        Type::Primitive(Primitives::I32) => "i32".into(),
+        Type::Primitive(Primitives::I64) => "i64".into(),
+        Type::Primitive(Primitives::U8) => "u8".into(),
+        Type::Primitive(Primitives::U16) => "u16".into(),
+        Type::Primitive(Primitives::U32) => "u32".into(),
+        Type::Primitive(Primitives::U64) => "u64".into(),
+        Type::Primitive(Primitives::F32) => "f32".into(),
+        Type::Primitive(Primitives::F64) => "f64".into(),
+        Type::Pointer(_) => "*mut c_void".into(),
+        Type::Array(element, size) => {
+            let element_type = get_rust_type(&*element);
+            format!("[{}; {}]", element_type, size).into()
+        }
+        Type::UserType(u) => match &*u.decl.borrow() {
+            Decl::Enum(_) => u.name.clone().into(),
+            Decl::Typedef(_) => u.name.clone().into(),
+            Decl::Struct(_) => u.name.clone().into(),
+            _ => format!("unknown {}", u.name).into(),
+        },
+        _ => format!("unknown").into(),
     }
 }
 
@@ -64,7 +86,7 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
                 "#[repr({})]
 enum {} {{
 ",
-                repr_type(&*e.base_type),
+                get_rust_type(&*e.base_type),
                 t.name,
             ))?;
 
@@ -102,7 +124,11 @@ pub struct {} {{
             ))?;
 
             for field in &s.fields {
-                w.write_fmt(format_args!("    {}: u32,\n", field.name))?;
+                w.write_fmt(format_args!(
+                    "    {}: {},\n",
+                    field.name,
+                    get_rust_type(&*field.field_type)
+                ))?;
             }
 
             w.write("}\n\n".as_bytes())?;

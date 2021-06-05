@@ -35,8 +35,7 @@ fn visit_children<T: Visitor>(cursor: CXCursor, ptr: *mut Data<T>) {
     unsafe { clang_visitChildren(cursor, visitor::<T>, ptr as *mut c_void) };
 }
 
-pub fn revisit_children<T: Visitor>(cursor: CXCursor, visitor: &mut T, type_map: &mut TypeMap)
-{
+pub fn revisit_children<T: Visitor>(cursor: CXCursor, visitor: &mut T, type_map: &mut TypeMap) {
     let mut data = Data { visitor, type_map };
     let ptr = &mut data as *mut Data<T>;
     visit_children(cursor, ptr);
@@ -48,7 +47,10 @@ pub fn visit_children_with<T: Visitor, F: FnOnce() -> T>(
     f: F,
 ) -> T::Result {
     let mut visitor = f();
-    let mut data = Data { visitor: &mut visitor, type_map };
+    let mut data = Data {
+        visitor: &mut visitor,
+        type_map,
+    };
     let ptr = &mut data as *mut Data<T>;
     visit_children(cursor, ptr);
     let data = unsafe { &mut *ptr };

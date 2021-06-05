@@ -47,7 +47,6 @@ impl<'a> OnVisit for FunctionVisitor<'a> {
     fn on_visit(
         &mut self,
         cursor: CXCursor,
-        _parent: CXCursor,
     ) -> bool {
 
         match cursor.kind {

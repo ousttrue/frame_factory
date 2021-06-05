@@ -5,19 +5,19 @@ use clang_sys::*;
 pub trait OnVisit {
     type Result;
 
-    fn on_visit(&mut self, cursor: CXCursor, parent: CXCursor) -> bool;
+    fn on_visit(&mut self, cursor: CXCursor) -> bool;
 
     fn result(&mut self) -> Self::Result;
 }
 
 extern "C" fn visitor<T: OnVisit>(
     cursor: CXCursor,
-    parent: CXCursor,
+    _parent: CXCursor,
     data: CXClientData,
 ) -> CXChildVisitResult {
     let t = data as *mut T;
     let t = unsafe { & mut *t };
-    if t.on_visit(cursor, parent) {
+    if t.on_visit(cursor) {
         CXChildVisit_Continue
     } else {
         CXChildVisit_Break

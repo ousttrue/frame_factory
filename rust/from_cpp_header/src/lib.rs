@@ -55,13 +55,9 @@ impl Drop for Root {
 #[allow(non_upper_case_globals)]
 impl OnVisit for Root
 {
-    fn on_visit(&mut self, cursor: CXCursor, parent: CXCursor)->bool {
+    fn on_visit(&mut self, cursor: CXCursor)->bool {
 
         let ptr = self as *mut Root;
-
-        let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
-        assert!(!parent_is_null);
-        // assert!(data.stack.len() == 0);
 
         let spelling = cx_string::CXString::cursor_spelling(cursor);
         // let location = cx_source_location::CXSourceLocation::from_cursor(cursor);

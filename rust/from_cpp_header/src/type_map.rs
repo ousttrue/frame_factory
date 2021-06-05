@@ -1,12 +1,10 @@
-use std::{
-    collections::HashMap,
-    rc::Rc,
-};
+use std::{collections::HashMap, rc::Rc};
 
 use clang_sys::*;
 
 use crate::{
-    cx_source_location, cx_string, visit_children_with, Decl, Function, OnVisit, Primitives, Type, UserType,
+    cx_source_location, cx_string, visit_children_with, Decl, Function, OnVisit, Primitives, Type,
+    UserType,
 };
 
 #[allow(non_upper_case_globals, non_snake_case)]
@@ -37,11 +35,7 @@ struct ReferenceVisitor<'a> {
 
 #[allow(non_upper_case_globals)]
 impl<'a> OnVisit for ReferenceVisitor<'a> {
-    fn on_visit(
-        &mut self,
-        cursor: CXCursor,
-        _parent: CXCursor,
-    ) -> bool {
+    fn on_visit(&mut self, cursor: CXCursor) -> bool {
         match cursor.kind {
             CXCursor_TypeRef => {
                 let referenced = unsafe { clang_getCursorReferenced(cursor) };
@@ -69,11 +63,7 @@ struct ElaboratedVisitor<'a> {
 impl<'a> OnVisit for ElaboratedVisitor<'a> {
     type Result = Rc<Type>;
 
-    fn on_visit(
-        &mut self,
-        cursor: CXCursor,
-        _parent: CXCursor,
-    ) -> bool {
+    fn on_visit(&mut self, cursor: CXCursor) -> bool {
         match cursor.kind {
             CXCursor_StructDecl | CXCursor_UnionDecl => {
                 let t = self.type_map.get_or_create_user_type(cursor);

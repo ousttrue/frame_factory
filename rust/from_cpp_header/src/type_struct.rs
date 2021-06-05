@@ -1,4 +1,4 @@
-use std::{rc::Rc};
+use std::rc::Rc;
 
 use clang_sys::*;
 
@@ -28,11 +28,7 @@ struct StructVisitor<'a> {
 impl<'a> OnVisit for StructVisitor<'a> {
     type Result = Struct;
 
-    fn on_visit(
-        &mut self,
-        cursor: CXCursor,
-        _parent: CXCursor,
-    ) -> bool {
+    fn on_visit(&mut self, cursor: CXCursor) -> bool {
         match cursor.kind {
             CXCursor_FieldDecl => {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();

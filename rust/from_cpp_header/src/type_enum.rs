@@ -25,7 +25,7 @@ struct EnumVisitor {
 impl OnVisit for EnumVisitor {
     type Result = Enum;
 
-    fn on_visit(&mut self, cursor: CXCursor, _parent: CXCursor) -> bool {
+    fn on_visit(&mut self, cursor: CXCursor) -> bool {
         match cursor.kind {
             CXCursor_EnumConstantDecl => {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();

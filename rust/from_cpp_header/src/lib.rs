@@ -53,7 +53,7 @@ impl Drop for Root {
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit<Root> for Root
+impl OnVisit for Root
 {
     fn on_visit(&mut self, ptr: *mut Root, cursor: CXCursor, parent: CXCursor)->bool {
         let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;

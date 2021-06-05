@@ -43,7 +43,7 @@ impl<'a> FunctionVisitor<'a> {
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit<FunctionVisitor<'a>> for FunctionVisitor<'a> {
+impl<'a> OnVisit for FunctionVisitor<'a> {
     fn on_visit(
         &mut self,
         _ptr: *mut FunctionVisitor,

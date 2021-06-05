@@ -25,7 +25,7 @@ struct StructVisitor<'a> {
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit<StructVisitor<'a>> for StructVisitor<'a> {
+impl<'a> OnVisit for StructVisitor<'a> {
     type Result = Struct;
 
     fn on_visit(

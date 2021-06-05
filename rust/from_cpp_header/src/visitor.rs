@@ -39,15 +39,15 @@ impl<T> NoDrop<T> {
     }
 }
 
-pub trait OnVisit<T> {
+pub trait OnVisit {
     type Result;
 
-    fn on_visit(&mut self, ptr: *mut T, cursor: CXCursor, parent: CXCursor) -> bool;
+    fn on_visit(&mut self, ptr: *mut Self, cursor: CXCursor, parent: CXCursor) -> bool;
 
     fn result(&mut self) -> Self::Result;
 }
 
-extern "C" fn visitor<T: OnVisit<T>>(
+extern "C" fn visitor<T: OnVisit>(
     cursor: CXCursor,
     parent: CXCursor,
     data: CXClientData,
@@ -62,11 +62,11 @@ extern "C" fn visitor<T: OnVisit<T>>(
     }
 }
 
-pub fn visit_children<T: OnVisit<T>>(cursor: CXCursor, ptr: *mut T) {
+pub fn visit_children<T: OnVisit>(cursor: CXCursor, ptr: *mut T) {
     unsafe { clang_visitChildren(cursor, visitor::<T>, ptr as *mut c_void) };
 }
 
-pub fn visit_children_with<T: OnVisit<T>, F: FnOnce() -> T>(cursor: CXCursor, f: F) -> T::Result {
+pub fn visit_children_with<T: OnVisit, F: FnOnce() -> T>(cursor: CXCursor, f: F) -> T::Result {
     let visitor = Box::new(f());
     let ptr = Box::into_raw(visitor);
     visit_children(cursor, ptr);

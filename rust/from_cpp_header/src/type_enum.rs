@@ -22,7 +22,7 @@ struct EnumVisitor {
 }
 
 #[allow(non_upper_case_globals, non_snake_case)]
-impl OnVisit<EnumVisitor> for EnumVisitor {
+impl OnVisit for EnumVisitor {
     type Result = Enum;
 
     fn on_visit(&mut self, _ptr: *mut EnumVisitor, cursor: CXCursor, _parent: CXCursor) -> bool {

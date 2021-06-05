@@ -36,7 +36,7 @@ struct ReferenceVisitor<'a> {
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit<ReferenceVisitor<'a>> for ReferenceVisitor<'a> {
+impl<'a> OnVisit for ReferenceVisitor<'a> {
     fn on_visit(
         &mut self,
         _ptr: *mut ReferenceVisitor,
@@ -67,7 +67,7 @@ struct ElaboratedVisitor<'a> {
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit<ElaboratedVisitor<'a>> for ElaboratedVisitor<'a> {
+impl<'a> OnVisit for ElaboratedVisitor<'a> {
     type Result = Rc<Type>;
 
     fn on_visit(

@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use crate::{Args, Decl, Primitives, Type, TypeMap, UserType};
+use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, UserType};
 
 fn get_rust_type(t: &Type) -> Cow<'static, str> {
     match t {
@@ -60,6 +60,65 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
     enums
 }
 
+fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error>
+{
+    w.write_fmt(format_args!(
+        "#[repr({})]
+enum {} {{
+",
+        get_rust_type(&*e.base_type),
+        t.name,
+    ))?;
+
+    for entry in &e.entries {
+        w.write_fmt(format_args!(
+            "    {} = 0x{:x},\n",
+            entry.name, entry.value as i32
+        ))?;
+    }
+
+    w.write("}\n\n".as_bytes())?;
+
+    Ok(())
+}
+
+fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct)->Result<(), std::io::Error>
+{
+    w.write_fmt(format_args!(
+        "#[repr(C)]
+pub struct {} {{
+",
+        t.name
+    ))?;
+
+    for field in &s.fields {
+        w.write_fmt(format_args!(
+            "    {}: {},\n",
+            field.name,
+            get_rust_type(&*field.field_type)
+        ))?;
+    }
+
+    w.write("}\n\n".as_bytes())?;
+
+    Ok(())
+}
+
+fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(), std::io::Error>
+{
+    if let Some(export_name) = &f.export_name {
+        w.write_fmt(format_args!(
+            "
+#[link_name = \"{}\"]
+pub fn {}();
+",
+            export_name, t.name
+        ))?;
+    }
+
+    Ok(())
+}
+
 pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     let dir = args.out.parent().unwrap();
     std::fs::create_dir_all(dir)?;
@@ -70,68 +129,22 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     let export = &args.exports[0];
 
     //
-    // enums
+    // enum, struct, typedef
     //
-    let enums = get_sorted_entries(type_map, &export.header, |d| {
-        if let Decl::Enum(_) = d {
-            true
-        } else {
+    let types = get_sorted_entries(type_map, &export.header, |d| {
+        if let Decl::Function(_) = d {
             false
+        } else {
+            true
         }
     });
 
-    for t in enums {
-        if let Decl::Enum(e) = &*t.decl.borrow() {
-            w.write_fmt(format_args!(
-                "#[repr({})]
-enum {} {{
-",
-                get_rust_type(&*e.base_type),
-                t.name,
-            ))?;
-
-            for entry in &e.entries {
-                w.write_fmt(format_args!(
-                    "    {} = 0x{:x},\n",
-                    entry.name, entry.value as i32
-                ))?;
-            }
-
-            w.write("}\n\n".as_bytes())?;
-        }
-    }
-
-    //
-    // struct
-    //
-    let structs = get_sorted_entries(type_map, &export.header, |d| {
-        if let Decl::Struct(s) = d {
-            if s.fields.len() > 0 {
-                return true;
-            }
-        }
-
-        false
-    });
-
-    for t in structs {
-        if let Decl::Struct(s) = &*t.decl.borrow() {
-            w.write_fmt(format_args!(
-                "#[repr(C)]
-pub struct {} {{
-",
-                t.name
-            ))?;
-
-            for field in &s.fields {
-                w.write_fmt(format_args!(
-                    "    {}: {},\n",
-                    field.name,
-                    get_rust_type(&*field.field_type)
-                ))?;
-            }
-
-            w.write("}\n\n".as_bytes())?;
+    for t in types {
+        match &*t.decl.borrow() 
+        {
+            Decl::Enum(e) => write_enum(&mut w, t, e)?,
+            Decl::Struct(s) => write_struct(&mut w, t, s)?,
+            _ =>(),
         }
     }
 
@@ -156,15 +169,7 @@ extern {{
 
     for t in functions {
         if let Decl::Function(f) = &*t.decl.borrow() {
-            if let Some(export_name) = &f.export_name {
-                w.write_fmt(format_args!(
-                    "
-    #[link_name = \"{}\"]
-    pub fn {}();
-",
-                    export_name, t.name
-                ))?;
-            }
+            write_function(&mut w, t, f)?;
         }
     }
 

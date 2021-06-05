@@ -43,8 +43,7 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), Error> {
     for t in enums {
         if let Decl::Enum(e) = &*t.decl.borrow() {
             w.write_fmt(format_args!(
-                "
-#[repr({})]
+                "#[repr({})]
 enum {} {{
 ",
                 repr_type(&*e.base_type), t.name,
@@ -54,7 +53,7 @@ enum {} {{
                 w.write_fmt(format_args!("    {} = 0x{:x},\n", entry.name, entry.value as i32));
             }
 
-            w.write("}\n".as_bytes());
+            w.write("}\n\n".as_bytes());
         }
     }
 
@@ -63,8 +62,7 @@ enum {} {{
     //
 
     w.write_fmt(format_args!(
-        "
-#[link(name=\"{}\", kind=\"dylib\")]
+        "#[link(name = \"{}\", kind = \"dylib\")]
 extern {{
 ",
         export.dll
@@ -93,7 +91,7 @@ extern {{
             if let Some(export_name) = &f.export_name {
                 w.write_fmt(format_args!(
                     "
-    #[link_name=\"{}\"]
+    #[link_name = \"{}\"]
     pub fn {}();
 ",
                     export_name, t.name

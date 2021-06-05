@@ -1,4 +1,7 @@
-use std::{io::{BufWriter, Write}, path::Path};
+use std::{
+    io::{BufWriter, Write},
+    path::Path,
+};
 
 use crate::{Args, Decl, Primitives, Type, TypeMap, UserType};
 
@@ -9,8 +12,11 @@ fn repr_type(t: &Type) -> &'static str {
     }
 }
 
-fn get_sorted_entries<'a, F: Fn(&Decl)->bool>(type_map: &'a TypeMap, path: &Path, f: F) -> Vec<&'a UserType>
-{
+fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
+    type_map: &'a TypeMap,
+    path: &Path,
+    f: F,
+) -> Vec<&'a UserType> {
     let mut enums: Vec<&UserType> = type_map
         .map
         .iter()
@@ -44,12 +50,10 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     //
     // enums
     //
-    let enums = get_sorted_entries(type_map, &export.header, |d|{
-        if let Decl::Enum(_) = d
-        {
+    let enums = get_sorted_entries(type_map, &export.header, |d| {
+        if let Decl::Enum(_) = d {
             true
-        }
-        else {
+        } else {
             false
         }
     });
@@ -60,11 +64,15 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
                 "#[repr({})]
 enum {} {{
 ",
-                repr_type(&*e.base_type), t.name,
+                repr_type(&*e.base_type),
+                t.name,
             ))?;
 
             for entry in &e.entries {
-                w.write_fmt(format_args!("    {} = 0x{:x},\n", entry.name, entry.value as i32))?;
+                w.write_fmt(format_args!(
+                    "    {} = 0x{:x},\n",
+                    entry.name, entry.value as i32
+                ))?;
             }
 
             w.write("}\n\n".as_bytes())?;
@@ -74,6 +82,32 @@ enum {} {{
     //
     // struct
     //
+    let structs = get_sorted_entries(type_map, &export.header, |d| {
+        if let Decl::Struct(s) = d {
+            if s.fields.len() > 0 {
+                return true;
+            }
+        }
+
+        false
+    });
+
+    for t in structs {
+        if let Decl::Struct(s) = &*t.decl.borrow() {
+            w.write_fmt(format_args!(
+                "#[repr(C)]
+pub struct {} {{
+",
+                t.name
+            ))?;
+
+            for field in &s.fields {
+                w.write_fmt(format_args!("    {}: u32,\n", field.name))?;
+            }
+
+            w.write("}\n\n".as_bytes())?;
+        }
+    }
 
     //
     // functions
@@ -86,12 +120,10 @@ extern {{
         export.dll
     ))?;
 
-    let functions = get_sorted_entries(type_map, &export.header, |d|
-    {
+    let functions = get_sorted_entries(type_map, &export.header, |d| {
         if let Decl::Function(_) = d {
             true
-        }
-        else{
+        } else {
             false
         }
     });

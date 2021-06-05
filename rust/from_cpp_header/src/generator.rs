@@ -1,4 +1,5 @@
 use std::{
+    ascii::escape_default,
     borrow::Cow,
     io::{BufWriter, Write},
     path::Path,
@@ -6,9 +7,35 @@ use std::{
 
 use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
+fn escape_symbol(src: &str) -> Cow<str> {
+    match src {
+        "type" | "in" | "ref" => format!("r#{}", src).into(),
+        _ => src.into(),
+    }
+}
+
+// typedef => typedef => pointer => typedef
+fn is_function(t: &Type) -> bool {
+    match &*t {
+        Type::Pointer(p) => {
+            return is_function(p);
+        }
+        Type::UserType(u) => match &*u.decl.borrow() {
+            Decl::Function(f) => {
+                return true;
+            }
+            Decl::Typedef(d) => return is_function(&*d.base_type),
+            _ => (),
+        },
+        _ => (),
+    }
+
+    false
+}
+
 fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
     match t {
-        Type::Primitive(Primitives::Void) => "()".into(),
+        Type::Primitive(Primitives::Void) => "c_void".into(),
         Type::Primitive(Primitives::Bool) => "bool".into(),
         Type::Primitive(Primitives::I8) => "i8".into(),
         Type::Primitive(Primitives::I16) => "i16".into(),
@@ -38,7 +65,7 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
             Decl::Typedef(_) => u.name.clone().into(),
             Decl::Struct(_) => u.name.clone().into(),
             // to function pointer
-            Decl::Function(_) => "c_void".into(),
+            Decl::Function(_) => u.name.clone().into(),
             _ => format!("unknown {}", u.name).into(),
         },
         _ => format!("unknown").into(),
@@ -121,11 +148,23 @@ pub struct {} {{
 }
 
 fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), std::io::Error> {
-    w.write_fmt(format_args!(
-        "type {} = {};\n",
-        t.name,
-        get_rust_type(&*d.base_type, false)
-    ))?;
+    if t.name == "ImGuiInputTextCallback" {
+        let a = 0;
+        println!("{:?}", d.base_type)
+    }
+
+    if is_function(&*d.base_type) {
+        w.write_fmt(format_args!(
+            "type {} = *mut c_void; // function pointer\n",
+            t.name,
+        ))?;
+    } else {
+        w.write_fmt(format_args!(
+            "type {} = {};\n",
+            t.name,
+            get_rust_type(&*d.base_type, false)
+        ))?;
+    }
 
     Ok(())
 }
@@ -145,7 +184,7 @@ fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(),
 
                 pw.write_fmt(format_args!(
                     "        {}: {},\n",
-                    param.name,
+                    escape_symbol(&param.name),
                     get_rust_type(&*param.param_type, param.is_const)
                 ))
                 .unwrap();
@@ -175,6 +214,11 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
 
     let f = std::fs::File::create(&args.out)?;
     let mut w = BufWriter::new(f);
+    w.write_fmt(format_args!(
+        "use std::ffi::c_void;
+
+"
+    ))?;
 
     let export = &args.exports[0];
 

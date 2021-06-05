@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "imgui_raw",
     "gltf2",
     "scene",
     "renderer",

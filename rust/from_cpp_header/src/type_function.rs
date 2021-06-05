@@ -15,7 +15,7 @@ pub struct Function {
 }
 
 impl Debug for Function {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Ok(())
     }
 }
@@ -44,7 +44,12 @@ impl<'a> FunctionVisitor<'a> {
 
 #[allow(non_upper_case_globals)]
 impl<'a> OnVisit<FunctionVisitor<'a>> for FunctionVisitor<'a> {
-    fn on_visit(&mut self, ptr: *mut FunctionVisitor, cursor: CXCursor, parent: CXCursor) -> bool {
+    fn on_visit(
+        &mut self,
+        _ptr: *mut FunctionVisitor,
+        cursor: CXCursor,
+        _parent: CXCursor,
+    ) -> bool {
         match cursor.kind {
             CXCursor_CompoundStmt => {
                 self.has_body = true;

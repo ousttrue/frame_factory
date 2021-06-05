@@ -1,18 +1,15 @@
 use std::{
-    borrow::BorrowMut,
-    cell::{Ref, RefCell},
     collections::HashMap,
-    path::{Path, PathBuf},
     rc::Rc,
 };
 
 use clang_sys::*;
 
 use crate::{
-    cx_source_location, cx_string, visit_children_with, Decl, Function, OnVisit, Primitives, Type,
-    Typedef, UserType,
+    cx_source_location, cx_string, visit_children_with, Decl, Function, OnVisit, Primitives, Type, UserType,
 };
 
+#[allow(non_upper_case_globals, non_snake_case)]
 pub struct TypeMap {
     pub map: HashMap<u32, Rc<Type>>,
 
@@ -75,9 +72,9 @@ impl<'a> OnVisit<ElaboratedVisitor<'a>> for ElaboratedVisitor<'a> {
 
     fn on_visit(
         &mut self,
-        ptr: *mut ElaboratedVisitor<'a>,
+        _ptr: *mut ElaboratedVisitor<'a>,
         cursor: CXCursor,
-        parent: CXCursor,
+        _parent: CXCursor,
     ) -> bool {
         match cursor.kind {
             CXCursor_StructDecl | CXCursor_UnionDecl => {
@@ -229,6 +226,14 @@ impl TypeMap {
                 t
             }
 
+            CXType_ConstantArray => {
+                let array_size = unsafe { clang_getArraySize(cx_type) } as usize;
+                let element_type = unsafe { clang_getArrayElementType(cx_type) };
+                let element_type = self.type_from_cx_type(element_type, cursor);
+                let t = Type::Array(element_type, array_size);
+                Rc::new(t)
+            }
+
             _ => {
                 let spelling = cx_string::CXString::cursor_spelling(cursor).to_string();
                 let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
@@ -240,13 +245,6 @@ impl TypeMap {
         // if (cxType.kind == CXTypeKind._IncompleteArray)
         // {
         //     return TypeReference.FromPointer(new PointerType(CxTypeToType(libclang.clang_getArrayElementType(cxType), cursor)));
-        // }
-
-        // if (cxType.kind == CXTypeKind._ConstantArray)
-        // {
-        //     var arraySize = (int)libclang.clang_getArraySize(cxType);
-        //     var elementType = CxTypeToType(libclang.clang_getArrayElementType(cxType), cursor);
-        //     return TypeReference.FromArray(new ArrayType(elementType, arraySize));
         // }
     }
 

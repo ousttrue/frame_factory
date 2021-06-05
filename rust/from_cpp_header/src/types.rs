@@ -1,11 +1,12 @@
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
-use crate::{Enum, Function, Typedef};
+use crate::{Enum, Function, Struct, Typedef};
 
 #[derive(Debug)]
 pub enum Decl {
     None,
     Enum(Enum),
+    Struct(Struct),
     Function(Function),
     Typedef(Typedef),
 }
@@ -59,5 +60,6 @@ pub enum Primitives {
 pub enum Type {
     UserType(UserType),
     Pointer(Rc<Type>),
+    Array(Rc<Type>, usize),
     Primitive(Primitives),
 }

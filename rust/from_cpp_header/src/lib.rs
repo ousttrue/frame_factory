@@ -1,5 +1,5 @@
 use clang_sys::*;
-use std::{io::{stdout}, io::{stderr, Write}, path::PathBuf};
+use std::{io::{stdout}, io::{stderr, Write}};
 
 mod translation_unit;
 pub use translation_unit::*;
@@ -27,6 +27,9 @@ pub use type_typedef::*;
 mod type_enum;
 pub use type_enum::*;
 
+mod type_struct;
+pub use type_struct::*;
+
 mod generator;
 
 pub struct Root {
@@ -52,7 +55,7 @@ impl Drop for Root {
 #[allow(non_upper_case_globals)]
 impl OnVisit<Root> for Root
 {
-    fn on_visit(&mut self, t: *mut Root, cursor: CXCursor, parent: CXCursor)->bool {
+    fn on_visit(&mut self, ptr: *mut Root, cursor: CXCursor, parent: CXCursor)->bool {
         let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
         assert!(!parent_is_null);
         // assert!(data.stack.len() == 0);
@@ -85,13 +88,13 @@ impl OnVisit<Root> for Root
     
             CXCursor_Namespace => {
                 self.ns.push(spelling.to_string());
-                visit_children(cursor, t);
+                visit_children(cursor, ptr);
                 self.ns.pop();
             }
     
             CXCursor_UnexposedDecl => {
                 self.ns.push(spelling.to_string());
-                visit_children(cursor, t);
+                visit_children(cursor, ptr);
                 self.ns.pop();
             }
     
@@ -115,43 +118,21 @@ impl OnVisit<Root> for Root
             }
     
             CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {
-                // var reference = m_typeMap.GetOrCreate(cursor);
-                // var structType = StructType.Parse(cursor, m_typeMap);
-                // reference.Type = structType;
+                let t = self.get().get_or_create_user_type(cursor);
+                if let Type::UserType(t) = &*t
+                {
+                    let s = Struct::parse(cursor, self.get());
+                    t.decl.replace(Decl::Struct(s));
+                }
+
+                // parse as namespace
                 self.ns.push(spelling.to_string());
-                visit_children(cursor, t);
+                visit_children(cursor, ptr);
                 self.ns.pop();
-                // // if (libclang.clang_Cursor_isAnonymousRecordDecl(cursor) != 0)
-                // if (libclang.clang_Cursor_isAnonymous(cursor) != 0)
-                // {
-                //     // anonymous type decl add field to current struct.
-                //     structType.AnonymousParent = context.Current;
-                //     var fieldOffset = (uint)libclang.clang_Cursor_getOffsetOfField(cursor);
-                //     var current = context.Current;
-                //     // var fieldName = cursor.Spelling();
-                //     // FIXME: anonymous type field offset ?
-                //     if (current != null)
-                //     {
-                //         current.Fields.Add(new StructField(current.Fields.Count, "", reference, 0));
-                //     }
-                //     else
-                //     {
-                //         var a = 0;
-                //     }
-                // }
             }
     
             CXCursor_FieldDecl => {
-                // var fieldName = cursor.Spelling();
-                // var fieldOffset = (uint)libclang.clang_Cursor_getOffsetOfField(cursor);
-                // var fieldType = libclang.clang_getCursorType(cursor);
-                // var current = context.Current;
-                // if (!string.IsNullOrEmpty(fieldName) && current.Fields.Any(x => x.Name == fieldName))
-                // {
-                //     throw new Exception();
-                // }
-                // current.Fields.Add(new StructField(current.Fields.Count, fieldName, m_typeMap.CxTypeToType(fieldType, cursor).Item1, fieldOffset));
-                // break;
+                // process in Struct::parse. skip
             }
     
             CXCursor_CXXBaseSpecifier => {
@@ -232,7 +213,7 @@ pub fn run(args: &[String]) -> Result<(), Error> {
     });
 
     // generate
-    generator::generate(&type_map, &args)?;
+    generator::generate(&type_map, &args).map_err(|e|Error::IOError(e))?;
 
     Ok(())
 }

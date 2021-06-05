@@ -1,9 +1,6 @@
-use std::{
-    io::{BufWriter, Write},
-    rc::Rc,
-};
+use std::{io::{BufWriter, Write}, path::Path};
 
-use crate::{Args, Decl, Error, Primitives, Type, TypeMap, UserType};
+use crate::{Args, Decl, Primitives, Type, TypeMap, UserType};
 
 fn repr_type(t: &Type) -> &'static str {
     match t {
@@ -12,23 +9,15 @@ fn repr_type(t: &Type) -> &'static str {
     }
 }
 
-pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), Error> {
-    let dir = args.out.parent().unwrap();
-    std::fs::create_dir_all(dir).map_err(|e| Error::IOError(e))?;
-
-    let f = std::fs::File::create(&args.out).map_err(|e| Error::IOError(e))?;
-    let mut w = BufWriter::new(f);
-
-    let export = &args.exports[0];
-
-    // enums
+fn get_sorted_entries<'a, F: Fn(&Decl)->bool>(type_map: &'a TypeMap, path: &Path, f: F) -> Vec<&'a UserType>
+{
     let mut enums: Vec<&UserType> = type_map
         .map
         .iter()
-        .filter_map(|(k, v)| {
+        .filter_map(|(_k, v)| {
             if let Type::UserType(t) = &**v {
-                if let Some(_) = args.find_export(&t.file) {
-                    if let Decl::Enum(e) = &*t.decl.borrow() {
+                if t.file == path {
+                    if f(&*t.decl.borrow()) {
                         return Some(t);
                     }
                 }
@@ -40,6 +29,31 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), Error> {
 
     enums.sort_by(|a, b| a.line.cmp(&b.line));
 
+    enums
+}
+
+pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
+    let dir = args.out.parent().unwrap();
+    std::fs::create_dir_all(dir)?;
+
+    let f = std::fs::File::create(&args.out)?;
+    let mut w = BufWriter::new(f);
+
+    let export = &args.exports[0];
+
+    //
+    // enums
+    //
+    let enums = get_sorted_entries(type_map, &export.header, |d|{
+        if let Decl::Enum(_) = d
+        {
+            true
+        }
+        else {
+            false
+        }
+    });
+
     for t in enums {
         if let Decl::Enum(e) = &*t.decl.borrow() {
             w.write_fmt(format_args!(
@@ -47,15 +61,19 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), Error> {
 enum {} {{
 ",
                 repr_type(&*e.base_type), t.name,
-            ));
+            ))?;
 
             for entry in &e.entries {
-                w.write_fmt(format_args!("    {} = 0x{:x},\n", entry.name, entry.value as i32));
+                w.write_fmt(format_args!("    {} = 0x{:x},\n", entry.name, entry.value as i32))?;
             }
 
-            w.write("}\n\n".as_bytes());
+            w.write("}\n\n".as_bytes())?;
         }
     }
+
+    //
+    // struct
+    //
 
     //
     // functions
@@ -66,25 +84,17 @@ enum {} {{
 extern {{
 ",
         export.dll
-    ));
+    ))?;
 
-    let mut functions: Vec<&UserType> = type_map
-        .map
-        .iter()
-        .filter_map(|(k, v)| {
-            if let Type::UserType(t) = &**v {
-                if t.file == export.header {
-                    if let Decl::Function(f) = &*t.decl.borrow() {
-                        return Some(t);
-                    }
-                }
-            }
-
-            None
-        })
-        .collect();
-
-    functions.sort_by(|a, b| a.line.cmp(&b.line));
+    let functions = get_sorted_entries(type_map, &export.header, |d|
+    {
+        if let Decl::Function(_) = d {
+            true
+        }
+        else{
+            false
+        }
+    });
 
     for t in functions {
         if let Decl::Function(f) = &*t.decl.borrow() {
@@ -95,7 +105,7 @@ extern {{
     pub fn {}();
 ",
                     export_name, t.name
-                ));
+                ))?;
             }
         }
     }
@@ -103,7 +113,7 @@ extern {{
     w.write_fmt(format_args!(
         "}}
 "
-    ));
+    ))?;
 
     Ok(())
 }

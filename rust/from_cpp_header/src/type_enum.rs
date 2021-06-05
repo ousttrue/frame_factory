@@ -21,12 +21,13 @@ struct EnumVisitor {
     entries: Vec<EnumEntry>,
 }
 
+#[allow(non_upper_case_globals, non_snake_case)]
 impl OnVisit<EnumVisitor> for EnumVisitor {
     type Result = Enum;
 
-    fn on_visit(&mut self, ptr: *mut EnumVisitor, cursor: CXCursor, parent: CXCursor) -> bool {
+    fn on_visit(&mut self, _ptr: *mut EnumVisitor, cursor: CXCursor, _parent: CXCursor) -> bool {
         match cursor.kind {
-            CXCursorEnumConstantDecl => {
+            CXCursor_EnumConstantDecl => {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();
                 let value = unsafe { clang_getEnumConstantDeclValue(cursor) };
                 self.entries.push(EnumEntry {

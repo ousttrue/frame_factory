@@ -1,20 +1,20 @@
 use std::io::{BufWriter, Write};
 
-use crate::{Args, Error, Type, TypeMap};
+use crate::{Args, Decl, Error, Type, TypeMap};
 
-pub fn generate(type_map: &TypeMap, args: &Args)->Result<(), Error>
-{
-    std::fs::create_dir_all(args.dst.parent().unwrap()).unwrap();
+pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), Error> {
+    let dir = args.dst.parent().unwrap();
+    std::fs::create_dir_all(dir).map_err(|e| Error::IOError(e))?;
 
-    let mut f = BufWriter::new(std::fs::File::create(&args.dst).unwrap());     
+    let f = std::fs::File::create(&args.dst).map_err(|e| Error::IOError(e))?;
+    let mut w = BufWriter::new(f);
 
-    for (k, v) in type_map.get().iter()
-    {
-        if let Type::UserType(t) = &**v
-        {
-            if let Some(export) = args.find_export(&t.file)
-            {
-                f.write_fmt(format_args!("// {:?}\n", v));
+    for (_k, v) in type_map.map.iter() {
+        if let Type::UserType(t) = &**v {
+            if let Some(_) = args.find_export(&t.file) {
+                if let Decl::Function(f) = &*t.decl.borrow() {
+                    w.write_fmt(format_args!("// {:?}\n", v));
+                }
             }
         }
     }

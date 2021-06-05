@@ -1,4 +1,10 @@
-use std::{borrow::BorrowMut, cell::{Ref, RefCell}, collections::HashMap, path::{Path, PathBuf}, rc::Rc};
+use std::{
+    borrow::BorrowMut,
+    cell::{Ref, RefCell},
+    collections::HashMap,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use clang_sys::*;
 
@@ -61,7 +67,8 @@ pub enum Type {
 }
 
 pub struct TypeMap {
-    map: RefCell<HashMap<u32, Rc<Type>>>,
+    pub map: HashMap<u32, Rc<Type>>,
+
     VOID: Rc<Type>,
     BOOL: Rc<Type>,
     I8: Rc<Type>,
@@ -80,7 +87,7 @@ pub struct TypeMap {
 }
 
 struct ReferenceVisitor<'a> {
-    type_map: &'a TypeMap,
+    type_map: &'a mut TypeMap,
     reference: Option<Rc<Type>>,
 }
 
@@ -111,7 +118,7 @@ impl<'a> OnVisit<ReferenceVisitor<'a>> for ReferenceVisitor<'a> {
 }
 
 struct ElaboratedVisitor<'a> {
-    type_map: &'a TypeMap,
+    type_map: &'a mut TypeMap,
     reference: Option<Rc<Type>>,
 }
 
@@ -179,7 +186,7 @@ impl TypeMap {
     pub fn new() -> TypeMap {
         let void = Rc::new(Type::Primitive(Primitives::Void));
         TypeMap {
-            map: RefCell::new(HashMap::new()),
+            map: HashMap::new(),
             VOID: void.clone(),
             BOOL: Rc::new(Type::Primitive(Primitives::Bool)),
             I8: Rc::new(Type::Primitive(Primitives::I8)),
@@ -197,10 +204,10 @@ impl TypeMap {
         }
     }
 
-    pub fn get_or_create_user_type(&self, cursor: CXCursor) -> Rc<Type> {
+    pub fn get_or_create_user_type(&mut self, cursor: CXCursor) -> Rc<Type> {
         let hash = unsafe { clang_hashCursor(cursor) };
 
-        if let Some(t) = self.map.borrow_mut().get_mut(&hash) {
+        if let Some(t) = self.map.get_mut(&hash) {
             // 前方参照で hash は登録済み
             // この型がTypedefなどから参照されている回数
             let t = t.clone();
@@ -217,11 +224,11 @@ impl TypeMap {
             name,
             location.get_path(),
         )));
-        self.map.borrow_mut().insert(hash, t.clone());
+        self.map.insert(hash, t.clone());
         t
     }
 
-    pub fn type_from_cx_type(&self, cx_type: CXType, cursor: CXCursor) -> Rc<Type> {
+    pub fn type_from_cx_type(&mut self, cx_type: CXType, cursor: CXCursor) -> Rc<Type> {
         // let isConst = unsafe { clang_isConstQualifiedType(cx_type) } != 0;
 
         match cx_type.kind {
@@ -299,12 +306,8 @@ impl TypeMap {
         // }
     }
 
-    pub fn type_from_cx_cursor(&self, cursor: CXCursor) -> Rc<Type> {
+    pub fn type_from_cx_cursor(&mut self, cursor: CXCursor) -> Rc<Type> {
         let t = unsafe { clang_getCursorResultType(cursor) };
         self.type_from_cx_type(t, cursor)
-    }
-
-    pub fn get(&self) -> Ref<HashMap<u32, Rc<Type>>> {
-        self.map.borrow()
     }
 }

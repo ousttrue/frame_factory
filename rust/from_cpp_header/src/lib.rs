@@ -32,9 +32,9 @@ pub struct Root {
 
 impl Root
 {
-    pub fn get(&self)->&TypeMap
+    pub fn get(&mut self)->&mut TypeMap
     {
-        self.type_map.as_ref().unwrap()
+        self.type_map.as_mut().unwrap()
     }    
 }
 

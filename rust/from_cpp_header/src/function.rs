@@ -19,7 +19,7 @@ struct FunctionVisitor {
 }
 
 impl FunctionVisitor {
-    fn new(result_type: CXType, cursor: CXCursor, type_map: &TypeMap) -> FunctionVisitor {
+    fn new(result_type: CXType, cursor: CXCursor, type_map: &mut TypeMap) -> FunctionVisitor {
         let result = type_map.type_from_cx_type(result_type, cursor);
         let function = Function { result };
 
@@ -69,7 +69,7 @@ impl OnVisit<FunctionVisitor> for FunctionVisitor {
 }
 
 impl Function {
-    pub fn parse<'a>(result_type: CXType, cursor: CXCursor, type_map: &TypeMap) -> Function {
+    pub fn parse<'a>(result_type: CXType, cursor: CXCursor, type_map: &mut TypeMap) -> Function {
         visit_children_with(cursor, || {
             FunctionVisitor::new(result_type, cursor, type_map)
         })

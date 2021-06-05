@@ -16,7 +16,7 @@ impl Debug for Typedef {
 }
 
 impl Typedef {
-    pub fn parse(cursor: CXCursor, type_map: &TypeMap) -> Typedef {
+    pub fn parse(cursor: CXCursor, type_map: &mut TypeMap) -> Typedef {
         let underlying = unsafe { clang_getTypedefDeclUnderlyingType(cursor) };
         let base_type = type_map.type_from_cx_type(underlying, cursor);
 

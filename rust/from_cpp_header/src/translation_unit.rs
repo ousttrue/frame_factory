@@ -6,6 +6,7 @@ extern crate clang_sys;
 pub enum Error {
     StaticMessage(&'static str),
     CString(NulError),
+    IOError(std::io::Error),
 }
 
 pub struct Index {

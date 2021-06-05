@@ -1,18 +1,63 @@
+use std::rc::Rc;
+
 use clang_sys::*;
 
-use crate::{Decl, Enum, Function, OnVisit, Struct, Type, TypeMap, Typedef};
+use crate::{Decl, Enum, Function, Struct, Type, TypeMap, Typedef, Visitor, cx_string, visit_children_with};
 
-pub struct Root {
+#[derive(Debug)]
+pub struct Namespace {
+    pub name: String,
+    pub children: Vec<Rc<Namespace>>,
+    pub members: Vec<Rc<Type>>,
 }
 
-impl Drop for Root {
+impl Namespace
+{
+    pub fn print(&self, parent: &str)
+    {
+        println!("{}::{}[{}]", parent, self.name, self.members.len());
+        for child in &self.children
+        {
+            child.print(&format!("{}::{}", parent, self.name));
+        }
+    }
+}
+
+pub struct NamespaceVisitor
+{
+    pub name: String,
+    pub children: Vec<Rc<Namespace>>,
+    pub members: Vec<Rc<Type>>,
+}
+
+impl Drop for NamespaceVisitor {
     fn drop(&mut self) {
-        println!("drop Data");
+        if self.members.len()>0 {
+            // println!("close {}", self.name);
+        }
+    }
+}
+
+impl NamespaceVisitor
+{
+    pub fn new(name: String)->NamespaceVisitor
+    {
+        NamespaceVisitor
+        {
+            name,
+            children: Vec::new(),
+            members: Vec::new(),
+        }
+    }
+
+    pub fn nameless()->NamespaceVisitor
+    {
+        Self::new("".to_owned())
     }
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit for Root
+impl Visitor for NamespaceVisitor
 {
     fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap)->bool {
   
@@ -40,19 +85,27 @@ impl OnVisit for Root
             }
     
             CXCursor_Namespace => {
-                // self.ns.push(spelling.to_string());
-                // visit_children(cursor, Data{ptr, type_map});
-                // self.ns.pop();
+                let name = cx_string::CXString::cursor_spelling(cursor).to_string();
+                let child = visit_children_with(cursor, type_map, ||
+                {
+                    NamespaceVisitor::new(name)
+                });                
+                self.children.push(Rc::new(child));
             }
     
             CXCursor_UnexposedDecl => {
-                // self.ns.push(spelling.to_string());
-                // visit_children(cursor, ptr);
-                // self.ns.pop();
+                // section extern "C" ?
+                let name = cx_string::CXString::cursor_spelling(cursor).to_string();
+                let child = visit_children_with(cursor, type_map, ||
+                {
+                    NamespaceVisitor::new(name)
+                }); 
+                self.children.push(Rc::new(child));               
             }
     
             CXCursor_TypedefDecl => {
                 let t = type_map.get_or_create_user_type(cursor);
+                self.members.push(t.clone());
                 if let Type::UserType(t) = &*t
                 {
                     let def = Typedef::parse(cursor, type_map);
@@ -62,6 +115,7 @@ impl OnVisit for Root
     
             CXCursor_FunctionDecl => {
                 let t =type_map.get_or_create_user_type(cursor);                
+                self.members.push(t.clone());
                 if let Type::UserType(t) = &*t
                 {
                     let result_type = unsafe{clang_getCursorResultType(cursor)};
@@ -72,16 +126,12 @@ impl OnVisit for Root
     
             CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {
                 let t = type_map.get_or_create_user_type(cursor);
+                self.members.push(t.clone());
                 if let Type::UserType(t) = &*t
                 {
                     let s = Struct::parse(cursor, type_map);
                     t.decl.replace(Decl::Struct(s));
                 }
-
-                // parse as namespace
-                // self.ns.push(spelling.to_string());
-                // visit_children(cursor, ptr);
-                // self.ns.pop();
             }
     
             CXCursor_FieldDecl => {
@@ -112,6 +162,7 @@ impl OnVisit for Root
     
             CXCursor_EnumDecl => {
                 let t = type_map.get_or_create_user_type(cursor);
+                self.members.push(t.clone());
                 if let Type::UserType(t) = &*t
                 {
                     let cx_type = unsafe{clang_getEnumDeclIntegerType(cursor)};
@@ -129,9 +180,13 @@ impl OnVisit for Root
         true
     }
 
-    type Result = ();
+    type Result = Namespace;
 
     fn result(&mut self, _type_map: &mut TypeMap) -> Self::Result {
-        ()
+        Namespace{
+            name: self.name.clone(),
+            children: self.children.drain(..).collect(),
+            members: self.members.drain(..).collect(),
+        }
     }
 }

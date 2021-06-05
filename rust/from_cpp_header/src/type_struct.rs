@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use clang_sys::*;
 
-use crate::{cx_string, visit_children_with, OnVisit, Type, TypeMap};
+use crate::{cx_string, visit_children_with, Namespace, NamespaceVisitor, Type, TypeMap, Visitor};
 
 #[derive(Debug)]
 pub struct Field {
@@ -16,15 +16,18 @@ pub struct Struct {
     pub is_union: bool,
     pub size: usize,
     pub fields: Vec<Field>,
+    // for struct inner types
+    pub namespace: Namespace,
 }
 
 struct StructVisitor {
     cursor: CXCursor,
     fields: Vec<Field>,
+    namespace_visitor: NamespaceVisitor,
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit for StructVisitor {
+impl Visitor for StructVisitor {
     type Result = Struct;
 
     fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap) -> bool {
@@ -55,7 +58,9 @@ impl OnVisit for StructVisitor {
                 }
             }
 
-            _ => (),
+            _ => {
+                self.namespace_visitor.on_visit(cursor, type_map);
+            }
         };
 
         true
@@ -70,15 +75,18 @@ impl OnVisit for StructVisitor {
             fields: self.fields.drain(..).collect(),
             is_union,
             size,
+            namespace: self.namespace_visitor.result(type_map),
         }
     }
 }
 
 impl Struct {
     pub fn parse(cursor: CXCursor, type_map: &mut TypeMap) -> Struct {
+        let name = cx_string::CXString::cursor_spelling(cursor).to_string();
         visit_children_with(cursor, type_map, || StructVisitor {
             cursor,
             fields: Vec::new(),
+            namespace_visitor: NamespaceVisitor::new(format!("[{}]", name)),
         })
     }
 }

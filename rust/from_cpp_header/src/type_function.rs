@@ -2,7 +2,7 @@ use clang_sys::*;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use crate::{cx_string, visit_children_with, OnVisit, Type, TypeMap};
+use crate::{cx_string, visit_children_with, Visitor, Type, TypeMap};
 
 pub struct Param {
     pub name: String,
@@ -41,7 +41,7 @@ impl FunctionVisitor {
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit for FunctionVisitor {
+impl Visitor for FunctionVisitor {
     fn on_visit(
         &mut self,
         cursor: CXCursor,

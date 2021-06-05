@@ -1,4 +1,7 @@
-use std::{io::{stdout}, io::{stderr, Write}};
+use std::{
+    io::stdout,
+    io::{stderr, Write},
+};
 
 mod translation_unit;
 pub use translation_unit::*;
@@ -36,22 +39,21 @@ mod generator;
 
 pub fn run(args: &[String]) -> Result<(), Error> {
     // args
-    let args= Args::parse(args);
+    let args = Args::parse(args);
 
     // parse
     let tu = TranslationUnit::parse(&args.exports[0].header, &args.compile_args)?;
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 
-    let mut type_map = TypeMap::new();
-
     // aggregate
-    visit_children_with(tu.get_cursor(), &mut type_map, ||{
-        Root{}
-    });
+    let mut type_map = TypeMap::new();
+    let root_namespace = visit_children_with(tu.get_cursor(), &mut type_map, || NamespaceVisitor::nameless());
+
+    root_namespace.print("");
 
     // generate
-    generator::generate(&type_map, &args).map_err(|e|Error::IOError(e))?;
+    generator::generate(&type_map, &args).map_err(|e| Error::IOError(e))?;
 
     Ok(())
 }

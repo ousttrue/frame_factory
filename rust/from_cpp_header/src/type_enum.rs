@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use clang_sys::*;
 
-use crate::{OnVisit, Type, TypeMap, cx_string, visit_children_with};
+use crate::{Visitor, Type, TypeMap, cx_string, visit_children_with};
 
 #[derive(Debug)]
 pub struct EnumEntry {
@@ -22,7 +22,7 @@ struct EnumVisitor {
 }
 
 #[allow(non_upper_case_globals, non_snake_case)]
-impl OnVisit for EnumVisitor {
+impl Visitor for EnumVisitor {
     type Result = Enum;
 
     fn on_visit(&mut self, cursor: CXCursor, _type_map: &mut TypeMap) -> bool {

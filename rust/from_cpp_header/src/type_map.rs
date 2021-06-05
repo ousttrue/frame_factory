@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use clang_sys::*;
 
 use crate::{
-    cx_source_location, cx_string, visit_children_with, Decl, Function, OnVisit, Primitives, Type,
+    cx_source_location, cx_string, visit_children_with, Decl, Function, Visitor, Primitives, Type,
     UserType,
 };
 
@@ -33,7 +33,7 @@ struct ReferenceVisitor {
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit for ReferenceVisitor {
+impl Visitor for ReferenceVisitor {
     fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap) -> bool {
         match cursor.kind {
             CXCursor_TypeRef => {
@@ -58,7 +58,7 @@ struct ElaboratedVisitor {
 }
 
 #[allow(non_upper_case_globals)]
-impl OnVisit for ElaboratedVisitor {
+impl Visitor for ElaboratedVisitor {
     type Result = Rc<Type>;
 
     fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap) -> bool {

@@ -39,7 +39,6 @@ struct ReferenceVisitor<'a> {
 impl<'a> OnVisit for ReferenceVisitor<'a> {
     fn on_visit(
         &mut self,
-        _ptr: *mut ReferenceVisitor,
         cursor: CXCursor,
         _parent: CXCursor,
     ) -> bool {
@@ -72,7 +71,6 @@ impl<'a> OnVisit for ElaboratedVisitor<'a> {
 
     fn on_visit(
         &mut self,
-        _ptr: *mut ElaboratedVisitor<'a>,
         cursor: CXCursor,
         _parent: CXCursor,
     ) -> bool {

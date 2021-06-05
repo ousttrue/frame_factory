@@ -1,16 +1,11 @@
-use std::{
-    ffi::c_void,
-};
+use std::ffi::c_void;
 
 use clang_sys::*;
-
-use crate::NoDrop;
-
 
 pub trait OnVisit {
     type Result;
 
-    fn on_visit(&mut self, ptr: *mut Self, cursor: CXCursor, parent: CXCursor) -> bool;
+    fn on_visit(&mut self, cursor: CXCursor, parent: CXCursor) -> bool;
 
     fn result(&mut self) -> Self::Result;
 }
@@ -21,9 +16,8 @@ extern "C" fn visitor<T: OnVisit>(
     data: CXClientData,
 ) -> CXChildVisitResult {
     let t = data as *mut T;
-    let mut no_drop = NoDrop::new(t);
-
-    if no_drop.on_visit(t, cursor, parent) {
+    let t = unsafe { & mut *t };
+    if t.on_visit(cursor, parent) {
         CXChildVisit_Continue
     } else {
         CXChildVisit_Break

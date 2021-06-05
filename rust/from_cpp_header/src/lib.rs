@@ -10,9 +10,6 @@ mod cx_string;
 mod args;
 pub use args::*;
 
-mod no_drop;
-pub use no_drop::*;
-
 mod visitor;
 pub use visitor::*;
 
@@ -58,7 +55,10 @@ impl Drop for Root {
 #[allow(non_upper_case_globals)]
 impl OnVisit for Root
 {
-    fn on_visit(&mut self, ptr: *mut Root, cursor: CXCursor, parent: CXCursor)->bool {
+    fn on_visit(&mut self, cursor: CXCursor, parent: CXCursor)->bool {
+
+        let ptr = self as *mut Root;
+
         let parent_is_null = unsafe { clang_Cursor_isNull(parent) } != 0;
         assert!(!parent_is_null);
         // assert!(data.stack.len() == 0);

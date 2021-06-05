@@ -30,7 +30,6 @@ impl<'a> OnVisit for StructVisitor<'a> {
 
     fn on_visit(
         &mut self,
-        _ptr: *mut StructVisitor<'a>,
         cursor: CXCursor,
         _parent: CXCursor,
     ) -> bool {

@@ -46,10 +46,10 @@ impl<'a> FunctionVisitor<'a> {
 impl<'a> OnVisit for FunctionVisitor<'a> {
     fn on_visit(
         &mut self,
-        _ptr: *mut FunctionVisitor,
         cursor: CXCursor,
         _parent: CXCursor,
     ) -> bool {
+
         match cursor.kind {
             CXCursor_CompoundStmt => {
                 self.has_body = true;

@@ -13,6 +13,8 @@ pub use args::*;
 mod visitor;
 pub use visitor::*;
 
+mod types;
+pub use types::*;
 mod type_map;
 pub use type_map::*;
 
@@ -104,7 +106,7 @@ impl OnVisit<Root> for Root
                 if let Type::UserType(t) = &*t
                 {
                     let result_type = unsafe{clang_getCursorResultType(cursor)};
-                    let f = Function::parse(result_type, cursor, self.get());
+                    let f = Function::parse(cursor, result_type, self.get());
                     t.decl.replace(Decl::Function(f));
                 }              
             }
@@ -211,7 +213,7 @@ pub fn run(args: &[String]) -> Result<(), Error> {
     let args= Args::parse(args);
 
     // parse
-    let tu = TranslationUnit::parse(&args.exports[0].header)?;
+    let tu = TranslationUnit::parse(&args.exports[0].header, &args.compile_args)?;
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 

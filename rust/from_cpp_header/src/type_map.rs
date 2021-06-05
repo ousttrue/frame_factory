@@ -8,63 +8,10 @@ use std::{
 
 use clang_sys::*;
 
-use crate::{cx_source_location, cx_string, visit_children_with, Function, OnVisit, Typedef};
-
-#[derive(Debug)]
-pub enum Decl {
-    None,
-    Function(Function),
-    Typedef(Typedef),
-}
-
-#[derive(Debug)]
-pub struct UserType {
-    hash: u32,
-    pub name: String,
-    pub file: PathBuf,
-    count: RefCell<u32>,
-    pub decl: RefCell<Decl>,
-}
-
-impl UserType {
-    pub fn new(hash: u32, name: String, file: PathBuf) -> UserType {
-        UserType {
-            hash,
-            name,
-            file,
-            count: RefCell::new(0),
-            decl: RefCell::new(Decl::None),
-        }
-    }
-
-    pub fn increment(&self) {
-        self.count.replace_with(|&mut old| old + 1);
-    }
-}
-
-#[derive(Debug)]
-pub enum Primitives {
-    Void,
-    Bool,
-    I8,
-    I16,
-    I32,
-    I64,
-    U8,
-    U16,
-    U32,
-    U64,
-    F32,
-    F64,
-    F80,
-}
-
-#[derive(Debug)]
-pub enum Type {
-    UserType(UserType),
-    Pointer(Rc<Type>),
-    Primitive(Primitives),
-}
+use crate::{
+    cx_source_location, cx_string, visit_children_with, Decl, Function, OnVisit, Primitives, Type,
+    Typedef, UserType,
+};
 
 pub struct TypeMap {
     pub map: HashMap<u32, Rc<Type>>,
@@ -219,11 +166,8 @@ impl TypeMap {
 
         let name = cx_string::CXString::cursor_spelling(cursor).to_string();
         let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
-        let t = Rc::new(Type::UserType(UserType::new(
-            hash,
-            name,
-            location.get_path(),
-        )));
+        let (file, line) = location.get_path();
+        let t = Rc::new(Type::UserType(UserType::new(hash, name, file, line)));
         self.map.insert(hash, t.clone());
         t
     }
@@ -279,7 +223,7 @@ impl TypeMap {
                 let t = self.get_or_create_user_type(cursor);
                 if let Type::UserType(t) = &*t {
                     let result_type = unsafe { clang_getResultType(cx_type) };
-                    let function = Function::parse(result_type, cursor, self);
+                    let function = Function::parse(cursor, result_type, self);
                     t.decl.replace(Decl::Function(function));
                 }
                 t

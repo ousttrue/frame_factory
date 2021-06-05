@@ -19,7 +19,7 @@ impl CXSourceLocation {
         }
     }
 
-    pub fn get_path(&self) -> PathBuf {
+    pub fn get_path(&self) -> (PathBuf, u32) {
         let mut file: *mut c_void = ptr::null_mut();
         let mut line: u32 = 0;
         let mut column: u32 = 0;
@@ -36,8 +36,9 @@ impl CXSourceLocation {
         }
 
         let file = cx_string::CXString::from_file(file);
+        let file = Path::new(&file.to_string()).to_owned();
 
-        Path::new(&file.to_string()).to_owned()
+        (file, line)       
     }
 
     // let extent = unsafe { clang_sys::clang_getCursorExtent(cursor) };

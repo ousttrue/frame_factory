@@ -36,10 +36,10 @@ pub struct TranslationUnit {
 }
 
 impl TranslationUnit {
-    pub fn parse(path: &Path) -> Result<TranslationUnit, Error> {
+    pub fn parse(path: &Path, args: &[String]) -> Result<TranslationUnit, Error> {
         let index = Index::new()?;
 
-        let arguments = [
+        let base_args = [
             "-x",
             "c++",
             "-target",
@@ -48,13 +48,17 @@ impl TranslationUnit {
             "-fdeclspec",
             "-fms-compatibility",
         ];
-        let mut arguments: Vec<CString> = arguments
+        let mut arguments: Vec<CString> = base_args
             .iter()
             .map(|arg| CString::new(*arg).unwrap())
             .collect();
         {
             let tmp = format!("-I{}", path.to_string_lossy());
             arguments.push(CString::new(tmp.as_str()).unwrap());
+        }
+        for arg in args
+        {
+            arguments.push(CString::new(arg.as_str()).unwrap());
         }
 
         let path = CString::new(path.to_string_lossy().to_string()).map_err(|e| Error::CString(e))?;

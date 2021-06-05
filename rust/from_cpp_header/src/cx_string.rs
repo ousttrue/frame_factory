@@ -11,6 +11,12 @@ impl CXString {
         }
     }
 
+    pub fn cursor_mangling(cursor: clang_sys::CXCursor) -> CXString {
+        CXString {
+            data: unsafe { clang_sys::clang_Cursor_getMangling(cursor) },
+        }
+    }
+
     pub fn from_file(file: clang_sys::CXFile) -> CXString {
         CXString {
             data: unsafe { clang_sys::clang_getFileName(file) },

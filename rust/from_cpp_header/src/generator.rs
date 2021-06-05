@@ -8,6 +8,7 @@ use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typed
 
 fn get_rust_type(t: &Type) -> Cow<'static, str> {
     match t {
+        Type::Primitive(Primitives::Void) => "()".into(),
         Type::Primitive(Primitives::Bool) => "bool".into(),
         Type::Primitive(Primitives::I8) => "i8".into(),
         Type::Primitive(Primitives::I16) => "i16".into(),
@@ -128,10 +129,10 @@ fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(),
     if let Some(export_name) = &f.export_name {
         w.write_fmt(format_args!(
             "
-#[link_name = \"{}\"]
-pub fn {}();
+    #[link_name = \"{}\"]
+    pub fn {}() -> {};
 ",
-            export_name, t.name
+            export_name, t.name, get_rust_type(&*f.result)
         ))?;
     }
 
@@ -172,8 +173,9 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     //
 
     w.write_fmt(format_args!(
-        "#[link(name = \"{}\", kind = \"dylib\")]
-extern {{
+        "
+#[link(name = \"{}\", kind = \"dylib\")]
+extern \"C\" {{
 ",
         export.dll
     ))?;

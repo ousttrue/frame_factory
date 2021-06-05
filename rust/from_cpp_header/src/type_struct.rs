@@ -18,22 +18,21 @@ pub struct Struct {
     pub fields: Vec<Field>,
 }
 
-struct StructVisitor<'a> {
+struct StructVisitor {
     cursor: CXCursor,
-    type_map: &'a mut TypeMap,
     fields: Vec<Field>,
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit for StructVisitor<'a> {
+impl OnVisit for StructVisitor {
     type Result = Struct;
 
-    fn on_visit(&mut self, cursor: CXCursor) -> bool {
+    fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap) -> bool {
         match cursor.kind {
             CXCursor_FieldDecl => {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();
                 let cx_type = unsafe { clang_getCursorType(cursor) };
-                let field_type = self.type_map.type_from_cx_type(cx_type, cursor);
+                let field_type = type_map.type_from_cx_type(cx_type, cursor);
                 let offset = unsafe { clang_Cursor_getOffsetOfField(cursor) };
                 self.fields.push(Field {
                     name,
@@ -46,7 +45,7 @@ impl<'a> OnVisit for StructVisitor<'a> {
                 // anonymous field
                 if unsafe { clang_Cursor_isAnonymous(cursor) } != 0 {
                     let name = cx_string::CXString::cursor_spelling(cursor).to_string();
-                    let field_type = self.type_map.get_or_create_user_type(cursor);
+                    let field_type = type_map.get_or_create_user_type(cursor);
                     let offset = unsafe { clang_Cursor_getOffsetOfField(cursor) };
                     self.fields.push(Field {
                         name,
@@ -62,7 +61,7 @@ impl<'a> OnVisit for StructVisitor<'a> {
         true
     }
 
-    fn result(&mut self) -> Self::Result {
+    fn result(&mut self, type_map: &mut TypeMap) -> Self::Result {
         let is_union = self.cursor.kind == CXCursor_UnionDecl;
         let cx_type = unsafe { clang_getCursorType(self.cursor) };
         let size = unsafe { clang_Type_getSizeOf(cx_type) } as usize;
@@ -77,9 +76,8 @@ impl<'a> OnVisit for StructVisitor<'a> {
 
 impl Struct {
     pub fn parse(cursor: CXCursor, type_map: &mut TypeMap) -> Struct {
-        visit_children_with(cursor, || StructVisitor {
+        visit_children_with(cursor, type_map, || StructVisitor {
             cursor,
-            type_map,
             fields: Vec::new(),
         })
     }

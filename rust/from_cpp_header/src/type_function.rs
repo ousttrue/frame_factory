@@ -20,21 +20,19 @@ impl Debug for Function {
     }
 }
 
-struct FunctionVisitor<'a> {
+struct FunctionVisitor {
     cursor: CXCursor,
     result_type: CXType,
-    type_map: &'a mut TypeMap,
     params: Vec<Param>,
     export: bool,
     has_body: bool,
 }
 
-impl<'a> FunctionVisitor<'a> {
-    fn new(cursor: CXCursor, result_type: CXType, type_map: &mut TypeMap) -> FunctionVisitor {
+impl FunctionVisitor {
+    fn new(cursor: CXCursor, result_type: CXType) -> FunctionVisitor {
         FunctionVisitor {
             cursor,
             result_type,
-            type_map,
             params: Vec::new(),
             export: false,
             has_body: false,
@@ -43,10 +41,11 @@ impl<'a> FunctionVisitor<'a> {
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit for FunctionVisitor<'a> {
+impl OnVisit for FunctionVisitor {
     fn on_visit(
         &mut self,
         cursor: CXCursor,
+        type_map: &mut TypeMap,        
     ) -> bool {
 
         match cursor.kind {
@@ -82,9 +81,9 @@ impl<'a> OnVisit for FunctionVisitor<'a> {
 
     type Result = Function;
 
-    fn result(&mut self) -> Self::Result {
-        let result = self
-            .type_map
+    fn result(&mut self, type_map: &mut TypeMap) -> Self::Result {
+        let result = 
+            type_map
             .type_from_cx_type(self.result_type, self.cursor);
 
         let export_name = if self.export {
@@ -103,9 +102,9 @@ impl<'a> OnVisit for FunctionVisitor<'a> {
 }
 
 impl Function {
-    pub fn parse<'a>(cursor: CXCursor, result_type: CXType, type_map: &mut TypeMap) -> Function {
-        visit_children_with(cursor, || {
-            FunctionVisitor::new(cursor, result_type, type_map)
+    pub fn parse<'a>(cursor: CXCursor, type_map: &mut TypeMap, result_type: CXType) -> Function {
+        visit_children_with(cursor, type_map, || {
+            FunctionVisitor::new(cursor, result_type)
         })
     }
 }

@@ -28,18 +28,17 @@ pub struct TypeMap {
     NULL_PTR: Rc<Type>,
 }
 
-struct ReferenceVisitor<'a> {
-    type_map: &'a mut TypeMap,
+struct ReferenceVisitor {
     reference: Option<Rc<Type>>,
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit for ReferenceVisitor<'a> {
-    fn on_visit(&mut self, cursor: CXCursor) -> bool {
+impl OnVisit for ReferenceVisitor {
+    fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap) -> bool {
         match cursor.kind {
             CXCursor_TypeRef => {
                 let referenced = unsafe { clang_getCursorReferenced(cursor) };
-                self.reference = Some(self.type_map.get_or_create_user_type(referenced));
+                self.reference = Some(type_map.get_or_create_user_type(referenced));
                 false
             }
 
@@ -49,24 +48,23 @@ impl<'a> OnVisit for ReferenceVisitor<'a> {
 
     type Result = Rc<Type>;
 
-    fn result(&mut self) -> Self::Result {
+    fn result(&mut self, _type_map: &mut TypeMap) -> Self::Result {
         self.reference.take().unwrap()
     }
 }
 
-struct ElaboratedVisitor<'a> {
-    type_map: &'a mut TypeMap,
+struct ElaboratedVisitor {
     reference: Option<Rc<Type>>,
 }
 
 #[allow(non_upper_case_globals)]
-impl<'a> OnVisit for ElaboratedVisitor<'a> {
+impl OnVisit for ElaboratedVisitor {
     type Result = Rc<Type>;
 
-    fn on_visit(&mut self, cursor: CXCursor) -> bool {
+    fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap) -> bool {
         match cursor.kind {
             CXCursor_StructDecl | CXCursor_UnionDecl => {
-                let t = self.type_map.get_or_create_user_type(cursor);
+                let t = type_map.get_or_create_user_type(cursor);
 
                 // var structType = reference.Type as StructType;
                 // if (structType is null)
@@ -85,7 +83,7 @@ impl<'a> OnVisit for ElaboratedVisitor<'a> {
             }
 
             CXCursor_EnumDecl => {
-                let t = self.type_map.get_or_create_user_type(cursor);
+                let t = type_map.get_or_create_user_type(cursor);
 
                 // if (reference.Type is null)
                 // {
@@ -99,7 +97,7 @@ impl<'a> OnVisit for ElaboratedVisitor<'a> {
 
             CXCursor_TypeRef => {
                 let referenced = unsafe { clang_getCursorReferenced(cursor) };
-                let t = self.type_map.get_or_create_user_type(referenced);
+                let t = type_map.get_or_create_user_type(referenced);
                 self.reference = Some(t);
                 false
             }
@@ -108,7 +106,7 @@ impl<'a> OnVisit for ElaboratedVisitor<'a> {
         }
     }
 
-    fn result(&mut self) -> Self::Result {
+    fn result(&mut self, _type_map: &mut TypeMap) -> Self::Result {
         self.reference.take().unwrap()
     }
 }
@@ -193,22 +191,18 @@ impl TypeMap {
 
             CXType_Typedef | CXType_Record => {
                 // find reference from child cursors
-                visit_children_with(cursor, || ReferenceVisitor {
-                    type_map: self,
-                    reference: None,
-                })
+                visit_children_with(cursor, self, || ReferenceVisitor { reference: None })
             }
 
-            CXType_Elaborated => visit_children_with(cursor, || ElaboratedVisitor {
-                type_map: self,
-                reference: None,
-            }),
+            CXType_Elaborated => {
+                visit_children_with(cursor, self, || ElaboratedVisitor { reference: None })
+            }
 
             CXType_FunctionProto => {
                 let t = self.get_or_create_user_type(cursor);
                 if let Type::UserType(t) = &*t {
                     let result_type = unsafe { clang_getResultType(cx_type) };
-                    let function = Function::parse(cursor, result_type, self);
+                    let function = Function::parse(cursor, self, result_type);
                     t.decl.replace(Decl::Function(function));
                 }
                 t

@@ -33,17 +33,6 @@ pub use type_struct::*;
 mod generator;
 
 pub struct Root {
-    stack: Vec<u32>,
-    ns: Vec<String>,
-    type_map: Option<TypeMap>,
-}
-
-impl Root
-{
-    pub fn get(&mut self)->&mut TypeMap
-    {
-        self.type_map.as_mut().unwrap()
-    }    
 }
 
 impl Drop for Root {
@@ -55,7 +44,7 @@ impl Drop for Root {
 #[allow(non_upper_case_globals)]
 impl OnVisit for Root
 {
-    fn on_visit(&mut self, cursor: CXCursor)->bool {
+    fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap)->bool {
 
         let ptr = self as *mut Root;
 
@@ -86,48 +75,48 @@ impl OnVisit for Root
             }
     
             CXCursor_Namespace => {
-                self.ns.push(spelling.to_string());
-                visit_children(cursor, ptr);
-                self.ns.pop();
+                // self.ns.push(spelling.to_string());
+                // visit_children(cursor, Data{ptr, type_map});
+                // self.ns.pop();
             }
     
             CXCursor_UnexposedDecl => {
-                self.ns.push(spelling.to_string());
-                visit_children(cursor, ptr);
-                self.ns.pop();
+                // self.ns.push(spelling.to_string());
+                // visit_children(cursor, ptr);
+                // self.ns.pop();
             }
     
             CXCursor_TypedefDecl => {
-                let t = self.get().get_or_create_user_type(cursor);
+                let t = type_map.get_or_create_user_type(cursor);
                 if let Type::UserType(t) = &*t
                 {
-                    let def = Typedef::parse(cursor, self.get());
+                    let def = Typedef::parse(cursor, type_map);
                     t.decl.replace(Decl::Typedef(def));
                 }
             }
     
             CXCursor_FunctionDecl => {
-                let t =self.get().get_or_create_user_type(cursor);                
+                let t =type_map.get_or_create_user_type(cursor);                
                 if let Type::UserType(t) = &*t
                 {
                     let result_type = unsafe{clang_getCursorResultType(cursor)};
-                    let f = Function::parse(cursor, result_type, self.get());
+                    let f = Function::parse(cursor, type_map, result_type);
                     t.decl.replace(Decl::Function(f));
                 }              
             }
     
             CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {
-                let t = self.get().get_or_create_user_type(cursor);
+                let t = type_map.get_or_create_user_type(cursor);
                 if let Type::UserType(t) = &*t
                 {
-                    let s = Struct::parse(cursor, self.get());
+                    let s = Struct::parse(cursor, type_map);
                     t.decl.replace(Decl::Struct(s));
                 }
 
                 // parse as namespace
-                self.ns.push(spelling.to_string());
-                visit_children(cursor, ptr);
-                self.ns.pop();
+                // self.ns.push(spelling.to_string());
+                // visit_children(cursor, ptr);
+                // self.ns.pop();
             }
     
             CXCursor_FieldDecl => {
@@ -157,12 +146,12 @@ impl OnVisit for Root
             }
     
             CXCursor_EnumDecl => {
-                let t = self.get().get_or_create_user_type(cursor);
+                let t = type_map.get_or_create_user_type(cursor);
                 if let Type::UserType(t) = &*t
                 {
                     let cx_type = unsafe{clang_getEnumDeclIntegerType(cursor)};
-                    let base_type = self.get().type_from_cx_type(cx_type, cursor);            
-                    let e = Enum::parse(cursor, base_type);
+                    let base_type = type_map.type_from_cx_type(cx_type, cursor);            
+                    let e = Enum::parse(cursor, type_map, base_type);
                     t.decl.replace(Decl::Enum(e));
                 }              
             }
@@ -174,26 +163,15 @@ impl OnVisit for Root
     
         // processc children
     
-        self.stack.pop();
+        // self.stack.pop();
 
         true
     }
 
-    type Result = TypeMap;
+    type Result = ();
 
-    fn result(&mut self) -> Self::Result {
-        self.type_map.take().unwrap()
-    }
-}
-
-#[allow(non_upper_case_globals)]
-impl Root {
-    fn new() -> Root {
-        Root {
-            stack: Vec::new(),
-            ns: Vec::new(),
-            type_map: Some(TypeMap::new()),
-        }
+    fn result(&mut self, _type_map: &mut TypeMap) -> Self::Result {
+        ()
     }
 }
 
@@ -206,9 +184,11 @@ pub fn run(args: &[String]) -> Result<(), Error> {
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 
+    let mut type_map = TypeMap::new();
+
     // aggregate
-    let type_map = visit_children_with(tu.get_cursor(), ||{
-        Root::new()
+    visit_children_with(tu.get_cursor(), &mut type_map, ||{
+        Root{}
     });
 
     // generate

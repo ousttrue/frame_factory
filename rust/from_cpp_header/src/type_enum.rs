@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use clang_sys::*;
 
-use crate::{OnVisit, Type, cx_string, visit_children_with};
+use crate::{OnVisit, Type, TypeMap, cx_string, visit_children_with};
 
 #[derive(Debug)]
 pub struct EnumEntry {
@@ -25,7 +25,7 @@ struct EnumVisitor {
 impl OnVisit for EnumVisitor {
     type Result = Enum;
 
-    fn on_visit(&mut self, cursor: CXCursor) -> bool {
+    fn on_visit(&mut self, cursor: CXCursor, _type_map: &mut TypeMap) -> bool {
         match cursor.kind {
             CXCursor_EnumConstantDecl => {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();
@@ -40,7 +40,7 @@ impl OnVisit for EnumVisitor {
         }
     }
 
-    fn result(&mut self) -> Self::Result {
+    fn result(&mut self, _type_map: &mut TypeMap) -> Self::Result {
         Enum {
             base_type: self.base_type.clone(),
             entries: self.entries.drain(..).collect(),
@@ -49,9 +49,9 @@ impl OnVisit for EnumVisitor {
 }
 
 impl Enum {
-    pub fn parse(cursor: CXCursor, base_type: Rc<Type>) -> Enum {
+    pub fn parse(cursor: CXCursor, type_map: &mut TypeMap, base_type: Rc<Type>) -> Enum {
 
-        visit_children_with(cursor, || EnumVisitor {
+        visit_children_with(cursor, type_map, || EnumVisitor {
             base_type,
             entries: Vec::new(),
         })

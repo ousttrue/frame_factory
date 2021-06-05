@@ -1,11 +1,14 @@
 use clang_sys::*;
-use std::{fs, io::{BufWriter, stdout}, io::{stderr, Write}};
+use std::{io::{stdout}, io::{stderr, Write}, path::PathBuf};
 
 mod translation_unit;
 pub use translation_unit::*;
 
 mod cx_source_location;
 mod cx_string;
+
+mod args;
+pub use args::*;
 
 mod visitor;
 pub use visitor::*;
@@ -18,6 +21,8 @@ pub use function::*;
 
 mod typedef;
 pub use typedef::*;
+
+mod generator;
 
 pub struct Root {
     stack: Vec<u32>,
@@ -201,53 +206,7 @@ impl Root {
     }
 }
 
-struct Export
-{
-    header: String,
-    dll: String,
-}
-
-struct Args
-{
-    exports: Vec<Export>,
-    dst: String,
-}
-
-impl Args
-{
-    fn parse(args: &[String])->Args
-    {
-        let mut exports: Vec<Export> = Vec::new();
-        let mut dst = String::new();
-
-        for arg in args
-        {
-            if arg.starts_with("-E")
-            {
-                let split: Vec<&str> = arg[2..].rsplitn(2, ",").collect();
-                exports.push(Export{
-                    header: split[1].to_owned(),
-                    dll: split[0].to_owned(),
-                });
-            }
-            else if arg.starts_with("-D")
-            {
-                dst = arg[2..].to_owned();
-            }
-            else{
-                panic!()
-            }
-        }
-
-        Args
-        {
-            exports,
-            dst
-        }
-    }
-}
-
-pub fn run(args: &[String]) -> Result<TypeMap, Error> {
+pub fn run(args: &[String]) -> Result<(), Error> {
     // args
     let args= Args::parse(args);
 
@@ -262,21 +221,7 @@ pub fn run(args: &[String]) -> Result<TypeMap, Error> {
     });
 
     // generate
-    let dst = std::path::Path::new(&args.dst);
-    fs::create_dir_all(dst.parent().unwrap()).unwrap();
+    generator::generate(&type_map, &args)?;
 
-    let mut f = BufWriter::new(fs::File::create(dst).unwrap());     
-
-    for (k, v) in type_map.get().iter()
-    {
-        if let Type::UserType(t) = &**v
-        {
-            if t.file.ends_with("/imgui.h")
-            {
-                f.write_fmt(format_args!("// {:?}\n", v));
-            }
-        }
-    }
-
-    Ok(type_map)
+    Ok(())
 }

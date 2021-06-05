@@ -1,7 +1,4 @@
-use std::{
-    ffi::{c_void, CString, NulError},
-    ptr,
-};
+use std::{ffi::{c_void, CString, NulError}, path::Path, ptr};
 
 extern crate clang_sys;
 
@@ -38,7 +35,7 @@ pub struct TranslationUnit {
 }
 
 impl TranslationUnit {
-    pub fn parse(path: &str) -> Result<TranslationUnit, Error> {
+    pub fn parse(path: &Path) -> Result<TranslationUnit, Error> {
         let index = Index::new()?;
 
         let arguments = [
@@ -55,11 +52,11 @@ impl TranslationUnit {
             .map(|arg| CString::new(*arg).unwrap())
             .collect();
         {
-            let tmp = format!("-I{}", path);
+            let tmp = format!("-I{}", path.to_string_lossy());
             arguments.push(CString::new(tmp.as_str()).unwrap());
         }
 
-        let path = CString::new(path).map_err(|e| Error::CString(e))?;
+        let path = CString::new(path.to_string_lossy().to_string()).map_err(|e| Error::CString(e))?;
 
         let pp: Vec<*const i8> = arguments.iter().map(|arg| arg.as_ptr()).collect();
 

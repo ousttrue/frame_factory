@@ -1,9 +1,4 @@
-use std::{
-    borrow::BorrowMut,
-    cell::{Ref, RefCell},
-    collections::HashMap,
-    rc::Rc,
-};
+use std::{borrow::BorrowMut, cell::{Ref, RefCell}, collections::HashMap, path::{Path, PathBuf}, rc::Rc};
 
 use clang_sys::*;
 
@@ -20,13 +15,13 @@ pub enum Decl {
 pub struct UserType {
     hash: u32,
     pub name: String,
-    pub file: String,
+    pub file: PathBuf,
     count: RefCell<u32>,
     pub decl: RefCell<Decl>,
 }
 
 impl UserType {
-    pub fn new(hash: u32, name: String, file: String) -> UserType {
+    pub fn new(hash: u32, name: String, file: PathBuf) -> UserType {
         UserType {
             hash,
             name,
@@ -220,7 +215,7 @@ impl TypeMap {
         let t = Rc::new(Type::UserType(UserType::new(
             hash,
             name,
-            location.get_path().to_string_lossy().to_string(),
+            location.get_path(),
         )));
         self.map.borrow_mut().insert(hash, t.clone());
         t

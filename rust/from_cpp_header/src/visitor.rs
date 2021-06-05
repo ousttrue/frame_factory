@@ -12,8 +12,8 @@ pub trait Visitor {
     fn result(&mut self, type_map: &mut TypeMap) -> Self::Result;
 }
 
-struct Data<'a, T: Visitor> {
-    visitor: T,
+struct Data<'a, 'b, T: Visitor> {
+    visitor: &'b mut T,
     type_map: &'a mut TypeMap,
 }
 
@@ -23,7 +23,7 @@ extern "C" fn visitor<T: Visitor>(
     data: CXClientData,
 ) -> CXChildVisitResult {
     let t = data as *mut Data<T>;
-    let mut data = unsafe { &mut *t };
+    let data = unsafe { &mut *t };
     if data.visitor.on_visit(cursor, data.type_map) {
         CXChildVisit_Continue
     } else {
@@ -31,8 +31,15 @@ extern "C" fn visitor<T: Visitor>(
     }
 }
 
-fn _visit_children<T: Visitor>(cursor: CXCursor, ptr: *mut Data<T>) {
+fn visit_children<T: Visitor>(cursor: CXCursor, ptr: *mut Data<T>) {
     unsafe { clang_visitChildren(cursor, visitor::<T>, ptr as *mut c_void) };
+}
+
+pub fn revisit_children<T: Visitor>(cursor: CXCursor, visitor: &mut T, type_map: &mut TypeMap)
+{
+    let mut data = Data { visitor, type_map };
+    let ptr = &mut data as *mut Data<T>;
+    visit_children(cursor, ptr);
 }
 
 pub fn visit_children_with<T: Visitor, F: FnOnce() -> T>(
@@ -40,10 +47,10 @@ pub fn visit_children_with<T: Visitor, F: FnOnce() -> T>(
     type_map: &mut TypeMap,
     f: F,
 ) -> T::Result {
-    let visitor = f();
-    let mut data = Data { visitor, type_map };
+    let mut visitor = f();
+    let mut data = Data { visitor: &mut visitor, type_map };
     let ptr = &mut data as *mut Data<T>;
-    _visit_children(cursor, ptr);
+    visit_children(cursor, ptr);
     let data = unsafe { &mut *ptr };
     data.visitor.result(data.type_map)
 }

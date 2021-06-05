@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use clang_sys::*;
 
-use crate::{Decl, Enum, Function, Struct, Type, TypeMap, Typedef, Visitor, cx_string, visit_children_with};
+use crate::{Decl, Enum, Function, Struct, Type, TypeMap, Typedef, Visitor, cx_string, revisit_children, visit_children_with};
 
 #[derive(Debug)]
 pub struct Namespace {
@@ -94,13 +94,7 @@ impl Visitor for NamespaceVisitor
             }
     
             CXCursor_UnexposedDecl => {
-                // section extern "C" ?
-                let name = cx_string::CXString::cursor_spelling(cursor).to_string();
-                let child = visit_children_with(cursor, type_map, ||
-                {
-                    NamespaceVisitor::new(name)
-                }); 
-                self.children.push(Rc::new(child));               
+                revisit_children(cursor, self, type_map);
             }
     
             CXCursor_TypedefDecl => {

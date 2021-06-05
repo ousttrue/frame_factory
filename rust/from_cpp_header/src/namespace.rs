@@ -160,7 +160,7 @@ impl Visitor for NamespaceVisitor
                 if let Type::UserType(t) = &*t
                 {
                     let cx_type = unsafe{clang_getEnumDeclIntegerType(cursor)};
-                    let base_type = type_map.type_from_cx_type(cx_type, cursor);            
+                    let (base_type, _is_const) = type_map.type_from_cx_type(cx_type, cursor);            
                     let e = Enum::parse(cursor, type_map, base_type);
                     t.decl.replace(Decl::Enum(e));
                 }              

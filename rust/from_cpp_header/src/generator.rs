@@ -6,7 +6,7 @@ use std::{
 
 use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
-fn get_rust_type(t: &Type) -> Cow<'static, str> {
+fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
     match t {
         Type::Primitive(Primitives::Void) => "()".into(),
         Type::Primitive(Primitives::Bool) => "bool".into(),
@@ -21,11 +21,16 @@ fn get_rust_type(t: &Type) -> Cow<'static, str> {
         Type::Primitive(Primitives::F32) => "f32".into(),
         Type::Primitive(Primitives::F64) => "f64".into(),
         Type::Pointer(pointee) => {
-            let pointee_type = get_rust_type(&pointee);
-            format!("*mut {}", pointee_type).into()
+            let pointee_type = get_rust_type(&pointee, false);
+            format!(
+                "*{} {}",
+                if is_const { "const" } else { "mut" },
+                pointee_type
+            )
+            .into()
         }
         Type::Array(element, size) => {
-            let element_type = get_rust_type(&*element);
+            let element_type = get_rust_type(&*element, false);
             format!("[{}; {}]", element_type, size).into()
         }
         Type::UserType(u) => match &*u.decl.borrow() {
@@ -72,7 +77,7 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
 #[repr({})]
 enum {} {{
 ",
-        get_rust_type(&*e.base_type),
+        get_rust_type(&*e.base_type, false),
         t.name,
     ))?;
 
@@ -106,7 +111,7 @@ pub struct {} {{
         w.write_fmt(format_args!(
             "    {}: {},\n",
             field.name,
-            get_rust_type(&*field.field_type)
+            get_rust_type(&*field.field_type, false)
         ))?;
     }
 
@@ -119,7 +124,7 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
     w.write_fmt(format_args!(
         "type {} = {};\n",
         t.name,
-        get_rust_type(&*d.base_type)
+        get_rust_type(&*d.base_type, false)
     ))?;
 
     Ok(())
@@ -127,12 +132,37 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
 
 fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(), std::io::Error> {
     if let Some(export_name) = &f.export_name {
+        let mut params = String::new();
+        let pw = &mut params as &mut dyn std::fmt::Write;
+
+        if f.params.len() > 0 {
+            pw.write_str("\n").unwrap();
+
+            for param in &f.params {
+                if param.is_const {
+                    let a = 0;
+                }
+
+                pw.write_fmt(format_args!(
+                    "        {}: {},\n",
+                    param.name,
+                    get_rust_type(&*param.param_type, param.is_const)
+                ))
+                .unwrap();
+            }
+
+            pw.write_str("    ").unwrap();
+        }
+
         w.write_fmt(format_args!(
             "
     #[link_name = \"{}\"]
-    pub fn {}() -> {};
+    pub fn {}({}) -> {};
 ",
-            export_name, t.name, get_rust_type(&*f.result)
+            export_name,
+            t.name,
+            params,
+            get_rust_type(&*f.result, false)
         ))?;
     }
 

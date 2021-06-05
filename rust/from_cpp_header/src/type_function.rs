@@ -2,10 +2,12 @@ use clang_sys::*;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use crate::{cx_string, visit_children_with, Visitor, Type, TypeMap};
+use crate::{cx_string, visit_children_with, Type, TypeMap, Visitor};
 
 pub struct Param {
     pub name: String,
+    pub param_type: Rc<Type>,
+    pub is_const: bool,
 }
 
 pub struct Function {
@@ -42,12 +44,7 @@ impl FunctionVisitor {
 
 #[allow(non_upper_case_globals)]
 impl Visitor for FunctionVisitor {
-    fn on_visit(
-        &mut self,
-        cursor: CXCursor,
-        type_map: &mut TypeMap,        
-    ) -> bool {
-
+    fn on_visit(&mut self, cursor: CXCursor, type_map: &mut TypeMap) -> bool {
         match cursor.kind {
             CXCursor_CompoundStmt => {
                 self.has_body = true;
@@ -59,10 +56,9 @@ impl Visitor for FunctionVisitor {
 
             CXCursor_ParmDecl => {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();
-                // var childType = libclang.clang_getCursorType(child);
-                // var typeRef = typeMap.CxTypeToType(childType, child);
-                // type.Params.Add(new FunctionParam(type.Params.Count, childName, typeRef));
-                self.params.push(Param { name });
+                let cx_type = unsafe { clang_getCursorType(cursor) };
+                let (param_type, is_const) = type_map.type_from_cx_type(cx_type, cursor);
+                self.params.push(Param { name, param_type, is_const });
             }
 
             CXCursor_DLLImport | CXCursor_DLLExport => {
@@ -82,9 +78,7 @@ impl Visitor for FunctionVisitor {
     type Result = Function;
 
     fn result(&mut self, type_map: &mut TypeMap) -> Self::Result {
-        let result = 
-            type_map
-            .type_from_cx_type(self.result_type, self.cursor);
+        let (result, _is_const) = type_map.type_from_cx_type(self.result_type, self.cursor);
 
         let export_name = if self.export {
             let mangling = cx_string::CXString::cursor_mangling(self.cursor).to_string();

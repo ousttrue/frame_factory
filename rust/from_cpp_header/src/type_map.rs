@@ -3,8 +3,8 @@ use std::{collections::HashMap, rc::Rc};
 use clang_sys::*;
 
 use crate::{
-    cx_source_location, cx_string, visit_children_with, Decl, Function, Visitor, Primitives, Type,
-    UserType,
+    cx_source_location, cx_string, visit_children_with, Decl, Function, Primitives, Type, UserType,
+    Visitor,
 };
 
 #[allow(non_upper_case_globals, non_snake_case)]
@@ -155,10 +155,10 @@ impl TypeMap {
         t
     }
 
-    pub fn type_from_cx_type(&mut self, cx_type: CXType, cursor: CXCursor) -> Rc<Type> {
-        // let isConst = unsafe { clang_isConstQualifiedType(cx_type) } != 0;
+    pub fn type_from_cx_type(&mut self, cx_type: CXType, cursor: CXCursor) -> (Rc<Type>, bool) {
+        let mut is_const = unsafe { clang_isConstQualifiedType(cx_type) } != 0;
 
-        match cx_type.kind {
+        let t = match cx_type.kind {
             CXType_Void => self.VOID.clone(),
             CXType_Bool => self.BOOL.clone(),
 
@@ -184,7 +184,11 @@ impl TypeMap {
 
             CXType_Pointer | CXType_LValueReference => {
                 let pointee = unsafe { clang_getPointeeType(cx_type) };
-                let pointee_type = self.type_from_cx_type(pointee, cursor);
+                let (pointee_type, _is_const) = self.type_from_cx_type(pointee, cursor);
+                if _is_const
+                {
+                    is_const = true;
+                }
                 let t = Type::Pointer(pointee_type);
                 Rc::new(t)
             }
@@ -211,8 +215,15 @@ impl TypeMap {
             CXType_ConstantArray => {
                 let array_size = unsafe { clang_getArraySize(cx_type) } as usize;
                 let element_type = unsafe { clang_getArrayElementType(cx_type) };
-                let element_type = self.type_from_cx_type(element_type, cursor);
+                let (element_type, _is_const) = self.type_from_cx_type(element_type, cursor);
                 let t = Type::Array(element_type, array_size);
+                Rc::new(t)
+            }
+
+            CXType_IncompleteArray => {
+                let element_type = unsafe { clang_getArrayElementType(cx_type) };
+                let (element_type, _is_const) = self.type_from_cx_type(element_type, cursor);
+                let t = Type::Pointer(element_type);
                 Rc::new(t)
             }
 
@@ -222,16 +233,14 @@ impl TypeMap {
                 let file = location.get_path();
                 todo!()
             }
-        }
+        };
 
-        // if (cxType.kind == CXTypeKind._IncompleteArray)
-        // {
-        //     return TypeReference.FromPointer(new PointerType(CxTypeToType(libclang.clang_getArrayElementType(cxType), cursor)));
-        // }
+        (t, is_const)
     }
 
     pub fn type_from_cx_cursor(&mut self, cursor: CXCursor) -> Rc<Type> {
-        let t = unsafe { clang_getCursorResultType(cursor) };
-        self.type_from_cx_type(t, cursor)
+        let cx_type = unsafe { clang_getCursorResultType(cursor) };
+        let (t, _is_const) = self.type_from_cx_type(cx_type, cursor);
+        t
     }
 }

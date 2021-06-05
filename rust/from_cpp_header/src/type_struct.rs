@@ -35,7 +35,7 @@ impl Visitor for StructVisitor {
             CXCursor_FieldDecl => {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();
                 let cx_type = unsafe { clang_getCursorType(cursor) };
-                let field_type = type_map.type_from_cx_type(cx_type, cursor);
+                let (field_type, _is_const) = type_map.type_from_cx_type(cx_type, cursor);
                 let offset = unsafe { clang_Cursor_getOffsetOfField(cursor) };
                 self.fields.push(Field {
                     name,

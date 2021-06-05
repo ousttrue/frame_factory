@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, UserType};
+use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
 fn get_rust_type(t: &Type) -> Cow<'static, str> {
     match t {
@@ -19,7 +19,10 @@ fn get_rust_type(t: &Type) -> Cow<'static, str> {
         Type::Primitive(Primitives::U64) => "u64".into(),
         Type::Primitive(Primitives::F32) => "f32".into(),
         Type::Primitive(Primitives::F64) => "f64".into(),
-        Type::Pointer(_) => "*mut c_void".into(),
+        Type::Pointer(pointee) => {
+            let pointee_type = get_rust_type(&pointee);
+            format!("*mut {}", pointee_type).into()
+        }
         Type::Array(element, size) => {
             let element_type = get_rust_type(&*element);
             format!("[{}; {}]", element_type, size).into()
@@ -28,6 +31,8 @@ fn get_rust_type(t: &Type) -> Cow<'static, str> {
             Decl::Enum(_) => u.name.clone().into(),
             Decl::Typedef(_) => u.name.clone().into(),
             Decl::Struct(_) => u.name.clone().into(),
+            // to function pointer
+            Decl::Function(_) => "c_void".into(),
             _ => format!("unknown {}", u.name).into(),
         },
         _ => format!("unknown").into(),
@@ -60,10 +65,10 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
     enums
 }
 
-fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error>
-{
+fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error> {
     w.write_fmt(format_args!(
-        "#[repr({})]
+        "
+#[repr({})]
 enum {} {{
 ",
         get_rust_type(&*e.base_type),
@@ -77,15 +82,20 @@ enum {} {{
         ))?;
     }
 
-    w.write("}\n\n".as_bytes())?;
+    w.write("}\n".as_bytes())?;
 
     Ok(())
 }
 
-fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct)->Result<(), std::io::Error>
-{
+fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std::io::Error> {
+    if s.fields.len() == 0 {
+        // forward declaration ?
+        return Ok(());
+    }
+
     w.write_fmt(format_args!(
-        "#[repr(C)]
+        "
+#[repr(C)]
 pub struct {} {{
 ",
         t.name
@@ -99,13 +109,22 @@ pub struct {} {{
         ))?;
     }
 
-    w.write("}\n\n".as_bytes())?;
+    w.write("}\n".as_bytes())?;
 
     Ok(())
 }
 
-fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(), std::io::Error>
-{
+fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), std::io::Error> {
+    w.write_fmt(format_args!(
+        "type {} = {};\n",
+        t.name,
+        get_rust_type(&*d.base_type)
+    ))?;
+
+    Ok(())
+}
+
+fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(), std::io::Error> {
     if let Some(export_name) = &f.export_name {
         w.write_fmt(format_args!(
             "
@@ -140,11 +159,11 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     });
 
     for t in types {
-        match &*t.decl.borrow() 
-        {
-            Decl::Enum(e) => write_enum(&mut w, t, e)?,
-            Decl::Struct(s) => write_struct(&mut w, t, s)?,
-            _ =>(),
+        match &*t.decl.borrow() {
+            Decl::Enum(d) => write_enum(&mut w, t, d)?,
+            Decl::Struct(d) => write_struct(&mut w, t, d)?,
+            Decl::Typedef(d) => write_typedef(&mut w, t, d)?,
+            _ => (),
         }
     }
 

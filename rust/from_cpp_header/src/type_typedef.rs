@@ -6,7 +6,7 @@ use clang_sys::*;
 use crate::{Type, TypeMap};
 
 pub struct Typedef {
-    base_type: Rc<Type>,
+    pub base_type: Rc<Type>,
 }
 
 impl Debug for Typedef {

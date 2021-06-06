@@ -1,9 +1,4 @@
-use std::{
-    ascii::escape_default,
-    borrow::Cow,
-    io::{BufWriter, Write},
-    path::Path,
-};
+use std::{borrow::Cow, collections::HashSet, io::{BufWriter, Write}, path::Path};
 
 use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
@@ -64,6 +59,7 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
             Decl::Enum(_) => u.name.clone().into(),
             Decl::Typedef(_) => match u.name.as_str() {
                 "size_t" => "usize".into(),
+                "va_list" => "std::ffi::VaList".into(),
                 _ => u.name.clone().into(),
             },
             Decl::Struct(_) => u.name.clone().into(),
@@ -181,7 +177,7 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
     Ok(())
 }
 
-fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(), std::io::Error> {
+fn write_function<W: Write>(w: &mut W, name: &str, t: &UserType, f: &Function) -> Result<(), std::io::Error> {
     if let Some(export_name) = &f.export_name {
         let mut params = String::new();
         let pw = &mut params as &mut dyn std::fmt::Write;
@@ -211,7 +207,7 @@ fn write_function<W: Write>(w: &mut W, t: &UserType, f: &Function) -> Result<(),
     pub fn {}({}) -> {};
 ",
             export_name,
-            t.name,
+            name,
             params,
             get_rust_type(&*f.result, false)
         ))?;
@@ -260,6 +256,7 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
 
     w.write_fmt(format_args!(
         "
+#[allow(non_upper_case_globals, non_snake_case)]        
 #[link(name = \"{}\", kind = \"dylib\")]
 extern \"C\" {{
 ",
@@ -274,9 +271,16 @@ extern \"C\" {{
         }
     });
 
+    let mut used: HashSet<String> = HashSet::new();
     for t in functions {
         if let Decl::Function(f) = &*t.get_decl() {
-            write_function(&mut w, t, f)?;
+            let mut name = t.name.clone();
+            while used.contains(&name)
+            {
+                name.push('_');
+            }
+            write_function(&mut w, &name, t, f)?;
+            used.insert(name);
         }
     }
 

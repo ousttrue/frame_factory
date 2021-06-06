@@ -14,6 +14,7 @@ pub struct Field {
 #[derive(Debug)]
 pub struct Struct {
     pub is_union: bool,
+    pub definition: Option<u32>,
     pub size: usize,
     pub fields: Vec<Field>,
     // for struct inner types
@@ -24,6 +25,20 @@ struct StructVisitor {
     cursor: CXCursor,
     fields: Vec<Field>,
     namespace_visitor: NamespaceVisitor,
+}
+
+// https://joshpeterson.github.io/identifying-a-forward-declaration-with-libclang
+fn get_definition(cursor: CXCursor) -> Option<u32> {
+    let definition = unsafe { clang_getCursorDefinition(cursor) };
+
+    // If the definition is null, then there is no definition in this translation
+    // unit, so this cursor must be a forward declaration.
+    if unsafe { clang_equalCursors(definition, unsafe { clang_getNullCursor() }) } != 0 {
+        return None;
+    }
+
+    let hash = unsafe { clang_hashCursor(definition) };
+    Some(hash)
 }
 
 #[allow(non_upper_case_globals)]
@@ -73,6 +88,7 @@ impl Visitor for StructVisitor {
 
         Struct {
             fields: self.fields.drain(..).collect(),
+            definition: get_definition(self.cursor),
             is_union,
             size,
             namespace: self.namespace_visitor.result(type_map),

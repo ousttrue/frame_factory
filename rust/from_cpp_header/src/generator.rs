@@ -136,8 +136,7 @@ enum {} {{
 }
 
 fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std::io::Error> {
-    if s.fields.len() == 0 {
-        // forward declaration ?
+    if s.fields.len() == 0 && s.definition.is_some() {
         return Ok(());
     }
 

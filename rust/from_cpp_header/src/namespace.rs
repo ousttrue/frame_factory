@@ -103,7 +103,7 @@ impl Visitor for NamespaceVisitor
                 if let Type::UserType(t) = &*t
                 {
                     let def = Typedef::parse(cursor, type_map);
-                    t.decl.replace(Decl::Typedef(def));
+                    t.set_typedef(def);
                 }
             }
     
@@ -114,7 +114,7 @@ impl Visitor for NamespaceVisitor
                 {
                     let result_type = unsafe{clang_getCursorResultType(cursor)};
                     let f = Function::parse(cursor, type_map, result_type);
-                    t.decl.replace(Decl::Function(f));
+                    t.set_function(f);
                 }              
             }
     
@@ -124,7 +124,7 @@ impl Visitor for NamespaceVisitor
                 if let Type::UserType(t) = &*t
                 {
                     let s = Struct::parse(cursor, type_map);
-                    t.decl.replace(Decl::Struct(s));
+                    t.set_struct(s);
                 }
             }
     
@@ -162,7 +162,7 @@ impl Visitor for NamespaceVisitor
                     let cx_type = unsafe{clang_getEnumDeclIntegerType(cursor)};
                     let (base_type, _is_const) = type_map.type_from_cx_type(cx_type, cursor);            
                     let e = Enum::parse(cursor, type_map, base_type);
-                    t.decl.replace(Decl::Enum(e));
+                    t.set_enum(e);
                 }              
             }
     

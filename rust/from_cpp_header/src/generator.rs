@@ -20,7 +20,7 @@ fn is_function(t: &Type) -> bool {
         Type::Pointer(p) => {
             return is_function(p);
         }
-        Type::UserType(u) => match &*u.decl.borrow() {
+        Type::UserType(u) => match &*u.get_decl() {
             Decl::Function(f) => {
                 return true;
             }
@@ -60,7 +60,7 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
             let element_type = get_rust_type(&*element, false);
             format!("[{}; {}]", element_type, size).into()
         }
-        Type::UserType(u) => match &*u.decl.borrow() {
+        Type::UserType(u) => match &*u.get_decl() {
             Decl::Enum(_) => u.name.clone().into(),
             Decl::Typedef(_) => u.name.clone().into(),
             Decl::Struct(_) => u.name.clone().into(),
@@ -83,7 +83,7 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
         .filter_map(|(_k, v)| {
             if let Type::UserType(t) = &**v {
                 if t.file == path {
-                    if f(&*t.decl.borrow()) {
+                    if f(&*t.get_decl()) {
                         return Some(t);
                     }
                 }
@@ -148,11 +148,6 @@ pub struct {} {{
 }
 
 fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), std::io::Error> {
-    if t.name == "ImGuiInputTextCallback" {
-        let a = 0;
-        println!("{:?}", d.base_type)
-    }
-
     if is_function(&*d.base_type) {
         w.write_fmt(format_args!(
             "type {} = *mut c_void; // function pointer\n",
@@ -234,7 +229,7 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     });
 
     for t in types {
-        match &*t.decl.borrow() {
+        match &*t.get_decl() {
             Decl::Enum(d) => write_enum(&mut w, t, d)?,
             Decl::Struct(d) => write_struct(&mut w, t, d)?,
             Decl::Typedef(d) => write_typedef(&mut w, t, d)?,
@@ -263,7 +258,7 @@ extern \"C\" {{
     });
 
     for t in functions {
-        if let Decl::Function(f) = &*t.decl.borrow() {
+        if let Decl::Function(f) = &*t.get_decl() {
             write_function(&mut w, t, f)?;
         }
     }

@@ -1,4 +1,8 @@
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{
+    cell::{Ref, RefCell},
+    path::PathBuf,
+    rc::Rc,
+};
 
 use crate::{Enum, Function, Struct, Typedef};
 
@@ -19,7 +23,7 @@ pub struct UserType {
     pub file: PathBuf,
     pub line: u32,
     count: RefCell<u32>,
-    pub decl: RefCell<Decl>,
+    decl: RefCell<Decl>,
 }
 
 impl UserType {
@@ -36,6 +40,33 @@ impl UserType {
 
     pub fn increment(&self) {
         self.count.replace_with(|&mut old| old + 1);
+    }
+
+    pub fn set_decl(&self, d: Decl) {
+        self.decl.replace(d);
+    }
+
+    pub fn get_decl(&self) -> Ref<Decl> {
+        self.decl.borrow()
+    }
+
+    pub fn set_function(&self, f: Function) {
+        self.set_decl(Decl::Function(f));
+    }
+    pub fn set_typedef(&self, d: Typedef) {
+        if let Decl::None = &*self.decl.borrow() {
+        } else {
+            // avoid function pointer and typedef has same cursor hash
+            // typedef void (NAME*)();
+            return;
+        }
+        self.set_decl(Decl::Typedef(d));
+    }
+    pub fn set_struct(&self, s: Struct) {
+        self.set_decl(Decl::Struct(s));
+    }
+    pub fn set_enum(&self, e: Enum) {
+        self.set_decl(Decl::Enum(e));
     }
 }
 

@@ -207,7 +207,7 @@ impl TypeMap {
                 if let Type::UserType(t) = &*t {
                     let result_type = unsafe { clang_getResultType(cx_type) };
                     let function = Function::parse(cursor, self, result_type);
-                    t.decl.replace(Decl::Function(function));
+                    t.set_function(function);
                 }
                 t
             }

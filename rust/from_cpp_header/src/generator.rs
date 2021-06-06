@@ -1,9 +1,4 @@
-use std::{
-    borrow::Cow,
-    collections::HashSet,
-    io::{BufWriter, Write},
-    path::Path,
-};
+use std::{borrow::Cow, collections::HashSet, io::{BufWriter, Write}, path::Path, rc::Rc};
 
 use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
@@ -64,7 +59,7 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
             Decl::Enum(_) => u.name.clone().into(),
             Decl::Typedef(_) => match u.name.as_str() {
                 "size_t" => "usize".into(),
-                "va_list" => "std::ffi::VaList".into(),
+                "va_list" => "va_list::VaList".into(),
                 _ => u.name.clone().into(),
             },
             Decl::Struct(_) => u.name.clone().into(),
@@ -117,27 +112,52 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
     enums
 }
 
+fn is_i32(t: &Rc<Type>)->bool
+{
+    if let Type::Primitive(Primitives::I32) = &**t
+    {
+        true
+    }
+    else{
+        false
+    }
+}
+
 fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error> {
-    let mut enum_name = t.name.as_str();
-    enum_name = enum_name.trim_end_matches("_");
+    assert!(is_i32(&e.base_type));
+
     w.write_fmt(format_args!(
         "
 #[repr({})]
 enum {} {{
 ",
         get_rust_type(&*e.base_type, false),
-        enum_name,
+        t.name,
     ))?;
 
+    let mut used: HashSet<i64> = HashSet::new();
     for entry in &e.entries {
+        let mut prefix = "";
+        if used.contains(&entry.value) {
+            prefix = "// ";
+        } else {
+            used.insert(entry.value);
+        }
+
         let mut name = entry.name.as_str();
         if name.starts_with(&t.name) {
             name = name.trim_start_matches(&t.name);
         }
 
+        let value = if entry.value > 0 {
+            format!("0x{:x}", entry.value as i32)
+        } else {
+            entry.value.to_string()
+        };
+
         w.write_fmt(format_args!(
-            "    {} = 0x{:x},\n",
-            name, entry.value as i32
+            "    {}{} = {},\n",
+            prefix, name, value
         ))?;
     }
 
@@ -241,6 +261,7 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     let mut w = BufWriter::new(f);
     w.write_fmt(format_args!(
         "use std::ffi::c_void;
+extern crate va_list;
 
 "
     ))?;
@@ -270,6 +291,7 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     //
     // functions
     //
+    let lib_name =export.dll.trim_end_matches(".dll");
 
     w.write_fmt(format_args!(
         "
@@ -277,7 +299,7 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
 #[link(name = \"{}\", kind = \"dylib\")]
 extern \"C\" {{
 ",
-        export.dll
+        lib_name
     ))?;
 
     let functions = get_sorted_entries(type_map, &export.header, |d| {

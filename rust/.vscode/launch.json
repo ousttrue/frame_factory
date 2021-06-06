@@ -21,7 +21,7 @@
             },
             "args": [
                 // Export
-                "-E${workspaceFolder}/../cpp/_external/imgui/imgui.h,ImGui.dll",
+                "-E${workspaceFolder}/../cpp/_external/imgui/imgui.h,imgui.dll",
                 // Define
                 "-DIMGUI_API=__declspec(dllexport)",
                 // OUt
@@ -95,39 +95,23 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'sample'",
+            "name": "Debug executable 'link_test'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=sample",
-                    "--package=sample"
+                    "--package=imgui_raw",
+                    "--bin=link_test"
                 ],
                 "filter": {
-                    "name": "sample",
+                    "name": "link_test",
                     "kind": "bin"
                 }
             },
             "args": [],
+            "env": {
+                "PATH": "${workspaceFolder}\\..\\cpp\\build\\Debug\\bin;${env:PATH}"
+            },
             "cwd": "${workspaceFolder}"
         },
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "Debug unit tests in executable 'sample'",
-            "cargo": {
-                "args": [
-                    "test",
-                    "--no-run",
-                    "--bin=sample",
-                    "--package=sample"
-                ],
-                "filter": {
-                    "name": "sample",
-                    "kind": "bin"
-                }
-            },
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        }
     ]
 }

@@ -62,7 +62,10 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
         }
         Type::UserType(u) => match &*u.get_decl() {
             Decl::Enum(_) => u.name.clone().into(),
-            Decl::Typedef(_) => u.name.clone().into(),
+            Decl::Typedef(_) => match u.name.as_str() {
+                "size_t" => "usize".into(),
+                _ => u.name.clone().into(),
+            },
             Decl::Struct(_) => u.name.clone().into(),
             // to function pointer
             Decl::Function(f) => {

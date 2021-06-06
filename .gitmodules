@@ -7,3 +7,6 @@
 [submodule "glTF"]
 	path = glTF
 	url = https://github.com/KhronosGroup/glTF.git
+[submodule "cpp/_external/SDL"]
+	path = cpp/_external/SDL
+	url = https://github.com/libsdl-org/SDL.git

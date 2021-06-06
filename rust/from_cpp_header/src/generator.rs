@@ -1,4 +1,9 @@
-use std::{borrow::Cow, collections::HashSet, io::{BufWriter, Write}, path::Path};
+use std::{
+    borrow::Cow,
+    collections::HashSet,
+    io::{BufWriter, Write},
+    path::Path,
+};
 
 use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
@@ -113,19 +118,26 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
 }
 
 fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error> {
+    let mut enum_name = t.name.as_str();
+    enum_name = enum_name.trim_end_matches("_");
     w.write_fmt(format_args!(
         "
 #[repr({})]
 enum {} {{
 ",
         get_rust_type(&*e.base_type, false),
-        t.name,
+        enum_name,
     ))?;
 
     for entry in &e.entries {
+        let mut name = entry.name.as_str();
+        if name.starts_with(&t.name) {
+            name = name.trim_start_matches(&t.name);
+        }
+
         w.write_fmt(format_args!(
             "    {} = 0x{:x},\n",
-            entry.name, entry.value as i32
+            name, entry.value as i32
         ))?;
     }
 
@@ -177,7 +189,12 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
     Ok(())
 }
 
-fn write_function<W: Write>(w: &mut W, name: &str, t: &UserType, f: &Function) -> Result<(), std::io::Error> {
+fn write_function<W: Write>(
+    w: &mut W,
+    name: &str,
+    t: &UserType,
+    f: &Function,
+) -> Result<(), std::io::Error> {
     if let Some(export_name) = &f.export_name {
         let mut params = String::new();
         let pw = &mut params as &mut dyn std::fmt::Write;
@@ -275,8 +292,7 @@ extern \"C\" {{
     for t in functions {
         if let Decl::Function(f) = &*t.get_decl() {
             let mut name = t.name.clone();
-            while used.contains(&name)
-            {
+            while used.contains(&name) {
                 name.push('_');
             }
             write_function(&mut w, &name, t, f)?;

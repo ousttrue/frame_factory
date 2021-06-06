@@ -65,7 +65,22 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
             Decl::Typedef(_) => u.name.clone().into(),
             Decl::Struct(_) => u.name.clone().into(),
             // to function pointer
-            Decl::Function(_) => u.name.clone().into(),
+            Decl::Function(f) => {
+                let mut params = String::new();
+                for p in &f.params {
+                    std::fmt::Write::write_fmt(
+                        &mut params,
+                        format_args!("{},", get_rust_type(&*p.param_type, false)),
+                    )
+                    .unwrap();
+                }
+                format!(
+                    "extern fn({}) -> {}",
+                    params,
+                    get_rust_type(&*f.result, false)
+                )
+                .into()
+            }
             _ => format!("unknown {}", u.name).into(),
         },
         _ => format!("unknown").into(),

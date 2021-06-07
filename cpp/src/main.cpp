@@ -1,8 +1,6 @@
 #include "imgui_app.h"
 #include "dx11.h"
 
-const auto CLASS_NAME = L"CPP_SAMPLE_CLASS";
-
 class FPS
 {
     UINT m_beginTime = 0;
@@ -39,7 +37,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow)
 #endif
 {
-    auto window = SampleWindow::create(CLASS_NAME, L"CPP_SAMPLE");
+
+    // auto window = SampleWindow::create(CLASS_NAME, L"CPP_SAMPLE");
+    auto window = SDLWindow::create("CPP_SAMPLE");
     if (!window)
     {
         return 1;
@@ -51,7 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         return 2;
     }
 
-    ImGuiApp gui(window->handle(), d3d->device().Get(), d3d->context().Get());
+    ImGuiApp gui(window->window(), d3d->device().Get(), d3d->context().Get());
     gui.load(d3d->device().Get(), argc, argv);
 
     FPS fps(30);

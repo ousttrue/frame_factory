@@ -13,6 +13,7 @@ TARGET_LINK_DIRECTORIES(${TARGET_NAME} PRIVATE
 TARGET_LINK_LIBRARIES(${TARGET_NAME} PRIVATE
     frame_factory.dll.lib
     #
+    SDL2
     imgui
     json
     #

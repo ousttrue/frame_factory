@@ -41,7 +41,7 @@ Read imgui.h and generate rust code for c++ ffi. Shared the imgui.dll between c+
 * [x] docking
 * [x] font
 * [ ] logger 🔧
-* [ ] SDL2
+* [x] SDL2
 * [x] separate crate dll, scene and resource
 * [x] menu file open
 * [x] multi view

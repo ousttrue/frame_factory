@@ -1,7 +1,12 @@
 #include "window_util.h"
 #include <imgui.h>
+#include <backends/imgui_impl_sdl.h>
+#include <memory>
 #include <windowsx.h>
+#include "SDL_events.h"
+#include "SDL_video.h"
 #include "save_windowplacement.h"
+#include <SDL_syswm.h>
 
 const auto JSON_FILE = L"cpp_sample.json";
 
@@ -126,18 +131,17 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         break;
 
-    // case WM_SETCURSOR:
-    //     if (!g_enableSetCursor)
-    //     {
-    //         if (LOWORD(lParam) == HTCLIENT)
-    //         {
-    //             g_state.Set(screenstate::MouseButtonFlags::CursorUpdate);
-    //             return 1;
-    //         }
-    //     }
-    //     break;
-    // }
-        
+        // case WM_SETCURSOR:
+        //     if (!g_enableSetCursor)
+        //     {
+        //         if (LOWORD(lParam) == HTCLIENT)
+        //         {
+        //             g_state.Set(screenstate::MouseButtonFlags::CursorUpdate);
+        //             return 1;
+        //         }
+        //     }
+        //     break;
+        // }
     }
     return ::DefWindowProc(hWnd, msg, wParam, lParam);
 }
@@ -239,4 +243,114 @@ auto SampleWindow::main_loop(screenstate::ScreenState *state) -> bool
     g_state.Clear();
 
     return true;
+}
+
+//
+// SDLWindow
+//
+SDLWindow::SDLWindow(SDL_Window *window) : m_window(window)
+{
+}
+
+SDLWindow::~SDLWindow()
+{
+    SDL_DestroyWindow(m_window);
+    SDL_Quit();
+}
+
+HWND SDLWindow::handle() const
+{
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    SDL_GetWindowWMInfo(m_window, &wmInfo);
+    return (HWND)wmInfo.info.win.window;
+}
+
+std::shared_ptr<SDLWindow> SDLWindow::create(const char *title)
+{
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) !=
+        0)
+    {
+        printf("Error: %s\n", SDL_GetError());
+        return nullptr;
+    }
+
+    // Setup window
+    SDL_WindowFlags window_flags =
+        (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    SDL_Window *window = SDL_CreateWindow(
+        title, SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+
+    return std::shared_ptr<SDLWindow>(new SDLWindow(window));
+}
+
+auto SDLWindow::main_loop(screenstate::ScreenState *state) -> bool
+{
+    SDL_Event event;
+    bool done = false;
+    while (SDL_PollEvent(&event))
+    {
+        ImGui_ImplSDL2_ProcessEvent(&event);
+
+        switch (event.type)
+        {
+        case SDL_QUIT:
+            done = true;
+            break;
+
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_CLOSE &&
+                event.window.windowID == SDL_GetWindowID(m_window))
+                done = true;
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED &&
+                event.window.windowID == SDL_GetWindowID(m_window))
+            {
+                g_state.Width = event.window.data1;
+                g_state.Height = event.window.data2;
+            }
+            break;
+
+        case SDL_MOUSEWHEEL:
+        {
+            if (event.wheel.y > 0)
+                g_state.Set(screenstate::MouseButtonFlags::WheelPlus);
+            if (event.wheel.y < 0)
+                g_state.Set(screenstate::MouseButtonFlags::WheelMinus);
+            break;
+        }
+
+        case SDL_MOUSEBUTTONDOWN:
+        {
+            if (event.button.button == SDL_BUTTON_LEFT)
+                g_state.Set(screenstate::MouseButtonFlags::LeftDown);
+            if (event.button.button == SDL_BUTTON_RIGHT)
+                g_state.Set(screenstate::MouseButtonFlags::RightDown);
+            if (event.button.button == SDL_BUTTON_MIDDLE)
+                g_state.Set(screenstate::MouseButtonFlags::MiddleDown);
+            break;
+        }
+
+        case SDL_MOUSEBUTTONUP:
+        {
+            if (event.button.button == SDL_BUTTON_LEFT)
+                g_state.Unset(screenstate::MouseButtonFlags::LeftDown);
+            if (event.button.button == SDL_BUTTON_RIGHT)
+                g_state.Unset(screenstate::MouseButtonFlags::RightDown);
+            if (event.button.button == SDL_BUTTON_MIDDLE)
+                g_state.Unset(screenstate::MouseButtonFlags::MiddleDown);
+            break;
+        }
+        }
+    }
+
+    int x, y;
+    SDL_GetMouseState(&x, &y);
+    g_state.MouseX = x;
+    g_state.MouseY = y;
+
+    *state = g_state;
+    g_state.Clear();
+
+    return !done;
 }

@@ -10,6 +10,7 @@ ADD_LIBRARY(${TARGET_NAME} SHARED
     ${SRC_DIR}/imgui_draw.cpp
     ${SRC_DIR}/imgui_demo.cpp
     ${SRC_DIR}/backends/imgui_impl_win32.cpp
+    ${SRC_DIR}/backends/imgui_impl_sdl.cpp
     ${SRC_DIR}/backends/imgui_impl_dx11.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} PUBLIC
@@ -18,4 +19,7 @@ TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} PUBLIC
 )
 TARGET_COMPILE_DEFINITIONS(${TARGET_NAME} PRIVATE
     "IMGUI_API=__declspec( dllexport )"
+)
+TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
+    SDL2
 )

@@ -174,9 +174,9 @@ ${SDL_DIR}/src/main/windows/version.rc
 )
 
 TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME}
-PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}
+# PRIVATE
 PUBLIC
+    # ${CMAKE_CURRENT_LIST_DIR}
     ${SDL_DIR}/include
     ${SDL_DIR}/src/video/khronos
 )
@@ -187,7 +187,7 @@ PRIVATE
 PUBLIC
     WIN32
     _WINDOWS
-    USING_GENERATED_CONFIG_H
+    # USING_GENERATED_CONFIG_H
     $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
     $<$<CONFIG:Debug>:_DEBUG>
 )

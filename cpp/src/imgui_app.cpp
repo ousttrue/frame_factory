@@ -7,7 +7,8 @@
 #include <string_view>
 #include <filesystem>
 #include <imgui.h>
-#include <backends/imgui_impl_win32.h>
+// #include <backends/imgui_impl_win32.h>
+#include <backends/imgui_impl_sdl.h>
 #include <backends/imgui_impl_dx11.h>
 
 static std::string get_file_name(std::string_view src)
@@ -115,9 +116,9 @@ public:
 
 int RustRenderer::s_next_id = 1;
 
-ImGuiApp::ImGuiApp(HWND hwnd, ID3D11Device *device,
+ImGuiApp::ImGuiApp(void *window, ID3D11Device *device,
                    ID3D11DeviceContext *context)
-    : m_hwnd(hwnd)
+    : m_window(window)
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -141,7 +142,9 @@ ImGuiApp::ImGuiApp(HWND hwnd, ID3D11Device *device,
                                      io.Fonts->GetGlyphRangesJapanese());
     }
 
-    ImGui_ImplWin32_Init(hwnd);
+    // ImGui_ImplWin32_Init(window);
+    ImGui_ImplSDL2_InitForD3D((SDL_Window*)window);
+
     ImGui_ImplDX11_Init(device, context);
 
     // docking
@@ -152,7 +155,8 @@ ImGuiApp::~ImGuiApp()
 {
     // Cleanup
     ImGui_ImplDX11_Shutdown();
-    ImGui_ImplWin32_Shutdown();
+    // ImGui_ImplWin32_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 }
 
@@ -193,7 +197,8 @@ void ImGuiApp::update(ID3D11Device *device, ID3D11DeviceContext *context,
 
     // Start the Dear ImGui frame
     ImGui_ImplDX11_NewFrame();
-    ImGui_ImplWin32_NewFrame();
+    // ImGui_ImplWin32_NewFrame();
+    ImGui_ImplSDL2_NewFrame((SDL_Window*)m_window);
     ImGui::NewFrame();
 
     gui(device, context, state);
@@ -240,7 +245,7 @@ void ImGuiApp::gui(ID3D11Device *device, ID3D11DeviceContext *context,
                     char strFile[MAX_PATH] = {0};
                     OPENFILENAMEA ofn = {0};
                     ofn.lStructSize = sizeof(OPENFILENAME);
-                    ofn.hwndOwner = m_hwnd;
+                    ofn.hwndOwner = nullptr;
                     ofn.lpstrFilter = "glb files {*.glb}\0*.glb\0"
                                       "All files {*.*}\0*.*\0"
                                       "\0";

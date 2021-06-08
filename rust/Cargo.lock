@@ -417,6 +417,7 @@ dependencies = [
  "cgmath",
  "com_ptr",
  "image",
+ "imgui_raw",
  "scene",
  "winapi",
 ]

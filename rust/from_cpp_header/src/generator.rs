@@ -1,4 +1,10 @@
-use std::{borrow::Cow, collections::HashSet, io::{BufWriter, Write}, path::Path, rc::Rc};
+use std::{
+    borrow::Cow,
+    collections::HashSet,
+    io::{BufWriter, Write},
+    path::Path,
+    rc::Rc,
+};
 
 use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
@@ -26,6 +32,14 @@ fn is_function(t: &Type) -> bool {
     }
 
     false
+}
+
+fn rename_type(t: &str) -> String {
+    match t {
+        "size_t" => "usize".into(),
+        "va_list" => "va_list::VaList".into(),
+        _ => t.into(),
+    }
 }
 
 fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
@@ -57,11 +71,7 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
         }
         Type::UserType(u) => match &*u.get_decl() {
             Decl::Enum(_) => u.name.clone().into(),
-            Decl::Typedef(_) => match u.name.as_str() {
-                "size_t" => "usize".into(),
-                "va_list" => "va_list::VaList".into(),
-                _ => u.name.clone().into(),
-            },
+            Decl::Typedef(_) => rename_type(&u.name).into(),
             Decl::Struct(_) => u.name.clone().into(),
             // to function pointer
             Decl::Function(f) => {
@@ -80,7 +90,7 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
                 )
                 .into()
             }
-            _ => format!("unknown {}", u.name).into(),
+            Decl::None => rename_type(&u.name).into(),
         },
         _ => format!("unknown").into(),
     }
@@ -112,13 +122,10 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
     enums
 }
 
-fn is_i32(t: &Rc<Type>)->bool
-{
-    if let Type::Primitive(Primitives::I32) = &**t
-    {
+fn is_i32(t: &Rc<Type>) -> bool {
+    if let Type::Primitive(Primitives::I32) = &**t {
         true
-    }
-    else{
+    } else {
         false
     }
 }
@@ -128,6 +135,7 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
 
     w.write_fmt(format_args!(
         "
+#[allow(non_snake_case)]
 #[repr({})]
 enum {} {{
 ",
@@ -155,10 +163,7 @@ enum {} {{
             entry.value.to_string()
         };
 
-        w.write_fmt(format_args!(
-            "    {}{} = {},\n",
-            prefix, name, value
-        ))?;
+        w.write_fmt(format_args!("    {}{} = {},\n", prefix, name, value))?;
     }
 
     w.write("}\n".as_bytes())?;
@@ -173,6 +178,7 @@ fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std
 
     w.write_fmt(format_args!(
         "
+#[allow(non_snake_case)]        
 #[repr(C)]
 pub struct {} {{
 ",
@@ -218,28 +224,37 @@ fn write_function<W: Write>(
     if let Some(export_name) = &f.export_name {
         let mut params = String::new();
         let pw = &mut params as &mut dyn std::fmt::Write;
+        let mut comment = "\n".to_owned();
+        let cw = &mut comment as &mut dyn std::fmt::Write;
 
         if f.params.len() > 0 {
             pw.write_str("\n").unwrap();
 
             for param in &f.params {
-                if param.is_const {
-                    let a = 0;
-                }
-
                 pw.write_fmt(format_args!(
                     "        {}: {},\n",
                     escape_symbol(&param.name),
                     get_rust_type(&*param.param_type, param.is_const)
                 ))
                 .unwrap();
+
+                // default value
+                let default_value = if let Some(default_value) = &param.default_value
+                {
+                    default_value
+                }
+                else{
+                    ""
+                };
+                cw.write_fmt(format_args!("    /// * {}: {}\n", param.name, default_value)).unwrap();
             }
 
             pw.write_str("    ").unwrap();
         }
 
+        w.write_fmt(format_args!("{}", comment))?;
         w.write_fmt(format_args!(
-            "
+            "    #[allow(non_snake_case)]        
     #[link_name = \"{}\"]
     pub fn {}({}) -> {};
 ",
@@ -260,7 +275,8 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     let f = std::fs::File::create(&args.out)?;
     let mut w = BufWriter::new(f);
     w.write_fmt(format_args!(
-        "use std::ffi::c_void;
+        "// this is generated.
+use std::ffi::c_void;
 extern crate va_list;
 
 "
@@ -291,7 +307,7 @@ extern crate va_list;
     //
     // functions
     //
-    let lib_name =export.dll.trim_end_matches(".dll");
+    let lib_name = export.dll.trim_end_matches(".dll");
 
     w.write_fmt(format_args!(
         "

@@ -1,6 +1,5 @@
 use cgmath::One;
 use std::collections::HashMap;
-use std::ffi::CStr;
 use std::ptr;
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 use winapi::um::d3d11;
@@ -158,7 +157,7 @@ impl ResourceManager {
             if imgui_raw::Begin("imgui_raw\0".as_ptr() as *const i8, ptr::null_mut(), 0) {
                 // for (auto &msg : m_messages)
                 // {
-                    imgui_raw::Text("imgui_raw\0".as_ptr() as *const i8);
+                imgui_raw::Text("imgui_raw\0".as_ptr() as *const i8);
                 // imgui_raw::TextUnformatted(msg.data(), msg.data() + msg.size());
                 // }
                 imgui_raw::End();

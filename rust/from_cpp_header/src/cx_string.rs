@@ -1,5 +1,7 @@
 use std::ffi::CStr;
 
+use clang_sys::CXTranslationUnit;
+
 pub struct CXString {
     data: clang_sys::CXString,
 }
@@ -20,6 +22,12 @@ impl CXString {
     pub fn from_file(file: clang_sys::CXFile) -> CXString {
         CXString {
             data: unsafe { clang_sys::clang_getFileName(file) },
+        }
+    }
+
+    pub fn from_token(tu: CXTranslationUnit, token: clang_sys::CXToken) -> CXString {
+        CXString {
+            data: unsafe { clang_sys::clang_getTokenSpelling(tu, token) },
         }
     }
 

@@ -2,12 +2,18 @@ use clang_sys::*;
 use std::fmt::Debug;
 use std::rc::Rc;
 
+use crate::cx_token;
 use crate::{cx_string, visit_children_with, Type, TypeMap, Visitor};
 
 pub struct Param {
     pub name: String,
     pub param_type: Rc<Type>,
     pub is_const: bool,
+    pub default_value: Option<String>,
+}
+
+fn get_default_value(cursor: CXCursor) -> Option<String> {
+    cx_token::CXTokens::from_cursor(cursor).get()
 }
 
 pub struct Function {
@@ -58,7 +64,12 @@ impl Visitor for FunctionVisitor {
                 let name = cx_string::CXString::cursor_spelling(cursor).to_string();
                 let cx_type = unsafe { clang_getCursorType(cursor) };
                 let (param_type, is_const) = type_map.type_from_cx_type(cx_type, cursor);
-                self.params.push(Param { name, param_type, is_const });
+                self.params.push(Param {
+                    name,
+                    param_type,
+                    is_const,
+                    default_value: get_default_value(cursor)
+                });
             }
 
             CXCursor_DLLImport | CXCursor_DLLExport => {

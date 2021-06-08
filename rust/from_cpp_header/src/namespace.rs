@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use clang_sys::*;
 
-use crate::{Decl, Enum, Function, Struct, Type, TypeMap, Typedef, Visitor, cx_string, revisit_children, visit_children_with};
+use crate::{Enum, Function, Struct, Type, TypeMap, Typedef, Visitor, cx_string, revisit_children, visit_children_with};
 
 #[derive(Debug)]
 pub struct Namespace {

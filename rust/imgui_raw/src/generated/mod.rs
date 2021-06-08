@@ -2,21 +2,9 @@
 use std::ffi::c_void;
 extern crate va_list;
 
-
-#[allow(non_snake_case)]        
-#[repr(C)]
-pub struct ImDrawListSharedData {
-}
-
-#[allow(non_snake_case)]        
-#[repr(C)]
-pub struct ImFontBuilderIO {
-}
-
-#[allow(non_snake_case)]        
-#[repr(C)]
-pub struct ImGuiContext {
-}
+type ImDrawListSharedData = c_void;
+type ImFontBuilderIO = c_void;
+type ImGuiContext = c_void;
 type ImGuiCol = i32;
 type ImGuiCond = i32;
 type ImGuiDataType = i32;

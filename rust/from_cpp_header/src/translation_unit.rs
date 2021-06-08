@@ -31,7 +31,7 @@ impl Index {
 }
 
 pub struct TranslationUnit {
-    index: Index,
+    _index: Index,
     tu: *mut c_void,
 }
 
@@ -82,7 +82,7 @@ impl TranslationUnit {
             ));
         }
 
-        Ok(TranslationUnit { index, tu })
+        Ok(TranslationUnit { _index: index, tu })
     }
 
     pub fn get_cursor(&self) -> clang_sys::CXCursor {

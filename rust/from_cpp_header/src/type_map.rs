@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use clang_sys::*;
 
 use crate::{
-    cx_source_location, cx_string, visit_children_with, Decl, Function, Primitives, Type, UserType,
+    cx_source_location, cx_string, visit_children_with, Function, Primitives, Type, UserType,
     Visitor,
 };
 
@@ -185,8 +185,7 @@ impl TypeMap {
             CXType_Pointer | CXType_LValueReference => {
                 let pointee = unsafe { clang_getPointeeType(cx_type) };
                 let (pointee_type, _is_const) = self.type_from_cx_type(pointee, cursor);
-                if _is_const
-                {
+                if _is_const {
                     is_const = true;
                 }
                 let t = Type::Pointer(pointee_type);
@@ -228,9 +227,9 @@ impl TypeMap {
             }
 
             _ => {
-                let spelling = cx_string::CXString::cursor_spelling(cursor).to_string();
-                let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
-                let file = location.get_path();
+                let _spelling = cx_string::CXString::cursor_spelling(cursor).to_string();
+                let _location = cx_source_location::CXSourceLocation::from_cursor(cursor);
+                let _file = _location.get_path();
                 todo!()
             }
         };

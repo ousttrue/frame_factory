@@ -13,12 +13,6 @@ impl CXSourceLocation {
         CXSourceLocation { data: location }
     }
 
-    pub fn is_null(&self) -> bool {
-        unsafe {
-            clang_sys::clang_equalLocations(self.data, clang_sys::clang_getNullLocation()) != 0
-        }
-    }
-
     pub fn get_path(&self) -> (PathBuf, u32) {
         let mut file: *mut c_void = ptr::null_mut();
         let mut line: u32 = 0;

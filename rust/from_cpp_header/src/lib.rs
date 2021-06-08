@@ -49,7 +49,7 @@ pub fn run(args: &[String]) -> Result<(), Error> {
 
     // aggregate
     let mut type_map = TypeMap::new();
-    let root_namespace = visit_children_with(tu.get_cursor(), &mut type_map, || NamespaceVisitor::nameless());
+    let _root_namespace = visit_children_with(tu.get_cursor(), &mut type_map, || NamespaceVisitor::nameless());
     // root_namespace.debug_print("");
 
     // generate

@@ -22,7 +22,7 @@ fn is_function(t: &Type) -> bool {
             return is_function(p);
         }
         Type::UserType(u) => match &*u.get_decl() {
-            Decl::Function(f) => {
+            Decl::Function(_f) => {
                 return true;
             }
             Decl::Typedef(d) => return is_function(&*d.base_type),
@@ -176,6 +176,12 @@ fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std
         return Ok(());
     }
 
+    if s.fields.len() == 0 {
+        w.write_fmt(format_args!("type {} = c_void;\n", &t.name))?;
+
+        return Ok(());
+    }
+
     w.write_fmt(format_args!(
         "
 #[allow(non_snake_case)]        
@@ -218,7 +224,7 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
 fn write_function<W: Write>(
     w: &mut W,
     name: &str,
-    t: &UserType,
+    _t: &UserType,
     f: &Function,
 ) -> Result<(), std::io::Error> {
     if let Some(export_name) = &f.export_name {
@@ -239,14 +245,16 @@ fn write_function<W: Write>(
                 .unwrap();
 
                 // default value
-                let default_value = if let Some(default_value) = &param.default_value
-                {
+                let default_value = if let Some(default_value) = &param.default_value {
                     default_value
-                }
-                else{
+                } else {
                     ""
                 };
-                cw.write_fmt(format_args!("    /// * {}: {}\n", param.name, default_value)).unwrap();
+                cw.write_fmt(format_args!(
+                    "    /// * {}: {}\n",
+                    param.name, default_value
+                ))
+                .unwrap();
             }
 
             pw.write_str("    ").unwrap();

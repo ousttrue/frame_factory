@@ -33,7 +33,7 @@ fn get_definition(cursor: CXCursor) -> Option<u32> {
 
     // If the definition is null, then there is no definition in this translation
     // unit, so this cursor must be a forward declaration.
-    if unsafe { clang_equalCursors(definition, unsafe { clang_getNullCursor() }) } != 0 {
+    if unsafe { clang_equalCursors(definition, clang_getNullCursor()) } != 0 {
         return None;
     }
 

@@ -1,16 +1,13 @@
 extern crate imgui_raw;
 extern crate sdl2;
 
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use sdl2::pixels::Color;
-use sdl2::sys::SDL_GetWindowWMInfo;
-use sdl2::sys::SDL_SysWMinfo;
+use sdl2::sys::*;
 use std::ffi::c_void;
 use std::ptr;
 use std::time::Duration;
 
 pub fn main() -> Result<(), String> {
+    unsafe {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
@@ -32,71 +29,65 @@ pub fn main() -> Result<(), String> {
         panic!();
     }
 
-    unsafe {
-        imgui_raw::CreateContext(ptr::null_mut());
-        let mut io = imgui_raw::GetIO().as_mut().unwrap();
-        io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::NavEnableKeyboard as i32; // Enable Keyboard Controls
-                                                                                  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-        io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::DockingEnable as i32; // Enable Docking
-        io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32; // Enable Multi-Viewport / Platform Windows
-                                                                                //io.ConfigViewportsNoAutoMerge = true;
-                                                                                //io.ConfigViewportsNoTaskBarIcon = true;
+    imgui_raw::CreateContext(ptr::null_mut());
+    let mut io = imgui_raw::GetIO().as_mut().unwrap();
+    io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::NavEnableKeyboard as i32; // Enable Keyboard Controls
+                                                                                //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::DockingEnable as i32; // Enable Docking
+    io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32; // Enable Multi-Viewport / Platform Windows
+                                                                            //io.ConfigViewportsNoAutoMerge = true;
+                                                                            //io.ConfigViewportsNoTaskBarIcon = true;
 
-        // Setup Dear ImGui style
-        imgui_raw::StyleColorsDark(ptr::null_mut());
-        //ImGui::StyleColorsClassic();
+    // Setup Dear ImGui style
+    imgui_raw::StyleColorsDark(ptr::null_mut());
+    //imgui_raw::StyleColorsClassic();
 
-        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-        let style = imgui_raw::GetStyle().as_mut().unwrap();
-        if (io.ConfigFlags & imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32) != 0 {
-            style.WindowRounding = 0.0f32;
-            style.Colors[imgui_raw::ImGuiCol_::WindowBg as usize].w = 1.0f32;
-        }
-
-        // Setup Platform/Renderer backends
-        imgui_raw::ImGui_ImplSDL2_InitForD3D(window.raw() as *mut c_void);
-        // imgui_raw::ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
-
-        // // Load Fonts
-        // // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-        // // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-        // // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-        // // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-        // // - Read 'docs/FONTS.md' for more instructions and details.
-        // // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-        // //io.Fonts->AddFontDefault();
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-        // //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-        // //IM_ASSERT(font != NULL);
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+    let style = imgui_raw::GetStyle().as_mut().unwrap();
+    if (io.ConfigFlags & imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32) != 0 {
+        style.WindowRounding = 0.0f32;
+        style.Colors[imgui_raw::ImGuiCol_::WindowBg as usize].w = 1.0f32;
     }
 
-    // // Our state
-    // bool show_demo_window = true;
-    // bool show_another_window = false;
-    // ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    // Setup Platform/Renderer backends
+    imgui_raw::ImGui_ImplSDL2_InitForD3D(window.raw() as *mut c_void);
+    // imgui_raw::ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-    // 'running: loop {
-    //     for event in event_pump.poll_iter() {
-    //         match event {
-    //             Event::Quit { .. }
-    //             | Event::KeyDown {
-    //                 keycode: Some(Keycode::Escape),
-    //                 ..
-    //             } => break 'running,
-    //             _ => {}
-    //         }
-    //     }
+    // Load Fonts
+    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use imgui_raw::PushFont()/PopFont() to select them.
+    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+    // - Read 'docs/FONTS.md' for more instructions and details.
+    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+    //io.Fonts->AddFontDefault();
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+    //IM_ASSERT(font != NULL);
 
-    //     canvas.clear();
-    //     canvas.present();
-    //     ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 30));
-    //     // The rest of the game loop goes here...
-    // }
+    // Our state
+    let show_demo_window = true;
+    let show_another_window = false;
+    let clear_color = imgui_raw::ImVec4 {
+        x: 0.45f32,
+        y: 0.55f32,
+        z: 0.60f32,
+        w: 1.00f32,
+    };
+
+
+    // Cleanup
+    imgui_raw::ImGui_ImplDX11_Shutdown();
+    imgui_raw::ImGui_ImplSDL2_Shutdown();
+    imgui_raw::DestroyContext(ptr::null_mut());
+
+    // CleanupDeviceD3D();
 
     Ok(())
+}
 }
 
 fn CreateDeviceD3D(hWnd: *mut c_void) -> bool {

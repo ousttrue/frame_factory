@@ -68,7 +68,7 @@ impl Visitor for FunctionVisitor {
                     name,
                     param_type,
                     is_const,
-                    default_value: get_default_value(cursor)
+                    default_value: get_default_value(cursor),
                 });
             }
 
@@ -91,15 +91,15 @@ impl Visitor for FunctionVisitor {
     fn result(&mut self, type_map: &mut TypeMap) -> Self::Result {
         let (result, _is_const) = type_map.type_from_cx_type(self.result_type, self.cursor);
 
-        let export_name = if self.export {
-            let mangling = cx_string::CXString::cursor_mangling(self.cursor).to_string();
-            Some(mangling)
-        } else {
-            None
-        };
+        // let export_name = if self.export {
+        let mangling = cx_string::CXString::cursor_mangling(self.cursor).to_string();
+        // Some(mangling)
+        // } else {
+        //     None
+        // };
 
         Function {
-            export_name,
+            export_name: Some(mangling),
             result,
             params: self.params.drain(..).collect(),
         }

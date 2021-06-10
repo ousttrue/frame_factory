@@ -10,12 +10,14 @@ ADD_LIBRARY(${TARGET_NAME} STATIC
     ${SRC_DIR}/imgui_draw.cpp
     ${SRC_DIR}/imgui_demo.cpp
     ${SRC_DIR}/backends/imgui_impl_win32.cpp
-    # ${SRC_DIR}/backends/imgui_impl_sdl.cpp
+    ${SRC_DIR}/backends/imgui_impl_sdl.cpp
     ${SRC_DIR}/backends/imgui_impl_dx11.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}
     ${SRC_DIR}
+PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/../../_external/SDL/include
 )
 # TARGET_COMPILE_DEFINITIONS(${TARGET_NAME} PRIVATE
 #     "IMGUI_API=__declspec( dllexport )"
@@ -23,6 +25,6 @@ TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} PUBLIC
 # TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
 #     SDL2
 # )
-# TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} PRIVATE
-#     ${CMAKE_CURRENT_LIST_DIR}/../../_external/SDL/include
-# )
+TARGET_LINK_OPTIONS(${TARGET_NAME} PUBLIC
+    /NODEFAULTLIB:MSVCRTD
+)

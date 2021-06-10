@@ -226,7 +226,7 @@ fn write_function<W: Write>(
     _t: &UserType,
     f: &Function,
 ) -> Result<(), std::io::Error> {
-    if let Some(export_name) = &f.export_name {
+    let name = if let Some(export_name) = &f.export_name {
         let mut params = String::new();
         let pw = &mut params as &mut dyn std::fmt::Write;
         let mut comment = "\n".to_owned();
@@ -269,7 +269,7 @@ fn write_function<W: Write>(
             params,
             get_rust_type(&*f.result, false)
         ))?;
-    }
+    };
 
     Ok(())
 }
@@ -311,11 +311,16 @@ extern crate va_list;
     //
     // functions
     //
-    let mut link_name = export.link.trim_end_matches(".dll");
-    let mut kind = "dynlib";
-    if link_name.len() == 0 {
+    let link_name;
+    let kind;
+    if export.link.ends_with(".dll") {
+        link_name = export.link.trim_end_matches(".dll");
+        kind = "dylib";
+    } else if export.link.ends_with(".lib") {
         link_name = export.link.trim_end_matches(".lib");
         kind = "static";
+    } else {
+        panic!();
     }
 
     w.write_fmt(format_args!(

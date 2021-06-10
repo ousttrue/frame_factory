@@ -1195,6 +1195,34 @@ pub enum ImDrawCornerFlags_ {
 #[link(name = "imgui_static", kind = "static")]
 extern "C" {
 
+    /// * data: 
+    #[link_name = ""]
+    pub fn ImGuiInputTextCallback(
+        data: *mut ImGuiInputTextCallbackData,
+    ) -> i32;
+
+    /// * data: 
+    #[link_name = ""]
+    pub fn ImGuiSizeCallback(
+        data: *mut ImGuiSizeCallbackData,
+    ) -> c_void;
+
+    /// * sz: 
+    /// * user_data: 
+    #[link_name = ""]
+    pub fn ImGuiMemAllocFunc(
+        sz: usize,
+        user_data: *mut c_void,
+    ) -> *mut c_void;
+
+    /// * ptr: 
+    /// * user_data: 
+    #[link_name = ""]
+    pub fn ImGuiMemFreeFunc(
+        ptr: *mut c_void,
+        user_data: *mut c_void,
+    ) -> c_void;
+
     /// * shared_font_atlas: NULL
     #[link_name = "?CreateContext@ImGui@@YAPEAUImGuiContext@@PEAUImFontAtlas@@@Z"]
     pub fn CreateContext(
@@ -2125,6 +2153,16 @@ extern "C" {
         popup_max_height_in_items: i32,
     ) -> bool;
 
+    /// * data: 
+    /// * idx: 
+    /// * out_text: 
+    #[link_name = "?items_getter@?1??Combo@ImGui@@YA_NPEBDPEAHP6A_NPEAXHPEAPEBD@Z2HH@Z@3P6A_N2H3@ZEA"]
+    pub fn items_getter(
+        data: *mut c_void,
+        idx: i32,
+        out_text: *const *mut i8,
+    ) -> bool;
+
     /// * label: 
     /// * v: 
     /// * v_speed: 1.0f
@@ -3042,6 +3080,16 @@ extern "C" {
         height_in_items: i32,
     ) -> bool;
 
+    /// * data: 
+    /// * idx: 
+    /// * out_text: 
+    #[link_name = "?items_getter@?1??ListBox@ImGui@@YA_NPEBDPEAHP6A_NPEAXHPEAPEBD@Z2HH@Z@3P6A_N2H3@ZEA"]
+    pub fn items_getter_(
+        data: *mut c_void,
+        idx: i32,
+        out_text: *const *mut i8,
+    ) -> bool;
+
     /// * label: 
     /// * current_item: 
     /// * items_getter: 
@@ -3079,6 +3127,14 @@ extern "C" {
         graph_size: ImVec2,
         stride: i32,
     ) -> c_void;
+
+    /// * data: 
+    /// * idx: 
+    #[link_name = "?values_getter@?1??PlotLines@ImGui@@YAXPEBDP6AMPEAXH@Z1HH0MMUImVec2@@@Z@3P6AM1H@ZEA"]
+    pub fn values_getter(
+        data: *mut c_void,
+        idx: i32,
+    ) -> f32;
 
     /// * label: 
     /// * values_getter: 
@@ -3145,6 +3201,14 @@ extern "C" {
         scale_max: f32,
         graph_size: ImVec2,
     ) -> c_void;
+
+    /// * data: 
+    /// * idx: 
+    #[link_name = "?values_getter@?1??PlotHistogram@ImGui@@YAXPEBDP6AMPEAXH@Z1HH0MMUImVec2@@@Z@3P6AM1H@ZEA"]
+    pub fn values_getter_(
+        data: *mut c_void,
+        idx: i32,
+    ) -> f32;
 
     /// * prefix: 
     /// * b: 
@@ -4100,6 +4164,218 @@ extern "C" {
         platform_handle: *mut c_void,
     ) -> *mut ImGuiViewport;
 
+    // /// * : 
+    // /// * : 
+    // /// * ptr: 
+    // #[link_name = "??2@YAPEAX_KUImNewWrapper@@PEAX@Z"]
+    // pub fn operator new(
+    //     : usize,
+    //     : ImNewWrapper,
+    //     ptr: *mut c_void,
+    // ) -> *mut c_void;
+
+    // /// * : 
+    // /// * : 
+    // /// * : 
+    // #[link_name = "??3@YAXPEAXUImNewWrapper@@0@Z"]
+    // pub fn operator delete(
+    //     : *mut c_void,
+    //     : ImNewWrapper,
+    //     : *mut c_void,
+    // ) -> c_void;
+
+    /// * user_data: 
+    #[link_name = ""]
+    pub fn GetClipboardTextFn(
+        user_data: *mut c_void,
+    ) -> *mut i8;
+
+    /// * user_data: 
+    /// * text: 
+    #[link_name = ""]
+    pub fn SetClipboardTextFn(
+        user_data: *mut c_void,
+        text: *const i8,
+    ) -> c_void;
+
+    /// * parent_list: 
+    /// * cmd: 
+    #[link_name = ""]
+    pub fn ImDrawCallback(
+        parent_list: *const ImDrawList,
+        cmd: *const ImDrawCmd,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_CreateWindow(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_DestroyWindow(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_ShowWindow(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * pos: 
+    #[link_name = ""]
+    pub fn Platform_SetWindowPos(
+        vp: *mut ImGuiViewport,
+        pos: ImVec2,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_GetWindowPos(
+        vp: *mut ImGuiViewport,
+    ) -> ImVec2;
+
+    /// * vp: 
+    /// * size: 
+    #[link_name = ""]
+    pub fn Platform_SetWindowSize(
+        vp: *mut ImGuiViewport,
+        size: ImVec2,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_GetWindowSize(
+        vp: *mut ImGuiViewport,
+    ) -> ImVec2;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_SetWindowFocus(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_GetWindowFocus(
+        vp: *mut ImGuiViewport,
+    ) -> bool;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_GetWindowMinimized(
+        vp: *mut ImGuiViewport,
+    ) -> bool;
+
+    /// * vp: 
+    /// * str: 
+    #[link_name = ""]
+    pub fn Platform_SetWindowTitle(
+        vp: *mut ImGuiViewport,
+        str: *const i8,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * alpha: 
+    #[link_name = ""]
+    pub fn Platform_SetWindowAlpha(
+        vp: *mut ImGuiViewport,
+        alpha: f32,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_UpdateWindow(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * render_arg: 
+    #[link_name = ""]
+    pub fn Platform_RenderWindow(
+        vp: *mut ImGuiViewport,
+        render_arg: *mut c_void,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * render_arg: 
+    #[link_name = ""]
+    pub fn Platform_SwapBuffers(
+        vp: *mut ImGuiViewport,
+        render_arg: *mut c_void,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_GetWindowDpiScale(
+        vp: *mut ImGuiViewport,
+    ) -> f32;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Platform_OnChangedViewport(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * pos: 
+    #[link_name = ""]
+    pub fn Platform_SetImeInputPos(
+        vp: *mut ImGuiViewport,
+        pos: ImVec2,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * vk_inst: 
+    /// * vk_allocators: 
+    /// * out_vk_surface: 
+    #[link_name = ""]
+    pub fn Platform_CreateVkSurface(
+        vp: *mut ImGuiViewport,
+        vk_inst: ImU64,
+        vk_allocators: *const c_void,
+        out_vk_surface: *mut ImU64,
+    ) -> i32;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Renderer_CreateWindow(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    #[link_name = ""]
+    pub fn Renderer_DestroyWindow(
+        vp: *mut ImGuiViewport,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * size: 
+    #[link_name = ""]
+    pub fn Renderer_SetWindowSize(
+        vp: *mut ImGuiViewport,
+        size: ImVec2,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * render_arg: 
+    #[link_name = ""]
+    pub fn Renderer_RenderWindow(
+        vp: *mut ImGuiViewport,
+        render_arg: *mut c_void,
+    ) -> c_void;
+
+    /// * vp: 
+    /// * render_arg: 
+    #[link_name = ""]
+    pub fn Renderer_SwapBuffers(
+        vp: *mut ImGuiViewport,
+        render_arg: *mut c_void,
+    ) -> c_void;
+
     /// * label: 
     /// * items_count: 
     /// * height_in_items: -1
@@ -4109,6 +4385,25 @@ extern "C" {
         items_count: i32,
         height_in_items: i32,
     ) -> bool;
+
+    /// * label: 
+    /// * size: ImVec2(0,0)
+    #[link_name = "?ListBoxHeader@ImGui@@YA_NPEBDAEBUImVec2@@@Z"]
+    pub fn ListBoxHeader_(
+        label: *const i8,
+        size: *const ImVec2,
+    ) -> bool;
+
+    #[link_name = "?ListBoxFooter@ImGui@@YAXXZ"]
+    pub fn ListBoxFooter() -> c_void;
+
+    /// * str_id: NULL
+    /// * mb: 1
+    #[link_name = "?OpenPopupContextItem@ImGui@@YAXPEBDH@Z"]
+    pub fn OpenPopupContextItem(
+        str_id: *const i8,
+        mb: ImGuiMouseButton,
+    ) -> c_void;
 
     /// * label: 
     /// * data_type: 
@@ -4153,6 +4448,78 @@ extern "C" {
     ) -> bool;
 
     /// * label: 
+    /// * v: 
+    /// * v_speed: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?DragFloat@ImGui@@YA_NPEBDPEAMMMM0M@Z"]
+    pub fn DragFloat_(
+        label: *const i8,
+        v: *mut f32,
+        v_speed: f32,
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * label: 
+    /// * v: 
+    /// * v_speed: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?DragFloat2@ImGui@@YA_NPEBDQEAMMMM0M@Z"]
+    pub fn DragFloat2_(
+        label: *const i8,
+        v: [f32; 2],
+        v_speed: f32,
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * label: 
+    /// * v: 
+    /// * v_speed: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?DragFloat3@ImGui@@YA_NPEBDQEAMMMM0M@Z"]
+    pub fn DragFloat3_(
+        label: *const i8,
+        v: [f32; 3],
+        v_speed: f32,
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * label: 
+    /// * v: 
+    /// * v_speed: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?DragFloat4@ImGui@@YA_NPEBDQEAMMMM0M@Z"]
+    pub fn DragFloat4_(
+        label: *const i8,
+        v: [f32; 4],
+        v_speed: f32,
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * label: 
     /// * data_type: 
     /// * p_data: 
     /// * p_min: 
@@ -4189,4 +4556,95 @@ extern "C" {
         format: *const i8,
         power: f32,
     ) -> bool;
+
+    /// * label: 
+    /// * v: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?SliderFloat@ImGui@@YA_NPEBDPEAMMM0M@Z"]
+    pub fn SliderFloat_(
+        label: *const i8,
+        v: *mut f32,
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * label: 
+    /// * v: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?SliderFloat2@ImGui@@YA_NPEBDQEAMMM0M@Z"]
+    pub fn SliderFloat2_(
+        label: *const i8,
+        v: [f32; 2],
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * label: 
+    /// * v: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?SliderFloat3@ImGui@@YA_NPEBDQEAMMM0M@Z"]
+    pub fn SliderFloat3_(
+        label: *const i8,
+        v: [f32; 3],
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * label: 
+    /// * v: 
+    /// * v_min: 
+    /// * v_max: 
+    /// * format: 
+    /// * power: 
+    #[link_name = "?SliderFloat4@ImGui@@YA_NPEBDQEAMMM0M@Z"]
+    pub fn SliderFloat4_(
+        label: *const i8,
+        v: [f32; 4],
+        v_min: f32,
+        v_max: f32,
+        format: *const i8,
+        power: f32,
+    ) -> bool;
+
+    /// * str_id: 
+    /// * mb: 
+    /// * over_items: 
+    #[link_name = "?BeginPopupContextWindow@ImGui@@YA_NPEBDH_N@Z"]
+    pub fn BeginPopupContextWindow_(
+        str_id: *const i8,
+        mb: ImGuiMouseButton,
+        over_items: bool,
+    ) -> bool;
+
+    #[link_name = "?TreeAdvanceToLabelPos@ImGui@@YAXXZ"]
+    pub fn TreeAdvanceToLabelPos() -> c_void;
+
+    /// * open: 
+    /// * cond: 0
+    #[link_name = "?SetNextTreeNodeOpen@ImGui@@YAX_NH@Z"]
+    pub fn SetNextTreeNodeOpen(
+        open: bool,
+        cond: ImGuiCond,
+    ) -> c_void;
+
+    #[link_name = "?GetContentRegionAvailWidth@ImGui@@YAMXZ"]
+    pub fn GetContentRegionAvailWidth() -> f32;
+
+    #[link_name = "?GetOverlayDrawList@ImGui@@YAPEAUImDrawList@@XZ"]
+    pub fn GetOverlayDrawList() -> *mut ImDrawList;
 }

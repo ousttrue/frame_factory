@@ -7,8 +7,8 @@ use std::ffi::c_void;
 extern crate va_list;
 
 pub type SDL_Window = c_void;
-// pub type SDL_Event = SDL_Event;
 pub type SDL_Event = c_void;
+// pub type SDL_Event = SDL_Event;
 
 #[link(name = "imgui_static", kind = "static")]
 extern "C" {

@@ -2,13 +2,13 @@ use std::path::{Path, PathBuf};
 
 pub struct Export {
     pub header: PathBuf,
-    pub dll: String,
+    pub link: String,
 }
 
 pub struct Args {
     pub exports: Vec<Export>,
     pub compile_args: Vec<String>,
-    pub out: PathBuf,
+    pub out_dir: PathBuf,
 }
 
 impl Args {
@@ -23,10 +23,10 @@ impl Args {
                     let split: Vec<&str> = arg[2..].rsplitn(2, ",").collect();
                     exports.push(Export {
                         header: Path::new(split[1]).to_owned(),
-                        dll: split[0].to_owned(),
+                        link: split[0].to_owned(),
                     });
                 }
-                "-D" => {
+                "-D" | "-I" => {
                     compile_args.push(arg.clone());
                 }
                 "-O" => {
@@ -39,11 +39,22 @@ impl Args {
         Args {
             exports,
             compile_args,
-            out: dst,
+            out_dir: dst,
         }
     }
 
     pub fn find_export(&self, header: &Path) -> Option<&Export> {
         self.exports.iter().find(|x| header == x.header)
+    }
+
+    pub fn merge_export_header(&self) -> String {
+        let mut buffer = String::new();
+        for export in &self.exports {
+            buffer.push_str(&format!(
+                "#include \"{}\"\n",
+                export.header.to_string_lossy()
+            ));
+        }
+        buffer
     }
 }

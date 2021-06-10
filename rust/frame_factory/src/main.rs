@@ -32,46 +32,45 @@ pub fn main() -> Result<(), String> {
         panic!();
     }
 
-    unsafe{
-    imgui_raw::CreateContext(ptr::null_mut());
-    let mut io = imgui_raw::GetIO().as_mut().unwrap();
-    io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::NavEnableKeyboard as i32;       // Enable Keyboard Controls
-    // //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-    // //io.ConfigViewportsNoAutoMerge = true;
-    // //io.ConfigViewportsNoTaskBarIcon = true;
+    unsafe {
+        imgui_raw::CreateContext(ptr::null_mut());
+        let mut io = imgui_raw::GetIO().as_mut().unwrap();
+        io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::NavEnableKeyboard as i32; // Enable Keyboard Controls
+                                                                                  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::DockingEnable as i32; // Enable Docking
+        io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32; // Enable Multi-Viewport / Platform Windows
+                                                                                //io.ConfigViewportsNoAutoMerge = true;
+                                                                                //io.ConfigViewportsNoTaskBarIcon = true;
 
-    // // Setup Dear ImGui style
-    // ImGui::StyleColorsDark();
-    // //ImGui::StyleColorsClassic();
+        // Setup Dear ImGui style
+        imgui_raw::StyleColorsDark(ptr::null_mut());
+        //ImGui::StyleColorsClassic();
 
-    // // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-    // ImGuiStyle& style = ImGui::GetStyle();
-    // if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    // {
-    //     style.WindowRounding = 0.0f;
-    //     style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    // }
+        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+        let style = imgui_raw::GetStyle().as_mut().unwrap();
+        if (io.ConfigFlags & imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32) != 0 {
+            style.WindowRounding = 0.0f32;
+            style.Colors[imgui_raw::ImGuiCol_::WindowBg as usize].w = 1.0f32;
+        }
 
-    // // Setup Platform/Renderer backends
-    // ImGui_ImplSDL2_InitForD3D(window);
-    // ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+        // Setup Platform/Renderer backends
+        imgui_raw::ImGui_ImplSDL2_InitForD3D(window.raw() as *mut c_void);
+        // imgui_raw::ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-    // // Load Fonts
-    // // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // // - Read 'docs/FONTS.md' for more instructions and details.
-    // // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    // //io.Fonts->AddFontDefault();
-    // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-    // //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    // //IM_ASSERT(font != NULL);
+        // // Load Fonts
+        // // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
+        // // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+        // // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+        // // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+        // // - Read 'docs/FONTS.md' for more instructions and details.
+        // // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+        // //io.Fonts->AddFontDefault();
+        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+        // //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+        // //IM_ASSERT(font != NULL);
     }
 
     // // Our state

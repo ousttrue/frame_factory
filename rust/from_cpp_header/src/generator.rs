@@ -1,12 +1,13 @@
 use std::{
     borrow::Cow,
     collections::HashSet,
+    fs::File,
     io::{BufWriter, Write},
     path::Path,
     rc::Rc,
 };
 
-use crate::{Args, Decl, Enum, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
+use crate::{Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
 fn escape_symbol(src: &str) -> Cow<str> {
     match src {
@@ -273,11 +274,7 @@ fn write_function<W: Write>(
     Ok(())
 }
 
-pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
-    let dir = args.out.parent().unwrap();
-    std::fs::create_dir_all(dir)?;
-
-    let f = std::fs::File::create(&args.out)?;
+pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(), std::io::Error> {
     let mut w = BufWriter::new(f);
     w.write_fmt(format_args!(
         "// this is generated.
@@ -290,8 +287,6 @@ extern crate va_list;
 
 "
     ))?;
-
-    let export = &args.exports[0];
 
     //
     // enum, struct, typedef
@@ -316,14 +311,19 @@ extern crate va_list;
     //
     // functions
     //
-    let lib_name = export.dll.trim_end_matches(".dll");
+    let mut link_name = export.link.trim_end_matches(".dll");
+    let mut kind = "dynlib";
+    if link_name.len() == 0 {
+        link_name = export.link.trim_end_matches(".lib");
+        kind = "static";
+    }
 
     w.write_fmt(format_args!(
         "
-#[link(name = \"{}\", kind = \"static\")]
+#[link(name = \"{}\", kind = \"{}\")]
 extern \"C\" {{
 ",
-        lib_name
+        link_name, kind
     ))?;
 
     let functions = get_sorted_entries(type_map, &export.header, |d| {

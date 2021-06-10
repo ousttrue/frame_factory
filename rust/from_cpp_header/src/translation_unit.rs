@@ -1,4 +1,10 @@
-use std::{ffi::{c_void, CString, NulError}, path::Path, ptr};
+use std::{
+    ffi::{c_void, CString, NulError},
+    path::Path,
+    ptr,
+};
+
+use clang_sys::CXUnsavedFile;
 
 extern crate clang_sys;
 
@@ -36,8 +42,14 @@ pub struct TranslationUnit {
 }
 
 impl TranslationUnit {
-    pub fn parse(path: &Path, args: &[String]) -> Result<TranslationUnit, Error> {
+    pub fn parse(
+        path: &Path,
+        unsaved_content: &str,
+        args: &[String],
+    ) -> Result<TranslationUnit, Error> {
         let index = Index::new()?;
+
+        let path = path.to_string_lossy().to_string();
 
         let base_args = [
             "-x",
@@ -53,17 +65,25 @@ impl TranslationUnit {
             .map(|arg| CString::new(*arg).unwrap())
             .collect();
         {
-            let tmp = format!("-I{}", path.to_string_lossy());
-            arguments.push(CString::new(tmp.as_str()).unwrap());
+            arguments.push(CString::new(format!("-I{}", path).as_str()).unwrap());
         }
-        for arg in args
-        {
+        for arg in args {
             arguments.push(CString::new(arg.as_str()).unwrap());
         }
 
-        let path = CString::new(path.to_string_lossy().to_string()).map_err(|e| Error::CString(e))?;
+        let path = CString::new(path).map_err(|e| Error::CString(e))?;
 
         let pp: Vec<*const i8> = arguments.iter().map(|arg| arg.as_ptr()).collect();
+
+        let mut unsaved = CXUnsavedFile::default();
+        let mut n_unsaved = 0;
+
+        if unsaved_content.len() > 0 {
+            n_unsaved = 1;
+            unsaved.Filename = path.as_ptr();
+            unsaved.Contents = unsaved_content.as_ptr() as *const i8;
+            unsaved.Length = unsaved_content.len() as u32;
+        }
 
         let tu = unsafe {
             clang_sys::clang_parseTranslationUnit(
@@ -71,8 +91,8 @@ impl TranslationUnit {
                 path.as_ptr(),
                 pp.as_ptr(),
                 pp.len() as i32,
-                ptr::null_mut(),
-                0,
+                &mut unsaved as *mut CXUnsavedFile,
+                n_unsaved,
                 clang_sys::CXTranslationUnit_DetailedPreprocessingRecord as i32,
             )
         };
@@ -86,6 +106,6 @@ impl TranslationUnit {
     }
 
     pub fn get_cursor(&self) -> clang_sys::CXCursor {
-        unsafe{clang_sys::clang_getTranslationUnitCursor(self.tu)}
+        unsafe { clang_sys::clang_getTranslationUnitCursor(self.tu) }
     }
 }

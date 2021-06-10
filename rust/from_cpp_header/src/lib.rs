@@ -1,7 +1,4 @@
-use std::{
-    io::stdout,
-    io::{stderr, Write},
-};
+use std::{io::stdout, io::{stderr, Write}, path::Path};
 
 mod translation_unit;
 pub use translation_unit::*;
@@ -41,19 +38,51 @@ mod generator;
 pub fn run(args: &[String]) -> Result<(), Error> {
     // args
     let args = Args::parse(args);
+    if args.exports.len() == 0 {
+        return Err(Error::StaticMessage("no export"));
+    }
 
     // parse
-    let tu = TranslationUnit::parse(&args.exports[0].header, &args.compile_args)?;
+    let tu = if args.exports.len() == 1 {
+        TranslationUnit::parse(&args.exports[0].header, "", &args.compile_args)?
+    } else {
+        TranslationUnit::parse(
+            Path::new("__unsaved_header__.h"),
+            &args.merge_export_header(),
+            &args.compile_args,
+        )?
+    };
     stderr().flush().unwrap();
     stdout().flush().unwrap();
 
     // aggregate
     let mut type_map = TypeMap::new();
-    let _root_namespace = visit_children_with(tu.get_cursor(), &mut type_map, || NamespaceVisitor::nameless());
+    let _root_namespace = visit_children_with(tu.get_cursor(), &mut type_map, || {
+        NamespaceVisitor::nameless()
+    });
     // root_namespace.debug_print("");
 
     // generate
-    generator::generate(&type_map, &args).map_err(|e| Error::IOError(e))?;
+    let mut mod_content = String::new();
+
+    std::fs::create_dir_all(&args.out_dir).map_err(|e| Error::IOError(e))?;
+    for export in &args.exports {
+        let export_name = export.header.file_stem().unwrap().to_string_lossy();
+        let path = format!("{}/{}.rs", args.out_dir.to_string_lossy(), export_name);
+        let mut f = std::fs::File::create(&path).map_err(|e| Error::IOError(e))?;
+        generator::generate(&mut f, &type_map, export).map_err(|e| Error::IOError(e))?;
+
+        mod_content.push_str(&format!(
+            "pub mod {};\npub use {}::*;\n",
+            export_name, export_name
+        ));
+    }
+
+    std::fs::write(
+        format!("{}/mod.rs", args.out_dir.to_string_lossy()),
+        mod_content,
+    )
+    .map_err(|e| Error::IOError(e))?;
 
     Ok(())
 }

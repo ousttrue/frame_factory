@@ -8,4 +8,8 @@ TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} INTERFACE
     ${SRC_DIR}/include
 )
 
-SUBDIRS(imgui SDL2)
+SUBDIRS(
+    # SDL2
+    imgui_static
+    # imgui
+)

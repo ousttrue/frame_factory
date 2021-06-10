@@ -1258,7 +1258,7 @@ enum ImDrawCornerFlags_ {
 }
 
 #[allow(non_upper_case_globals, non_snake_case)]        
-#[link(name = "imgui", kind = "dylib")]
+#[link(name = "imgui_static", kind = "static")]
 extern "C" {
 
     /// * shared_font_atlas: NULL

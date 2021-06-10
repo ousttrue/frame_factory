@@ -135,9 +135,8 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
 
     w.write_fmt(format_args!(
         "
-#[allow(non_snake_case)]
 #[repr({})]
-enum {} {{
+pub enum {} {{
 ",
         get_rust_type(&*e.base_type, false),
         t.name,
@@ -177,14 +176,13 @@ fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std
     }
 
     if s.fields.len() == 0 {
-        w.write_fmt(format_args!("type {} = c_void;\n", &t.name))?;
+        w.write_fmt(format_args!("pub type {} = c_void;\n", &t.name))?;
 
         return Ok(());
     }
 
     w.write_fmt(format_args!(
         "
-#[allow(non_snake_case)]        
 #[repr(C)]
 pub struct {} {{
 ",
@@ -193,7 +191,7 @@ pub struct {} {{
 
     for field in &s.fields {
         w.write_fmt(format_args!(
-            "    {}: {},\n",
+            "    pub {}: {},\n",
             field.name,
             get_rust_type(&*field.field_type, false)
         ))?;
@@ -207,12 +205,12 @@ pub struct {} {{
 fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), std::io::Error> {
     if is_function(&*d.base_type) {
         w.write_fmt(format_args!(
-            "type {} = *mut c_void; // function pointer\n",
+            "pub type {} = *mut c_void; // function pointer\n",
             t.name,
         ))?;
     } else {
         w.write_fmt(format_args!(
-            "type {} = {};\n",
+            "pub type {} = {};\n",
             t.name,
             get_rust_type(&*d.base_type, false)
         ))?;
@@ -262,8 +260,7 @@ fn write_function<W: Write>(
 
         w.write_fmt(format_args!("{}", comment))?;
         w.write_fmt(format_args!(
-            "    #[allow(non_snake_case)]        
-    #[link_name = \"{}\"]
+            "    #[link_name = \"{}\"]
     pub fn {}({}) -> {};
 ",
             export_name,
@@ -284,6 +281,10 @@ pub fn generate(type_map: &TypeMap, args: &Args) -> Result<(), std::io::Error> {
     let mut w = BufWriter::new(f);
     w.write_fmt(format_args!(
         "// this is generated.
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(dead_code)]        
 use std::ffi::c_void;
 extern crate va_list;
 
@@ -319,8 +320,7 @@ extern crate va_list;
 
     w.write_fmt(format_args!(
         "
-#[allow(non_upper_case_globals, non_snake_case)]        
-#[link(name = \"{}\", kind = \"dylib\")]
+#[link(name = \"{}\", kind = \"static\")]
 extern \"C\" {{
 ",
         lib_name

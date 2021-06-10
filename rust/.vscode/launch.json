@@ -40,7 +40,7 @@
             },
             "args": [
                 // Export
-                "-E${workspaceFolder}/../cpp/_external/imgui/imgui.h,imgui.dll",
+                "-E${workspaceFolder}/../cpp/_external/imgui/imgui.h,imgui_static.dll",
                 // Define
                 "-DIMGUI_API=__declspec(dllexport)",
                 // OUt

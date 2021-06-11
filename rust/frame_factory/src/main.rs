@@ -155,6 +155,23 @@ impl Device {
         }
         self.create_render_target();
     }
+
+    fn clear(&mut self, clear_color_with_alpha: &[f32; 4])
+    {
+        if let Some(context) = unsafe{self.context.as_mut()}
+        {
+            unsafe{context.OMSetRenderTargets(1, &mut self.rendertarget, ptr::null_mut())};
+            unsafe{context.ClearRenderTargetView(self.rendertarget, clear_color_with_alpha)};
+        }
+    }
+
+    fn present(&mut self)
+    {
+        if let Some(swapchain) = unsafe{self.swapchain.as_mut()}
+        {
+            unsafe{swapchain.Present(1, 0)}; // Present with vsync
+        }
+    }
 }
 
 #[link(name = "sdl2", kind = "static")]
@@ -207,7 +224,7 @@ pub fn main() -> Result<(), String> {
 
         // Setup Platform/Renderer backends
         imgui_raw::ImGui_ImplSDL2_InitForD3D(window.raw() as *mut c_void);
-        // imgui_raw::ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+        imgui_raw::ImGui_ImplDX11_Init(device.device as *mut c_void, device.context as *mut c_void);
 
         // Load Fonts
         // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use imgui_raw::PushFont()/PopFont() to select them.
@@ -225,14 +242,16 @@ pub fn main() -> Result<(), String> {
         //IM_ASSERT(font != NULL);
 
         // Our state
-        let show_demo_window = true;
-        let show_another_window = false;
-        let clear_color = imgui_raw::ImVec4 {
-            x: 0.45f32,
-            y: 0.55f32,
-            z: 0.60f32,
-            w: 1.00f32,
-        };
+        let mut show_demo_window = true;
+        let mut show_another_window = false;
+        let mut clear_color = [
+            0.45f32,
+            0.55f32,
+            0.60f32,
+            1.00f32,
+        ];
+        let mut f = 0.0f32;
+        let mut counter = 0;
 
         // Main loop
         let mut done = false;
@@ -263,6 +282,66 @@ pub fn main() -> Result<(), String> {
                     }
                 }
             }
+
+            imgui_raw::ImGui_ImplDX11_NewFrame();
+            imgui_raw::ImGui_ImplSDL2_NewFrame(window.raw() as *mut c_void);
+            imgui_raw::NewFrame();
+              
+            // 1. Show the big demo window (Most of the sample code is in imgui_raw::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+            if show_demo_window{
+                imgui_raw::ShowDemoWindow(&mut show_demo_window);
+            }
+
+            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+            {
+                imgui_raw::Begin("Hello, world!\0".as_ptr() as *const i8, ptr::null_mut(), 0);                          // Create a window called "Hello, world!" and append into it.
+
+                imgui_raw::Text("This is some useful text.".as_ptr() as *const i8);               // Display some text (you can use a format strings too)
+                imgui_raw::Checkbox("Demo Window".as_ptr() as *const i8, &mut show_demo_window);      // Edit bools storing our window open/close state
+                imgui_raw::Checkbox("Another Window".as_ptr() as *const i8, &mut show_another_window);
+
+                imgui_raw::SliderFloat("float".as_ptr() as *const i8, &mut f, 0.0f32, 1.0f32, "%.3f".as_ptr() as *const i8, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
+                let clear_color: [f32; 3] = clear_color[0..3].try_into().unwrap();
+                imgui_raw::ColorEdit3("clear color".as_ptr() as *const i8, clear_color, 0); // Edit 3 floats representing a color
+
+                if imgui_raw::Button("Button".as_ptr() as *const i8, &imgui_raw::ImVec2{x: 0f32, y:0f32})                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                {
+                    counter+=1;
+                }
+                imgui_raw::SameLine(0f32, -1f32);
+                // imgui_raw::TextV("counter = %d".as_ptr() as *const i8, counter);
+
+                // imgui_raw::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / imgui_raw::GetIO().Framerate, imgui_raw::GetIO().Framerate);
+                imgui_raw::End();
+            }            
+
+            // 3. Show another simple window.
+            if show_another_window
+            {
+                imgui_raw::Begin("Another Window".as_ptr() as *const i8, &mut show_another_window, 0);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                imgui_raw::Text("Hello from another window!".as_ptr() as *const i8);
+                if imgui_raw::Button("Close Me".as_ptr() as *const i8, &imgui_raw::ImVec2{x: 0f32, y:0f32})
+                {
+                    show_another_window = false;
+                }
+                imgui_raw::End();
+            }
+
+            // Rendering
+            imgui_raw::Render();
+            let clear_color_with_alpha = [ clear_color[0] * clear_color[3], clear_color[1] * clear_color[3], clear_color[2] * clear_color[3], clear_color[3] ];
+            device.clear(&clear_color_with_alpha);
+
+            imgui_raw::ImGui_ImplDX11_RenderDrawData(imgui_raw::GetDrawData());
+
+            // Update and Render additional Platform Windows
+            if (io.ConfigFlags & imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32)!=0
+            {
+                imgui_raw::UpdatePlatformWindows();
+                imgui_raw::RenderPlatformWindowsDefault(ptr::null_mut(), ptr::null_mut());
+            }
+
+            device.present();
         }
 
         // Cleanup

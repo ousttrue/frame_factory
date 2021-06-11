@@ -29,6 +29,15 @@ Read glTF's JsonSchema and generate rust code for serde_json.
 
 Read imgui.h and generate rust code for c++ ffi. Shared the imgui.dll between c++ and rust.
 
+# Build
+
+```
+$ cd rust/frame_factory
+rust/frame_factory$ cargo install cargo-vcpkg
+rust/frame_factory$ cargo vcpkg build
+rust/frame_factory$ cargo build
+```
+
 # ToDo
 ## GUI
 * [x] Window と Renderer を dll 分離

@@ -1,7 +1,9 @@
 extern crate imgui_raw;
 // extern crate sdl2;
 
+use sdl2::sys::SDL_Event;
 use sdl2::sys::SDL_GetWindowWMInfo;
+use sdl2::sys::SDL_PollEvent;
 use sdl2::sys::SDL_SysWMinfo;
 use std::convert::TryInto;
 use std::ffi::c_void;
@@ -142,6 +144,23 @@ impl Device {
             self.rendertarget = ptr::null_mut();
         }
     }
+
+    fn resize(&mut self)
+    {
+        // Release all outstanding references to the swap chain's buffers before resizing.
+        self.cleanup_render_target();
+        if let Some(swapchain) = unsafe{self.swapchain.as_mut()}
+        {
+            unsafe{ swapchain.ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0)};
+        }
+        self.create_render_target();
+    }
+}
+
+#[link(name = "sdl2", kind = "static")]
+extern "C" {
+    #[link_name = "SDL_PollEvent"]
+    fn _SDL_PollEvent(event: *mut c_void) -> i32;
 }
 
 pub fn main() -> Result<(), String> {
@@ -164,7 +183,7 @@ pub fn main() -> Result<(), String> {
         let array: [u8; 8] = info.dummy[0..8].try_into().unwrap();
         let addr = u64::from_le_bytes(array);
 
-        let device = Device::create(addr as HWND).unwrap();
+        let mut device = Device::create(addr as HWND).unwrap();
 
         imgui_raw::CreateContext(ptr::null_mut());
         let mut io = imgui_raw::GetIO().as_mut().unwrap();
@@ -215,9 +234,36 @@ pub fn main() -> Result<(), String> {
             w: 1.00f32,
         };
 
-        //
-        // main loop
-        //
+        // Main loop
+        let mut done = false;
+        while !done {
+            let mut event = [0 as u8; std::mem::size_of::<SDL_Event>()];
+            let p_event = event.as_mut_ptr() as *mut SDL_Event;
+            while _SDL_PollEvent(p_event as *mut c_void) != 0 {
+                imgui_raw::ImGui_ImplSDL2_ProcessEvent(p_event as *mut c_void);
+
+                if let Some(event) = p_event.as_ref() {
+                    match event.type_ {
+                        256 /* SDL_QUIT */ => {
+                            done = true;
+                        },
+                        512 /* SDL_WINDOWEVENT */ => {
+                            if event.window.event == 14 /* SDL_WINDOWEVENT_CLOSE */ && event.window.windowID == window.id()
+                            {
+                                done = true;
+                            }
+                            if event.window.event == 14 /* SDL_WINDOWEVENT_RESIZED */ && event.window.windowID == window.id()
+                            {
+                                device.resize();
+                            }               
+                        }
+                        _ =>{
+
+                        }
+                    }
+                }
+            }
+        }
 
         // Cleanup
         imgui_raw::ImGui_ImplDX11_Shutdown();

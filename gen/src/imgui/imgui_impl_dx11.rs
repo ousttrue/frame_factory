@@ -5,7 +5,8 @@
 #![allow(dead_code)]        
 use std::ffi::c_void;
 
-use crate::ImDrawData;
+use super::ImDrawData;
+
 extern crate va_list;
 
 pub type ID3D11Device = c_void;

@@ -1,13 +1,13 @@
 [workspace]
 
 members = [
-    "imgui_raw",
+    "gen",
     "gltf2",
     "scene",
     "renderer",
-    "frame_factory",
+    # "frame_factory",
     #
-    "sample",
+    # "sample",
     "from_jsonschema",
-    "from_cpp_header"
+    "from_cpp_header",
 ]

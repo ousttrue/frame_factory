@@ -1,7 +1,5 @@
-mod generated;
-pub use generated::*;
-mod sdl;
-pub use sdl::*;
+pub mod imgui;
+pub mod sdl;
 
 #[cfg(test)]
 mod tests {

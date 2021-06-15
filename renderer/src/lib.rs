@@ -1,6 +1,6 @@
 extern crate scene;
 extern crate image;
-extern crate imgui_raw;
+extern crate gen;
 
 pub mod asset_manager;
 pub mod com_util;

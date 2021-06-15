@@ -16,4 +16,6 @@
         "screenstate",
         "winapi"
     ],
+    "workbench.colorTheme": "Andromeda Colorizer",
+    "extensions.ignoreRecommendations": false
 }

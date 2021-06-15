@@ -1,4 +1,8 @@
-use std::{io::stdout, io::{stderr, Write}, path::Path};
+use std::{
+    io::stdout,
+    io::{stderr, Write},
+    path::Path,
+};
 
 mod translation_unit;
 pub use translation_unit::*;
@@ -32,6 +36,9 @@ pub use type_enum::*;
 
 mod type_struct;
 pub use type_struct::*;
+
+mod define;
+pub use define::*;
 
 mod generator;
 

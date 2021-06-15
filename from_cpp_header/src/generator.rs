@@ -7,7 +7,9 @@ use std::{
     rc::Rc,
 };
 
-use crate::{Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
+use crate::{
+    Decl, Define, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
+};
 
 fn escape_symbol(src: &str) -> Cow<str> {
     match src {
@@ -130,6 +132,17 @@ fn is_i32(t: &Rc<Type>) -> bool {
     } else {
         false
     }
+}
+
+fn write_definition(w: &mut impl Write, definition: &Define) {
+    // pub const SDL_INIT_TIMER: i32 = 0x00000001;
+    let name = &definition.values[0];
+    let mut value = String::new();
+    for token in &definition.values[1..] {
+        value.push_str(token);
+    }
+    w.write_fmt(format_args!("pub const {}: i32 = {};\n", &name, &value))
+        .unwrap();
 }
 
 fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error> {
@@ -288,6 +301,15 @@ extern crate va_list;
 
 "
     ))?;
+
+    //
+    // defines
+    //
+    for def in &type_map.defines {
+        if def.path == export.header {
+            write_definition(&mut w, def);
+        }
+    }
 
     //
     // enum, struct, typedef

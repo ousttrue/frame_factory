@@ -32,7 +32,25 @@ impl CXTokens {
         token
     }
 
-    pub fn get(&self) -> Option<String> {
+    pub fn len(&self) -> c_uint {
+        self.num
+    }
+
+    pub fn get(&self) -> Vec<String> {
+        let mut tokens: Vec<String> = Vec::new();
+
+        let mut p = self.token;
+        for _i in 0..self.num {
+            let token = unsafe { *p };
+            let token = cx_string::CXString::from_token(self.tu, token).to_string();
+            tokens.push(token);
+            p = unsafe { p.add(1) };
+        }
+
+        tokens
+    }
+
+    pub fn get_function_default_param(&self) -> Option<String> {
         let mut tokens: Vec<String> = Vec::new();
         let mut p = self.token;
         let mut found = false;

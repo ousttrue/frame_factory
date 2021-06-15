@@ -3,13 +3,14 @@ use std::{collections::HashMap, rc::Rc};
 use clang_sys::*;
 
 use crate::{
-    cx_source_location, cx_string, visit_children_with, Function, Primitives, Type, UserType,
-    Visitor,
+    cx_source_location, cx_string, visit_children_with, Define, Function, Primitives, Type,
+    UserType, Visitor,
 };
 
 #[allow(non_upper_case_globals, non_snake_case)]
 pub struct TypeMap {
     pub map: HashMap<u32, Rc<Type>>,
+    pub defines: Vec<Define>,
 
     VOID: Rc<Type>,
     BOOL: Rc<Type>,
@@ -117,6 +118,7 @@ impl TypeMap {
         let void = Rc::new(Type::Primitive(Primitives::Void));
         TypeMap {
             map: HashMap::new(),
+            defines: Vec::new(),
             VOID: void.clone(),
             BOOL: Rc::new(Type::Primitive(Primitives::Bool)),
             I8: Rc::new(Type::Primitive(Primitives::I8)),

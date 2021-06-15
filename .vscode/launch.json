@@ -39,13 +39,13 @@
             },
             "args": [
                 // Export
-                "-E${workspaceFolder}/../cpp/_external/imgui/imgui.h,imgui_static.lib",
-                "-E${workspaceFolder}/../cpp/_external/imgui/backends/imgui_impl_sdl.h,imgui_static.lib",
-                "-E${workspaceFolder}/../cpp/_external/imgui/backends/imgui_impl_dx11.h,imgui_static.lib",
+                "-E${workspaceFolder}/_external/imgui/imgui.h,imgui_static.lib",
+                "-E${workspaceFolder}/_external/imgui/backends/imgui_impl_sdl.h,imgui_static.lib",
+                "-E${workspaceFolder}/_external/imgui/backends/imgui_impl_dx11.h,imgui_static.lib",
                 // Define
                 // "-DIMGUI_API=__declspec(dllexport)",
                 // OUt
-                "-O${workspaceFolder}/imgui_raw/src/generated",
+                "-O${workspaceFolder}/gen/src/imgui",
             ],
             "cwd": "${workspaceFolder}",
             "env": {
@@ -69,11 +69,11 @@
             },
             "args": [
                 // Export
-                "-E${workspaceFolder}/../cpp/_external/SDL/include/SDL.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL.h,SDL2.lib",
                 // Define
                 // "-DIMGUI_API=__declspec(dllexport)",
                 // OUt
-                "-O${workspaceFolder}/imgui_raw/src/sdl",
+                "-O${workspaceFolder}/gen/src/sdl",
             ],
             "cwd": "${workspaceFolder}",
             "env": {

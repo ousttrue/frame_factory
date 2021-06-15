@@ -13,7 +13,7 @@ pub struct Param {
 }
 
 fn get_default_value(cursor: CXCursor) -> Option<String> {
-    cx_token::CXTokens::from_cursor(cursor).get()
+    cx_token::CXTokens::from_cursor(cursor).get_function_default_param()
 }
 
 pub struct Function {

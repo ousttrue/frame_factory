@@ -19,14 +19,13 @@
                     "kind": "bin"
                 }
             },
-            "args": [
-            ],
+            "args": [],
             "cwd": "${workspaceFolder}",
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "from cpp header",
+            "name": "from cpp header(imgui)",
             "cargo": {
                 "args": [
                     "build",
@@ -47,6 +46,34 @@
                 // "-DIMGUI_API=__declspec(dllexport)",
                 // OUt
                 "-O${workspaceFolder}/imgui_raw/src/generated",
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PATH": "${env:PATH};C:\\Program Files\\LLVM\\bin",
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "from cpp header(sdl)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=from_cpp_header",
+                    "--bin=from_cpp_header"
+                ],
+                "filter": {
+                    "name": "from_cpp_header",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                // Export
+                "-E${workspaceFolder}/../cpp/_external/SDL/include/SDL.h,SDL2.lib",
+                // Define
+                // "-DIMGUI_API=__declspec(dllexport)",
+                // OUt
+                "-O${workspaceFolder}/imgui_raw/src/sdl",
             ],
             "cwd": "${workspaceFolder}",
             "env": {

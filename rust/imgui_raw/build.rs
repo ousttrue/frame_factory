@@ -44,4 +44,30 @@ fn main() {
         .file(format!("{}/backends/imgui_impl_sdl.cpp", imgui_src_dir))
         .include(format!("{}/include", sdl_src_dir))
         .compile("imgui_static");
+
+    // SDL
+    let dst = cmake::build(format!("{}/cpp", root_dir.to_string_lossy()));
+    println!("cargo:rustc-link-search=native={}", dst.display());
+    println!("cargo:rustc-link-lib=dylib=user32");
+    println!("cargo:rustc-link-lib=dylib=gdi32");
+    println!("cargo:rustc-link-lib=dylib=winmm");
+    println!("cargo:rustc-link-lib=dylib=imm32");
+    println!("cargo:rustc-link-lib=dylib=ole32");
+    println!("cargo:rustc-link-lib=dylib=oleaut32");
+    println!("cargo:rustc-link-lib=dylib=version");
+    println!("cargo:rustc-link-lib=dylib=uuid");
+    println!("cargo:rustc-link-lib=dylib=advapi32");
+    println!("cargo:rustc-link-lib=dylib=setupapi");
+    println!("cargo:rustc-link-lib=dylib=shell32");
+    println!("cargo:rustc-link-lib=dylib=dinput8");
+    println!("cargo:rustc-link-lib=dylib=kernel32");
+    println!("cargo:rustc-link-lib=dylib=user32");
+    println!("cargo:rustc-link-lib=dylib=gdi32");
+    println!("cargo:rustc-link-lib=dylib=winspool");
+    println!("cargo:rustc-link-lib=dylib=shell32");
+    println!("cargo:rustc-link-lib=dylib=ole32");
+    println!("cargo:rustc-link-lib=dylib=oleaut32");
+    println!("cargo:rustc-link-lib=dylib=uuid");
+    println!("cargo:rustc-link-lib=dylib=comdlg32");
+    println!("cargo:rustc-link-lib=dylib=advapi32");
 }

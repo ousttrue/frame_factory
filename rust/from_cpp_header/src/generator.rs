@@ -39,6 +39,7 @@ fn rename_type(t: &str) -> String {
     match t {
         "size_t" => "usize".into(),
         "va_list" => "va_list::VaList".into(),
+        "Uint32" => "u32".into(),
         _ => t.into(),
     }
 }

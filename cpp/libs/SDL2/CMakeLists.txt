@@ -1,6 +1,6 @@
 set(TARGET_NAME SDL2)
 set(SDL_DIR ${CMAKE_CURRENT_LIST_DIR}/../../_external/SDL)
-add_library(${TARGET_NAME} SHARED
+add_library(${TARGET_NAME} STATIC
 ${SDL_DIR}/src/SDL.c
 ${SDL_DIR}/src/SDL_assert.c
 ${SDL_DIR}/src/SDL_dataqueue.c
@@ -182,8 +182,8 @@ PUBLIC
 )
 
 TARGET_COMPILE_DEFINITIONS(${TARGET_NAME}
-PRIVATE
-    DLL_EXPORT
+# PRIVATE
+#     DLL_EXPORT
 PUBLIC
     WIN32
     _WINDOWS
@@ -231,3 +231,5 @@ PRIVATE
 #     # /NODEFAULTLIB
 #     /subsystem:console
 # )
+
+install (TARGETS ${TARGET_NAME} DESTINATION .)

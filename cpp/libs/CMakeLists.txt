@@ -9,7 +9,7 @@ TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} INTERFACE
 )
 
 SUBDIRS(
-    # SDL2
+    SDL2
     imgui_static
     # imgui
 )

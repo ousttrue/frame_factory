@@ -5,7 +5,7 @@
 	path = _external/json
 	url = https://github.com/nlohmann/json.git
 [submodule "glTF"]
-	path = glTF
+	path = _external/glTF
 	url = https://github.com/KhronosGroup/glTF.git
 [submodule "cpp/_external/SDL"]
 	path = _external/SDL

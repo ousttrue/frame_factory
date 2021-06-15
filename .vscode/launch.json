@@ -70,6 +70,7 @@
             "args": [
                 // Export
                 "-E${workspaceFolder}/_external/SDL/include/SDL.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_video.h,SDL2.lib",
                 // Define
                 // "-DIMGUI_API=__declspec(dllexport)",
                 // OUt

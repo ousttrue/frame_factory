@@ -170,6 +170,14 @@ extern "C" {
         overwrite: i32,
     ) -> i32;
 
+    /// * : 
+    /// * : 
+    #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
+    pub fn compare(
+        arg0: *const c_void,
+        arg1: *const c_void,
+    ) -> i32;
+
     /// * base: 
     /// * nmemb: 
     /// * size: 
@@ -181,14 +189,6 @@ extern "C" {
         size: usize,
         compare: *mut extern fn(*mut c_void,*mut c_void,) -> i32,
     ) -> c_void;
-
-    /// * : 
-    /// * : 
-    #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
-    pub fn compare(
-        arg0: *const c_void,
-        arg1: *const c_void,
-    ) -> i32;
 
     /// * x: 
     #[link_name = "SDL_abs"]

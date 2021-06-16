@@ -52,6 +52,8 @@ fn rename_type(t: &str) -> String {
         "uint16_t" => "u16".into(),
         "uint32_t" => "u32".into(),
         "uint64_t" => "u64".into(),
+        //
+        "SDL_bool" => "i32".into(),
 
         _ => t.into(),
     }

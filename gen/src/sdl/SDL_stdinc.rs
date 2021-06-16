@@ -65,8 +65,8 @@ pub enum SDL_DUMMY_ENUM {
     DUMMY_ENUM_VALUE = 0,
 }
 pub type SDL_compile_time_assert_enum = [i32; 1];
-pub type _SDL_iconv_t = c_void;
 pub type SDL_iconv_t = *mut _SDL_iconv_t;
+pub type _SDL_iconv_t = c_void;
 
 #[link(name = "SDL2", kind = "static")]
 extern "C" {

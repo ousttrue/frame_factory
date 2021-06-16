@@ -11,6 +11,7 @@ use super::*;
 //SDL_Colour SDL_Color
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_PixelType {
     SDL_PIXELTYPE_UNKNOWN = 0,
     SDL_PIXELTYPE_INDEX1 = 0x1,
@@ -27,6 +28,7 @@ pub enum SDL_PixelType {
 }
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_BitmapOrder {
     SDL_BITMAPORDER_NONE = 0,
     SDL_BITMAPORDER_4321 = 0x1,
@@ -34,6 +36,7 @@ pub enum SDL_BitmapOrder {
 }
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_PackedOrder {
     SDL_PACKEDORDER_NONE = 0,
     SDL_PACKEDORDER_XRGB = 0x1,
@@ -47,6 +50,7 @@ pub enum SDL_PackedOrder {
 }
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_ArrayOrder {
     SDL_ARRAYORDER_NONE = 0,
     SDL_ARRAYORDER_RGB = 0x1,
@@ -58,6 +62,7 @@ pub enum SDL_ArrayOrder {
 }
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_PackedLayout {
     SDL_PACKEDLAYOUT_NONE = 0,
     SDL_PACKEDLAYOUT_332 = 0x1,
@@ -71,6 +76,7 @@ pub enum SDL_PackedLayout {
 }
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_PixelFormatEnum {
     SDL_PIXELFORMAT_UNKNOWN = 0,
     SDL_PIXELFORMAT_INDEX1LSB = 0x11100100,

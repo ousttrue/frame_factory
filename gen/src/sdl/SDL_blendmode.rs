@@ -8,6 +8,7 @@ extern crate va_list;
 use super::*;
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_BlendMode {
     SDL_BLENDMODE_NONE = 0,
     SDL_BLENDMODE_BLEND = 0x1,
@@ -18,6 +19,7 @@ pub enum SDL_BlendMode {
 }
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_BlendOperation {
     SDL_BLENDOPERATION_ADD = 0x1,
     SDL_BLENDOPERATION_SUBTRACT = 0x2,
@@ -27,6 +29,7 @@ pub enum SDL_BlendOperation {
 }
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_BlendFactor {
     SDL_BLENDFACTOR_ZERO = 0x1,
     SDL_BLENDFACTOR_ONE = 0x2,

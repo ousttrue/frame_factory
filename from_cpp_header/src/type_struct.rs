@@ -62,9 +62,9 @@ impl Visitor for StructVisitor {
             CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {
                 // anonymous field
                 if unsafe { clang_Cursor_isAnonymous(cursor) } != 0 {
-                    let s = Struct::parse(cursor, type_map);
                     let field_type = type_map.get_or_create_user_type(cursor);
                     if let Type::UserType(t) = &*field_type {
+                        let s = Struct::parse(cursor, type_map);
                         t.set_struct(s);
                     }
                 }

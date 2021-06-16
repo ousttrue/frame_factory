@@ -57,7 +57,22 @@ fn rename_type(t: &str) -> String {
     }
 }
 
-fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
+#[derive(Clone, Copy)]
+struct TypeContext {
+    is_const: bool,
+    is_argument: bool,
+}
+
+impl TypeContext {
+    fn mutable(&self) -> TypeContext {
+        TypeContext {
+            is_const: false,
+            ..*self
+        }
+    }
+}
+
+fn get_rust_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
     match t {
         Type::Primitive(Primitives::Void) => "c_void".into(),
         Type::Primitive(Primitives::Bool) => "bool".into(),
@@ -72,17 +87,27 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
         Type::Primitive(Primitives::F32) => "f32".into(),
         Type::Primitive(Primitives::F64) => "f64".into(),
         Type::Pointer(pointee) => {
-            let pointee_type = get_rust_type(&pointee, false);
+            let pointee_type = get_rust_type(&pointee, context.mutable());
             format!(
                 "*{} {}",
-                if is_const { "const" } else { "mut" },
+                if context.is_const { "const" } else { "mut" },
                 pointee_type
             )
             .into()
         }
         Type::Array(element, size) => {
-            let element_type = get_rust_type(&*element, false);
-            format!("[{}; {}]", element_type, size).into()
+            let element_type = get_rust_type(&*element, context.mutable());
+            if context.is_argument {
+                // not FFI-safe warning
+                format!(
+                    "*{} {}",
+                    if context.is_const { "const" } else { "mut" },
+                    element_type
+                )
+                .into()
+            } else {
+                format!("[{}; {}]", element_type, size).into()
+            }
         }
         Type::UserType(u) => match &*u.get_decl() {
             Decl::Enum(_) => u.get_name().to_owned().into(),
@@ -94,14 +119,14 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
                 for p in &f.params {
                     std::fmt::Write::write_fmt(
                         &mut params,
-                        format_args!("{},", get_rust_type(&*p.param_type, false)),
+                        format_args!("{},", get_rust_type(&*p.param_type, context.mutable())),
                     )
                     .unwrap();
                 }
                 format!(
                     "extern fn({}) -> {}",
                     params,
-                    get_rust_type(&*f.result, false)
+                    get_rust_type(&*f.result, context.mutable())
                 )
                 .into()
             }
@@ -154,7 +179,13 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
 #[derive(Clone, Copy)]
 pub enum {} {{
 ",
-        get_rust_type(&*e.base_type, false),
+        get_rust_type(
+            &*e.base_type,
+            TypeContext {
+                is_argument: false,
+                is_const: false
+            }
+        ),
         t.get_name(),
     ))?;
 
@@ -212,7 +243,13 @@ pub {} {} {{
         w.write_fmt(format_args!(
             "    pub {}: {},\n",
             &field_name,
-            get_rust_type(&*field.field_type, false)
+            get_rust_type(
+                &*field.field_type,
+                TypeContext {
+                    is_argument: false,
+                    is_const: false
+                }
+            )
         ))?;
     }
 
@@ -237,7 +274,13 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
         w.write_fmt(format_args!(
             "pub type {} = {};\n",
             t.get_name(),
-            get_rust_type(&*d.base_type, false)
+            get_rust_type(
+                &*d.base_type,
+                TypeContext {
+                    is_argument: false,
+                    is_const: false
+                }
+            )
         ))?;
     }
 
@@ -268,7 +311,13 @@ fn write_function<W: Write>(
                 pw.write_fmt(format_args!(
                     "        {}: {},\n",
                     escape_symbol(&param.name, i),
-                    get_rust_type(&*param.param_type, param.is_const)
+                    get_rust_type(
+                        &*param.param_type,
+                        TypeContext {
+                            is_argument: true,
+                            is_const: param.is_const
+                        }
+                    )
                 ))
                 .unwrap();
 
@@ -298,7 +347,13 @@ fn write_function<W: Write>(
             "    pub fn {}({}) -> {};\n",
             name,
             params,
-            get_rust_type(&*f.result, false)
+            get_rust_type(
+                &*f.result,
+                TypeContext {
+                    is_argument: false,
+                    is_const: false
+                }
+            )
         ))?;
     };
 

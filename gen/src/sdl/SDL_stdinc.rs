@@ -62,6 +62,7 @@ pub type SDL_compile_time_assert_uint64 = [i32; 1];
 pub type SDL_compile_time_assert_sint64 = [i32; 1];
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_DUMMY_ENUM {
     DUMMY_ENUM_VALUE = 0,
 }

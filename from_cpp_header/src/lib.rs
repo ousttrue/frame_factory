@@ -41,6 +41,7 @@ mod define;
 pub use define::*;
 
 mod generator;
+mod c_macro;
 
 pub fn run(args: &[String]) -> Result<(), Error> {
     // args

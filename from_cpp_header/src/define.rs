@@ -5,7 +5,7 @@ use clang_sys::*;
 use crate::{cx_source_location, cx_token};
 
 pub struct Define {
-    pub values: Vec<String>,
+    pub tokens: Vec<String>,
     pub path: PathBuf,
 }
 
@@ -22,7 +22,7 @@ impl Define {
 
         let (path, _) = cx_source_location::CXSourceLocation::from_cursor(cursor).get_path();
         let def = Define {
-            values: token.get(),
+            tokens: token.get(),
             path,
         };
         Some(def)

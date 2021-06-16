@@ -5,7 +5,7 @@
 #![allow(dead_code)]        
 use std::ffi::c_void;
 extern crate va_list;
-
+use super::*;
 pub const SDL_INIT_TIMER: u32 = 0x00000001;
 pub const SDL_INIT_AUDIO: u32 = 0x00000010;
 pub const SDL_INIT_VIDEO: u32 = 0x00000020;

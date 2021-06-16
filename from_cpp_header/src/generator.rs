@@ -53,7 +53,6 @@ fn rename_type(t: &str) -> String {
         "uint32_t" => "u32".into(),
         "uint64_t" => "u64".into(),
         //
-        "SDL_bool" => "i32".into(),
 
         _ => t.into(),
     }
@@ -309,7 +308,7 @@ pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(),
 #![allow(dead_code)]        
 use std::ffi::c_void;
 extern crate va_list;
-
+use super::*;
 "
     ))?;
 

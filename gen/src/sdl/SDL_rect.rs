@@ -5,7 +5,7 @@
 #![allow(dead_code)]        
 use std::ffi::c_void;
 extern crate va_list;
-
+use super::*;
 
 #[repr(C)]
 pub struct SDL_Point {
@@ -44,13 +44,13 @@ extern "C" {
     pub fn SDL_PointInRect(
         p: *const SDL_Point,
         r: *const SDL_Rect,
-    ) -> i32;
+    ) -> SDL_bool;
 
     /// * r: 
     #[link_name = "SDL_RectEmpty"]
     pub fn SDL_RectEmpty(
         r: *const SDL_Rect,
-    ) -> i32;
+    ) -> SDL_bool;
 
     /// * a: 
     /// * b: 
@@ -58,7 +58,7 @@ extern "C" {
     pub fn SDL_RectEquals(
         a: *const SDL_Rect,
         b: *const SDL_Rect,
-    ) -> i32;
+    ) -> SDL_bool;
 
     /// * A: 
     /// * B: 
@@ -66,7 +66,7 @@ extern "C" {
     pub fn SDL_HasIntersection(
         A: *const SDL_Rect,
         B: *const SDL_Rect,
-    ) -> i32;
+    ) -> SDL_bool;
 
     /// * A: 
     /// * B: 
@@ -76,7 +76,7 @@ extern "C" {
         A: *const SDL_Rect,
         B: *const SDL_Rect,
         result: *mut SDL_Rect,
-    ) -> i32;
+    ) -> SDL_bool;
 
     /// * A: 
     /// * B: 
@@ -98,7 +98,7 @@ extern "C" {
         count: i32,
         clip: *const SDL_Rect,
         result: *mut SDL_Rect,
-    ) -> i32;
+    ) -> SDL_bool;
 
     /// * rect: 
     /// * X1: 
@@ -112,5 +112,5 @@ extern "C" {
         Y1: *mut i32,
         X2: *mut i32,
         Y2: *mut i32,
-    ) -> i32;
+    ) -> SDL_bool;
 }

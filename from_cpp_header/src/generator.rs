@@ -7,6 +7,8 @@ use std::{
     rc::Rc,
 };
 
+use regex::Regex;
+
 use crate::{
     Decl, Define, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
 };
@@ -134,6 +136,7 @@ fn is_i32(t: &Rc<Type>) -> bool {
     }
 }
 
+
 fn write_definition(w: &mut impl Write, definition: &Define) {
     // pub const SDL_INIT_TIMER: i32 = 0x00000001;
     let name = &definition.values[0];
@@ -141,8 +144,26 @@ fn write_definition(w: &mut impl Write, definition: &Define) {
     for token in &definition.values[1..] {
         value.push_str(token);
     }
-    w.write_fmt(format_args!("pub const {}: i32 = {};\n", &name, &value))
+
+    let re_hex = Regex::new(r"0x([0-9a-f]+)(u)?").unwrap();
+    let mut is_unsinged = false;
+    if let Some(caps) = re_hex.captures(&value) {
+        if let Some(_) = caps.at(1) {
+            is_unsinged = true;
+        }
+    }
+
+    if is_unsinged {
+        w.write_fmt(format_args!(
+            "pub const {}: u32 = {};\n",
+            &name,
+            value.trim_end_matches("u")
+        ))
         .unwrap();
+    } else {
+        w.write_fmt(format_args!("pub const {}: i32 = {};\n", &name, &value))
+            .unwrap();
+    }
 }
 
 fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error> {

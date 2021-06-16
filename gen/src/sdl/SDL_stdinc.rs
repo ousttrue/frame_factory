@@ -6,36 +6,67 @@
 use std::ffi::c_void;
 extern crate va_list;
 
+pub const SDL_MAX_SINT8: i8 = 0x7F;
+//SDL_MIN_SINT8 ((Sint8)(~0x7F))
+pub const SDL_MAX_UINT8: u8 = 0xFF;
+pub const SDL_MIN_UINT8: u8 = 0x00;
+pub const SDL_MAX_SINT16: i16 = 0x7FFF;
+//SDL_MIN_SINT16 ((Sint16)(~0x7FFF))
+pub const SDL_MAX_UINT16: u16 = 0xFFFF;
+pub const SDL_MIN_UINT16: u16 = 0x0000;
+pub const SDL_MAX_SINT32: i32 = 0x7FFFFFFF;
+//SDL_MIN_SINT32 ((Sint32)(~0x7FFFFFFF))
+pub const SDL_MAX_UINT32: u32 = 0xFFFFFFFF;
+pub const SDL_MIN_UINT32: u32 = 0x00000000;
+pub const SDL_MAX_SINT64: i64 = 0x7FFFFFFFFFFFFFFF;
+pub const SDL_MIN_SINT64: i64 = !0x7FFFFFFFFFFFFFFF;
+pub const SDL_MAX_UINT64: u64 = 0xFFFFFFFFFFFFFFFF;
+pub const SDL_MIN_UINT64: u32 = 0x0000000000000000;
+//SDL_PRIs64 "I64d"
+//SDL_PRIu64 "I64u"
+//SDL_PRIx64 "I64x"
+//SDL_PRIX64 "I64X"
+//SDL_PRIs32 "d"
+//SDL_PRIu32 "u"
+//SDL_PRIx32 "x"
+//SDL_PRIX32 "X"
+//SDL_PRINTF_FORMAT_STRING _Printf_format_string_
+//SDL_SCANF_FORMAT_STRING _Scanf_format_string_impl_
+//M_PI 3.14159265358979323846264338327950288
+//SDL_ICONV_ERROR (size_t)-1
+//SDL_ICONV_E2BIG (size_t)-2
+//SDL_ICONV_EILSEQ (size_t)-3
+//SDL_ICONV_EINVAL (size_t)-4
+
 #[repr(i32)]
 pub enum SDL_bool {
     SDL_FALSE = 0,
     SDL_TRUE = 0x1,
 }
-
-pub type Sint8 = i32;
-pub type Uint8 = i32;
-pub type Sint16 = i32;
-pub type Uint16 = i32;
+pub type Sint8 = i8;
+pub type Uint8 = u8;
+pub type Sint16 = i16;
+pub type Uint16 = u16;
 pub type Sint32 = i32;
-pub type Uint32 = i32;
-pub type Sint64 = i32;
-pub type Uint64 = i32;
-pub type SDL_compile_time_assert_uint8 = i32;
-pub type SDL_compile_time_assert_sint8 = i32;
-pub type SDL_compile_time_assert_uint16 = i32;
-pub type SDL_compile_time_assert_sint16 = i32;
+pub type Uint32 = u32;
+pub type Sint64 = i64;
+pub type Uint64 = u64;
+pub type SDL_compile_time_assert_uint8 = [i32; 1];
+pub type SDL_compile_time_assert_sint8 = [i32; 1];
+pub type SDL_compile_time_assert_uint16 = [i32; 1];
+pub type SDL_compile_time_assert_sint16 = [i32; 1];
 pub type SDL_compile_time_assert_uint32 = [i32; 1];
 pub type SDL_compile_time_assert_sint32 = [i32; 1];
-pub type SDL_compile_time_assert_uint64 = i32;
-pub type SDL_compile_time_assert_sint64 = i32;
+pub type SDL_compile_time_assert_uint64 = [i32; 1];
+pub type SDL_compile_time_assert_sint64 = [i32; 1];
 
 #[repr(i32)]
 pub enum SDL_DUMMY_ENUM {
     DUMMY_ENUM_VALUE = 0,
 }
 pub type SDL_compile_time_assert_enum = [i32; 1];
-pub type SDL_iconv_t = *mut _SDL_iconv_t;
 pub type _SDL_iconv_t = c_void;
+pub type SDL_iconv_t = *mut _SDL_iconv_t;
 
 #[link(name = "SDL2", kind = "static")]
 extern "C" {
@@ -143,8 +174,8 @@ extern "C" {
     /// * : 
     #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
     pub fn compare(
-        a: *const c_void,
-        b: *const c_void,
+        arg0: *const c_void,
+        arg1: *const c_void,
     ) -> i32;
 
     /// * base: 
@@ -656,7 +687,7 @@ extern "C" {
     pub fn SDL_vsscanf(
         text: *const i8,
         fmt: *const i8,
-        ap: i32,
+        ap: va_list::VaList,
     ) -> i32;
 
     /// * text: 
@@ -678,7 +709,7 @@ extern "C" {
         text: *mut i8,
         maxlen: usize,
         fmt: *const i8,
-        ap: i32,
+        ap: va_list::VaList,
     ) -> i32;
 
     /// * x: 

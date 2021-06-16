@@ -7,12 +7,11 @@ use std::{
     rc::Rc,
 };
 
-use crate::{
-    Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
-};
+use crate::{Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
-fn escape_symbol(src: &str) -> Cow<str> {
+fn escape_symbol(src: &str, i: i32) -> Cow<str> {
     match src {
+        "" => format!("arg{}", i).into(),
         "type" | "in" | "ref" => format!("r#{}", src).into(),
         _ => src.into(),
     }
@@ -44,6 +43,16 @@ fn rename_type(t: &str) -> String {
         //
         "Uint32" => "u32".into(),
         "Uint16" => "u16".into(),
+        //
+        "int8_t" => "i8".into(),
+        "int16_t" => "i16".into(),
+        "int32_t" => "i32".into(),
+        "int64_t" => "i64".into(),
+        "uint8_t" => "u8".into(),
+        "uint16_t" => "u16".into(),
+        "uint32_t" => "u32".into(),
+        "uint64_t" => "u64".into(),
+
         _ => t.into(),
     }
 }
@@ -246,10 +255,11 @@ fn write_function<W: Write>(
         if f.params.len() > 0 {
             pw.write_str("\n").unwrap();
 
+            let mut i = 0;
             for param in &f.params {
                 pw.write_fmt(format_args!(
                     "        {}: {},\n",
-                    escape_symbol(&param.name),
+                    escape_symbol(&param.name, i),
                     get_rust_type(&*param.param_type, param.is_const)
                 ))
                 .unwrap();
@@ -265,6 +275,8 @@ fn write_function<W: Write>(
                     param.name, default_value
                 ))
                 .unwrap();
+
+                i += 1;
             }
 
             pw.write_str("    ").unwrap();
@@ -304,7 +316,9 @@ extern crate va_list;
     //
     for def in &type_map.defines {
         if def.path == export.header {
-            w.write(crate::c_macro::to_const(&def.tokens).as_bytes())?;
+            if let Some(code) = crate::c_macro::to_const(&def.tokens) {
+                w.write(code.as_bytes())?;
+            }
         }
     }
 

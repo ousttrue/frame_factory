@@ -11,3 +11,7 @@ pub mod SDL_blendmode;
 pub use SDL_blendmode::*;
 pub mod SDL_rwops;
 pub use SDL_rwops::*;
+pub mod SDL_blit;
+pub use SDL_blit::*;
+pub mod SDL_surface;
+pub use SDL_surface::*;

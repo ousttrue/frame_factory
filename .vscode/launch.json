@@ -75,7 +75,8 @@
                 "-E${workspaceFolder}/_external/SDL/include/SDL_pixels.h,SDL2.lib",
                 "-E${workspaceFolder}/_external/SDL/include/SDL_blendmode.h,SDL2.lib",
                 "-E${workspaceFolder}/_external/SDL/include/SDL_rwops.h,SDL2.lib",
-                // "-E${workspaceFolder}/_external/SDL/include/SDL_surface.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/src/video/SDL_blit.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_surface.h,SDL2.lib",
                 // "-E${workspaceFolder}/_external/SDL/include/SDL_video.h,SDL2.lib",
                 // Define
                 // "-DIMGUI_API=__declspec(dllexport)",

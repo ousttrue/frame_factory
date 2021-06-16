@@ -7,3 +7,5 @@ pub mod SDL_rect;
 pub use SDL_rect::*;
 pub mod SDL_pixels;
 pub use SDL_pixels::*;
+pub mod SDL_blendmode;
+pub use SDL_blendmode::*;

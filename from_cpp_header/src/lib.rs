@@ -70,7 +70,7 @@ pub fn run(args: &[String]) -> Result<(), Error> {
     // root_namespace.debug_print("");
 
     // generate
-    let mut mod_content = String::new();
+    let mut mod_content = "#![allow(non_snake_case)]\n".to_owned();
 
     std::fs::create_dir_all(&args.out_dir).map_err(|e| Error::IOError(e))?;
     for export in &args.exports {

@@ -6,7 +6,7 @@ fn main() {
     // imgui__raw::IMGUI_CHECKVERSION();
     unsafe {
         imgui::CreateContext(ptr::null_mut());
-        let io = imgui::GetIO();
-        let a = 0;
+        let _io = imgui::GetIO();
+        let _a = 0;
     }
 }

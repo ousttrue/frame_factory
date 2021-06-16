@@ -1,7 +1,6 @@
 use std::{
     ffi::{c_void, CString, NulError},
     path::Path,
-    ptr,
 };
 
 use clang_sys::CXUnsavedFile;

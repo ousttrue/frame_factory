@@ -271,7 +271,7 @@ fn write_function<W: Write>(
     _t: &UserType,
     f: &Function,
 ) -> Result<(), std::io::Error> {
-    let name = if let Some(export_name) = &f.export_name {
+    if let Some(export_name) = &f.export_name {
         let mut params = String::new();
         let pw = &mut params as &mut dyn std::fmt::Write;
         let mut comment = "\n".to_owned();

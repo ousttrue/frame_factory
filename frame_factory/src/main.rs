@@ -1,9 +1,8 @@
 extern crate gen;
 
-use std::convert::TryInto;
+use gen::sdl;
 use std::ffi::c_void;
 use std::ptr;
-use gen::sdl;
 use winapi::Interface;
 
 use winapi::shared::dxgi;
@@ -40,6 +39,7 @@ impl Drop for Device {
     }
 }
 
+#[allow(dead_code)]
 impl Device {
     fn create(hwnd: HWND) -> Result<Device, i32> {
         // Setup swap chain
@@ -141,31 +141,25 @@ impl Device {
         }
     }
 
-    fn resize(&mut self)
-    {
+    fn resize(&mut self) {
         // Release all outstanding references to the swap chain's buffers before resizing.
         self.cleanup_render_target();
-        if let Some(swapchain) = unsafe{self.swapchain.as_mut()}
-        {
-            unsafe{ swapchain.ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0)};
+        if let Some(swapchain) = unsafe { self.swapchain.as_mut() } {
+            unsafe { swapchain.ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0) };
         }
         self.create_render_target();
     }
 
-    fn clear(&mut self, clear_color_with_alpha: &[f32; 4])
-    {
-        if let Some(context) = unsafe{self.context.as_mut()}
-        {
-            unsafe{context.OMSetRenderTargets(1, &mut self.rendertarget, ptr::null_mut())};
-            unsafe{context.ClearRenderTargetView(self.rendertarget, clear_color_with_alpha)};
+    fn clear(&mut self, clear_color_with_alpha: &[f32; 4]) {
+        if let Some(context) = unsafe { self.context.as_mut() } {
+            unsafe { context.OMSetRenderTargets(1, &mut self.rendertarget, ptr::null_mut()) };
+            unsafe { context.ClearRenderTargetView(self.rendertarget, clear_color_with_alpha) };
         }
     }
 
-    fn present(&mut self)
-    {
-        if let Some(swapchain) = unsafe{self.swapchain.as_mut()}
-        {
-            unsafe{swapchain.Present(1, 0)}; // Present with vsync
+    fn present(&mut self) {
+        if let Some(swapchain) = unsafe { self.swapchain.as_mut() } {
+            unsafe { swapchain.Present(1, 0) }; // Present with vsync
         }
     }
 }
@@ -178,7 +172,8 @@ extern "C" {
 
 pub fn main() -> Result<(), String> {
     unsafe {
-        if sdl::SDL_Init(sdl::SDL_INIT_VIDEO | sdl::SDL_INIT_TIMER | sdl::SDL_INIT_GAMECONTROLLER) != 0
+        if sdl::SDL_Init(sdl::SDL_INIT_VIDEO | sdl::SDL_INIT_TIMER | sdl::SDL_INIT_GAMECONTROLLER)
+            != 0
         {
             panic!();
             // panic!("Error: %s\n", SDL_GetError());
@@ -186,7 +181,7 @@ pub fn main() -> Result<(), String> {
 
         // let window_flags = (sdl::SDL_WINDOW_RESIZABLE | sdl::SDL_WINDOW_ALLOW_HIGHDPI);
         // SDL_Window* window = SDL_CreateWindow("Dear ImGui SDL2+DirectX11 example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
-    
+
         // let window = video_subsystem
         //     .window("rust-sdl2 demo: Video", 800, 600)
         //     .position_centered()
@@ -276,7 +271,7 @@ pub fn main() -> Result<(), String> {
         //                     if event.window.event == 14 /* SDL_WINDOWEVENT_RESIZED */ && event.window.windowID == window.id()
         //                     {
         //                         device.resize();
-        //                     }               
+        //                     }
         //                 }
         //                 _ =>{
 
@@ -288,7 +283,7 @@ pub fn main() -> Result<(), String> {
         //     imgui_raw::ImGui_ImplDX11_NewFrame();
         //     imgui_raw::ImGui_ImplSDL2_NewFrame(window.raw() as *mut c_void);
         //     imgui_raw::NewFrame();
-              
+
         //     // 1. Show the big demo window (Most of the sample code is in imgui_raw::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         //     if show_demo_window{
         //         imgui_raw::ShowDemoWindow(&mut show_demo_window);
@@ -315,7 +310,7 @@ pub fn main() -> Result<(), String> {
 
         //         // imgui_raw::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / imgui_raw::GetIO().Framerate, imgui_raw::GetIO().Framerate);
         //         imgui_raw::End();
-        //     }            
+        //     }
 
         //     // 3. Show another simple window.
         //     if show_another_window

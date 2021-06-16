@@ -39,6 +39,7 @@ pub const SDL_MIN_UINT64: u32 = 0x0000000000000000;
 //SDL_ICONV_EINVAL (size_t)-4
 
 #[repr(i32)]
+#[derive(Clone, Copy)]
 pub enum SDL_bool {
     SDL_FALSE = 0,
     SDL_TRUE = 0x1,
@@ -72,14 +73,12 @@ pub type _SDL_iconv_t = c_void;
 extern "C" {
 
     /// * size: 
-    #[link_name = "SDL_malloc"]
     pub fn SDL_malloc(
         size: usize,
     ) -> *mut c_void;
 
     /// * nmemb: 
     /// * size: 
-    #[link_name = "SDL_calloc"]
     pub fn SDL_calloc(
         nmemb: usize,
         size: usize,
@@ -87,43 +86,13 @@ extern "C" {
 
     /// * mem: 
     /// * size: 
-    #[link_name = "SDL_realloc"]
     pub fn SDL_realloc(
         mem: *mut c_void,
         size: usize,
     ) -> *mut c_void;
 
     /// * mem: 
-    #[link_name = "SDL_free"]
     pub fn SDL_free(
-        mem: *mut c_void,
-    ) -> c_void;
-
-    /// * size: 
-    #[link_name = ""]
-    pub fn SDL_malloc_func(
-        size: usize,
-    ) -> *mut c_void;
-
-    /// * nmemb: 
-    /// * size: 
-    #[link_name = ""]
-    pub fn SDL_calloc_func(
-        nmemb: usize,
-        size: usize,
-    ) -> *mut c_void;
-
-    /// * mem: 
-    /// * size: 
-    #[link_name = ""]
-    pub fn SDL_realloc_func(
-        mem: *mut c_void,
-        size: usize,
-    ) -> *mut c_void;
-
-    /// * mem: 
-    #[link_name = ""]
-    pub fn SDL_free_func(
         mem: *mut c_void,
     ) -> c_void;
 
@@ -131,7 +100,6 @@ extern "C" {
     /// * calloc_func: 
     /// * realloc_func: 
     /// * free_func: 
-    #[link_name = "SDL_GetMemoryFunctions"]
     pub fn SDL_GetMemoryFunctions(
         malloc_func: *mut extern fn(usize,) -> *mut c_void,
         calloc_func: *mut extern fn(usize,usize,) -> *mut c_void,
@@ -143,7 +111,6 @@ extern "C" {
     /// * calloc_func: 
     /// * realloc_func: 
     /// * free_func: 
-    #[link_name = "SDL_SetMemoryFunctions"]
     pub fn SDL_SetMemoryFunctions(
         malloc_func: extern fn(usize,) -> *mut c_void,
         calloc_func: extern fn(usize,usize,) -> *mut c_void,
@@ -151,11 +118,9 @@ extern "C" {
         free_func: extern fn(*mut c_void,) -> c_void,
     ) -> i32;
 
-    #[link_name = "SDL_GetNumAllocations"]
     pub fn SDL_GetNumAllocations() -> i32;
 
     /// * name: 
-    #[link_name = "SDL_getenv"]
     pub fn SDL_getenv(
         name: *const i8,
     ) -> *mut i8;
@@ -163,7 +128,6 @@ extern "C" {
     /// * name: 
     /// * value: 
     /// * overwrite: 
-    #[link_name = "SDL_setenv"]
     pub fn SDL_setenv(
         name: *const i8,
         value: *const i8,
@@ -174,15 +138,14 @@ extern "C" {
     /// * : 
     #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
     pub fn compare(
-        arg0: *const c_void,
-        arg1: *const c_void,
+        _0: *const c_void,
+        _1: *const c_void,
     ) -> i32;
 
     /// * base: 
     /// * nmemb: 
     /// * size: 
     /// * compare: 
-    #[link_name = "SDL_qsort"]
     pub fn SDL_qsort(
         base: *mut c_void,
         nmemb: usize,
@@ -191,91 +154,76 @@ extern "C" {
     ) -> c_void;
 
     /// * x: 
-    #[link_name = "SDL_abs"]
     pub fn SDL_abs(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isalpha"]
     pub fn SDL_isalpha(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isalnum"]
     pub fn SDL_isalnum(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isblank"]
     pub fn SDL_isblank(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_iscntrl"]
     pub fn SDL_iscntrl(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isdigit"]
     pub fn SDL_isdigit(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isxdigit"]
     pub fn SDL_isxdigit(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_ispunct"]
     pub fn SDL_ispunct(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isspace"]
     pub fn SDL_isspace(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isupper"]
     pub fn SDL_isupper(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_islower"]
     pub fn SDL_islower(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isprint"]
     pub fn SDL_isprint(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_isgraph"]
     pub fn SDL_isgraph(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_toupper"]
     pub fn SDL_toupper(
         x: i32,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_tolower"]
     pub fn SDL_tolower(
         x: i32,
     ) -> i32;
@@ -283,7 +231,6 @@ extern "C" {
     /// * crc: 
     /// * data: 
     /// * len: 
-    #[link_name = "SDL_crc32"]
     pub fn SDL_crc32(
         crc: u32,
         data: *const c_void,
@@ -293,7 +240,6 @@ extern "C" {
     /// * dst: 
     /// * c: 
     /// * len: 
-    #[link_name = "SDL_memset"]
     pub fn SDL_memset(
         dst: *mut c_void,
         c: i32,
@@ -303,7 +249,6 @@ extern "C" {
     /// * dst: 
     /// * val: 
     /// * dwords: 
-    #[link_name = "SDL_memset4"]
     pub fn SDL_memset4(
         dst: *mut c_void,
         val: u32,
@@ -313,7 +258,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * len: 
-    #[link_name = "SDL_memcpy"]
     pub fn SDL_memcpy(
         dst: *mut c_void,
         src: *const c_void,
@@ -323,7 +267,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * len: 
-    #[link_name = "SDL_memmove"]
     pub fn SDL_memmove(
         dst: *mut c_void,
         src: *const c_void,
@@ -333,7 +276,6 @@ extern "C" {
     /// * s1: 
     /// * s2: 
     /// * len: 
-    #[link_name = "SDL_memcmp"]
     pub fn SDL_memcmp(
         s1: *const c_void,
         s2: *const c_void,
@@ -341,7 +283,6 @@ extern "C" {
     ) -> i32;
 
     /// * wstr: 
-    #[link_name = "SDL_wcslen"]
     pub fn SDL_wcslen(
         wstr: *const u16,
     ) -> usize;
@@ -349,7 +290,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * maxlen: 
-    #[link_name = "SDL_wcslcpy"]
     pub fn SDL_wcslcpy(
         dst: *mut u16,
         src: *const u16,
@@ -359,7 +299,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * maxlen: 
-    #[link_name = "SDL_wcslcat"]
     pub fn SDL_wcslcat(
         dst: *mut u16,
         src: *const u16,
@@ -367,14 +306,12 @@ extern "C" {
     ) -> usize;
 
     /// * wstr: 
-    #[link_name = "SDL_wcsdup"]
     pub fn SDL_wcsdup(
         wstr: *const u16,
     ) -> *mut u16;
 
     /// * haystack: 
     /// * needle: 
-    #[link_name = "SDL_wcsstr"]
     pub fn SDL_wcsstr(
         haystack: *const u16,
         needle: *const u16,
@@ -382,7 +319,6 @@ extern "C" {
 
     /// * str1: 
     /// * str2: 
-    #[link_name = "SDL_wcscmp"]
     pub fn SDL_wcscmp(
         str1: *const u16,
         str2: *const u16,
@@ -391,7 +327,6 @@ extern "C" {
     /// * str1: 
     /// * str2: 
     /// * maxlen: 
-    #[link_name = "SDL_wcsncmp"]
     pub fn SDL_wcsncmp(
         str1: *const u16,
         str2: *const u16,
@@ -400,7 +335,6 @@ extern "C" {
 
     /// * str1: 
     /// * str2: 
-    #[link_name = "SDL_wcscasecmp"]
     pub fn SDL_wcscasecmp(
         str1: *const u16,
         str2: *const u16,
@@ -409,7 +343,6 @@ extern "C" {
     /// * str1: 
     /// * str2: 
     /// * len: 
-    #[link_name = "SDL_wcsncasecmp"]
     pub fn SDL_wcsncasecmp(
         str1: *const u16,
         str2: *const u16,
@@ -417,7 +350,6 @@ extern "C" {
     ) -> i32;
 
     /// * str: 
-    #[link_name = "SDL_strlen"]
     pub fn SDL_strlen(
         str: *const i8,
     ) -> usize;
@@ -425,7 +357,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * maxlen: 
-    #[link_name = "SDL_strlcpy"]
     pub fn SDL_strlcpy(
         dst: *mut i8,
         src: *const i8,
@@ -435,7 +366,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * dst_bytes: 
-    #[link_name = "SDL_utf8strlcpy"]
     pub fn SDL_utf8strlcpy(
         dst: *mut i8,
         src: *const i8,
@@ -445,7 +375,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * maxlen: 
-    #[link_name = "SDL_strlcat"]
     pub fn SDL_strlcat(
         dst: *mut i8,
         src: *const i8,
@@ -453,32 +382,27 @@ extern "C" {
     ) -> usize;
 
     /// * str: 
-    #[link_name = "SDL_strdup"]
     pub fn SDL_strdup(
         str: *const i8,
     ) -> *mut i8;
 
     /// * str: 
-    #[link_name = "SDL_strrev"]
     pub fn SDL_strrev(
         str: *mut i8,
     ) -> *mut i8;
 
     /// * str: 
-    #[link_name = "SDL_strupr"]
     pub fn SDL_strupr(
         str: *mut i8,
     ) -> *mut i8;
 
     /// * str: 
-    #[link_name = "SDL_strlwr"]
     pub fn SDL_strlwr(
         str: *mut i8,
     ) -> *mut i8;
 
     /// * str: 
     /// * c: 
-    #[link_name = "SDL_strchr"]
     pub fn SDL_strchr(
         str: *const i8,
         c: i32,
@@ -486,7 +410,6 @@ extern "C" {
 
     /// * str: 
     /// * c: 
-    #[link_name = "SDL_strrchr"]
     pub fn SDL_strrchr(
         str: *const i8,
         c: i32,
@@ -494,7 +417,6 @@ extern "C" {
 
     /// * haystack: 
     /// * needle: 
-    #[link_name = "SDL_strstr"]
     pub fn SDL_strstr(
         haystack: *const i8,
         needle: *const i8,
@@ -503,7 +425,6 @@ extern "C" {
     /// * s1: 
     /// * s2: 
     /// * saveptr: 
-    #[link_name = "SDL_strtokr"]
     pub fn SDL_strtokr(
         s1: *mut i8,
         s2: *const i8,
@@ -511,7 +432,6 @@ extern "C" {
     ) -> *mut i8;
 
     /// * str: 
-    #[link_name = "SDL_utf8strlen"]
     pub fn SDL_utf8strlen(
         str: *const i8,
     ) -> usize;
@@ -519,7 +439,6 @@ extern "C" {
     /// * value: 
     /// * str: 
     /// * radix: 
-    #[link_name = "SDL_itoa"]
     pub fn SDL_itoa(
         value: i32,
         str: *mut i8,
@@ -529,7 +448,6 @@ extern "C" {
     /// * value: 
     /// * str: 
     /// * radix: 
-    #[link_name = "SDL_uitoa"]
     pub fn SDL_uitoa(
         value: u32,
         str: *mut i8,
@@ -539,7 +457,6 @@ extern "C" {
     /// * value: 
     /// * str: 
     /// * radix: 
-    #[link_name = "SDL_ltoa"]
     pub fn SDL_ltoa(
         value: i32,
         str: *mut i8,
@@ -549,7 +466,6 @@ extern "C" {
     /// * value: 
     /// * str: 
     /// * radix: 
-    #[link_name = "SDL_ultoa"]
     pub fn SDL_ultoa(
         value: u32,
         str: *mut i8,
@@ -559,7 +475,6 @@ extern "C" {
     /// * value: 
     /// * str: 
     /// * radix: 
-    #[link_name = "SDL_lltoa"]
     pub fn SDL_lltoa(
         value: Sint64,
         str: *mut i8,
@@ -569,7 +484,6 @@ extern "C" {
     /// * value: 
     /// * str: 
     /// * radix: 
-    #[link_name = "SDL_ulltoa"]
     pub fn SDL_ulltoa(
         value: Uint64,
         str: *mut i8,
@@ -577,13 +491,11 @@ extern "C" {
     ) -> *mut i8;
 
     /// * str: 
-    #[link_name = "SDL_atoi"]
     pub fn SDL_atoi(
         str: *const i8,
     ) -> i32;
 
     /// * str: 
-    #[link_name = "SDL_atof"]
     pub fn SDL_atof(
         str: *const i8,
     ) -> f64;
@@ -591,7 +503,6 @@ extern "C" {
     /// * str: 
     /// * endp: 
     /// * base: 
-    #[link_name = "SDL_strtol"]
     pub fn SDL_strtol(
         str: *const i8,
         endp: *mut *mut i8,
@@ -601,7 +512,6 @@ extern "C" {
     /// * str: 
     /// * endp: 
     /// * base: 
-    #[link_name = "SDL_strtoul"]
     pub fn SDL_strtoul(
         str: *const i8,
         endp: *mut *mut i8,
@@ -611,7 +521,6 @@ extern "C" {
     /// * str: 
     /// * endp: 
     /// * base: 
-    #[link_name = "SDL_strtoll"]
     pub fn SDL_strtoll(
         str: *const i8,
         endp: *mut *mut i8,
@@ -621,7 +530,6 @@ extern "C" {
     /// * str: 
     /// * endp: 
     /// * base: 
-    #[link_name = "SDL_strtoull"]
     pub fn SDL_strtoull(
         str: *const i8,
         endp: *mut *mut i8,
@@ -630,7 +538,6 @@ extern "C" {
 
     /// * str: 
     /// * endp: 
-    #[link_name = "SDL_strtod"]
     pub fn SDL_strtod(
         str: *const i8,
         endp: *mut *mut i8,
@@ -638,7 +545,6 @@ extern "C" {
 
     /// * str1: 
     /// * str2: 
-    #[link_name = "SDL_strcmp"]
     pub fn SDL_strcmp(
         str1: *const i8,
         str2: *const i8,
@@ -647,7 +553,6 @@ extern "C" {
     /// * str1: 
     /// * str2: 
     /// * maxlen: 
-    #[link_name = "SDL_strncmp"]
     pub fn SDL_strncmp(
         str1: *const i8,
         str2: *const i8,
@@ -656,7 +561,6 @@ extern "C" {
 
     /// * str1: 
     /// * str2: 
-    #[link_name = "SDL_strcasecmp"]
     pub fn SDL_strcasecmp(
         str1: *const i8,
         str2: *const i8,
@@ -665,7 +569,6 @@ extern "C" {
     /// * str1: 
     /// * str2: 
     /// * len: 
-    #[link_name = "SDL_strncasecmp"]
     pub fn SDL_strncasecmp(
         str1: *const i8,
         str2: *const i8,
@@ -674,7 +577,6 @@ extern "C" {
 
     /// * text: 
     /// * fmt: 
-    #[link_name = "SDL_sscanf"]
     pub fn SDL_sscanf(
         text: *const i8,
         fmt: *const i8,
@@ -683,7 +585,6 @@ extern "C" {
     /// * text: 
     /// * fmt: 
     /// * ap: 
-    #[link_name = "SDL_vsscanf"]
     pub fn SDL_vsscanf(
         text: *const i8,
         fmt: *const i8,
@@ -693,7 +594,6 @@ extern "C" {
     /// * text: 
     /// * maxlen: 
     /// * fmt: 
-    #[link_name = "SDL_snprintf"]
     pub fn SDL_snprintf(
         text: *mut i8,
         maxlen: usize,
@@ -704,7 +604,6 @@ extern "C" {
     /// * maxlen: 
     /// * fmt: 
     /// * ap: 
-    #[link_name = "SDL_vsnprintf"]
     pub fn SDL_vsnprintf(
         text: *mut i8,
         maxlen: usize,
@@ -713,44 +612,37 @@ extern "C" {
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_acos"]
     pub fn SDL_acos(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_acosf"]
     pub fn SDL_acosf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_asin"]
     pub fn SDL_asin(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_asinf"]
     pub fn SDL_asinf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_atan"]
     pub fn SDL_atan(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_atanf"]
     pub fn SDL_atanf(
         x: f32,
     ) -> f32;
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_atan2"]
     pub fn SDL_atan2(
         x: f64,
         y: f64,
@@ -758,27 +650,23 @@ extern "C" {
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_atan2f"]
     pub fn SDL_atan2f(
         x: f32,
         y: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_ceil"]
     pub fn SDL_ceil(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_ceilf"]
     pub fn SDL_ceilf(
         x: f32,
     ) -> f32;
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_copysign"]
     pub fn SDL_copysign(
         x: f64,
         y: f64,
@@ -786,75 +674,63 @@ extern "C" {
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_copysignf"]
     pub fn SDL_copysignf(
         x: f32,
         y: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_cos"]
     pub fn SDL_cos(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_cosf"]
     pub fn SDL_cosf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_exp"]
     pub fn SDL_exp(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_expf"]
     pub fn SDL_expf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_fabs"]
     pub fn SDL_fabs(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_fabsf"]
     pub fn SDL_fabsf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_floor"]
     pub fn SDL_floor(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_floorf"]
     pub fn SDL_floorf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_trunc"]
     pub fn SDL_trunc(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_truncf"]
     pub fn SDL_truncf(
         x: f32,
     ) -> f32;
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_fmod"]
     pub fn SDL_fmod(
         x: f64,
         y: f64,
@@ -862,39 +738,33 @@ extern "C" {
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_fmodf"]
     pub fn SDL_fmodf(
         x: f32,
         y: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_log"]
     pub fn SDL_log(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_logf"]
     pub fn SDL_logf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_log10"]
     pub fn SDL_log10(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_log10f"]
     pub fn SDL_log10f(
         x: f32,
     ) -> f32;
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_pow"]
     pub fn SDL_pow(
         x: f64,
         y: f64,
@@ -902,39 +772,33 @@ extern "C" {
 
     /// * x: 
     /// * y: 
-    #[link_name = "SDL_powf"]
     pub fn SDL_powf(
         x: f32,
         y: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_round"]
     pub fn SDL_round(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_roundf"]
     pub fn SDL_roundf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_lround"]
     pub fn SDL_lround(
         x: f64,
     ) -> i32;
 
     /// * x: 
-    #[link_name = "SDL_lroundf"]
     pub fn SDL_lroundf(
         x: f32,
     ) -> i32;
 
     /// * x: 
     /// * n: 
-    #[link_name = "SDL_scalbn"]
     pub fn SDL_scalbn(
         x: f64,
         n: i32,
@@ -942,58 +806,49 @@ extern "C" {
 
     /// * x: 
     /// * n: 
-    #[link_name = "SDL_scalbnf"]
     pub fn SDL_scalbnf(
         x: f32,
         n: i32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_sin"]
     pub fn SDL_sin(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_sinf"]
     pub fn SDL_sinf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_sqrt"]
     pub fn SDL_sqrt(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_sqrtf"]
     pub fn SDL_sqrtf(
         x: f32,
     ) -> f32;
 
     /// * x: 
-    #[link_name = "SDL_tan"]
     pub fn SDL_tan(
         x: f64,
     ) -> f64;
 
     /// * x: 
-    #[link_name = "SDL_tanf"]
     pub fn SDL_tanf(
         x: f32,
     ) -> f32;
 
     /// * tocode: 
     /// * fromcode: 
-    #[link_name = "SDL_iconv_open"]
     pub fn SDL_iconv_open(
         tocode: *const i8,
         fromcode: *const i8,
     ) -> SDL_iconv_t;
 
     /// * cd: 
-    #[link_name = "SDL_iconv_close"]
     pub fn SDL_iconv_close(
         cd: SDL_iconv_t,
     ) -> i32;
@@ -1003,7 +858,6 @@ extern "C" {
     /// * inbytesleft: 
     /// * outbuf: 
     /// * outbytesleft: 
-    #[link_name = "SDL_iconv"]
     pub fn SDL_iconv(
         cd: SDL_iconv_t,
         inbuf: *const *mut i8,
@@ -1016,7 +870,6 @@ extern "C" {
     /// * fromcode: 
     /// * inbuf: 
     /// * inbytesleft: 
-    #[link_name = "SDL_iconv_string"]
     pub fn SDL_iconv_string(
         tocode: *const i8,
         fromcode: *const i8,
@@ -1027,7 +880,6 @@ extern "C" {
     /// * dst: 
     /// * src: 
     /// * dwords: 
-    #[link_name = "SDL_memcpy4"]
     pub fn SDL_memcpy4(
         dst: *mut c_void,
         src: *const c_void,

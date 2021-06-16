@@ -125,6 +125,7 @@ pub enum SDL_PixelFormatEnum {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct SDL_Color {
     pub r: Uint8,
     pub g: Uint8,
@@ -133,6 +134,7 @@ pub struct SDL_Color {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct SDL_Palette {
     pub ncolors: i32,
     pub colors: *mut SDL_Color,
@@ -141,6 +143,7 @@ pub struct SDL_Palette {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct SDL_PixelFormat {
     pub format: u32,
     pub palette: *mut SDL_Palette,
@@ -167,7 +170,6 @@ pub struct SDL_PixelFormat {
 extern "C" {
 
     /// * format: 
-    #[link_name = "SDL_GetPixelFormatName"]
     pub fn SDL_GetPixelFormatName(
         format: u32,
     ) -> *mut i8;
@@ -178,7 +180,6 @@ extern "C" {
     /// * Gmask: 
     /// * Bmask: 
     /// * Amask: 
-    #[link_name = "SDL_PixelFormatEnumToMasks"]
     pub fn SDL_PixelFormatEnumToMasks(
         format: u32,
         bpp: *mut i32,
@@ -193,7 +194,6 @@ extern "C" {
     /// * Gmask: 
     /// * Bmask: 
     /// * Amask: 
-    #[link_name = "SDL_MasksToPixelFormatEnum"]
     pub fn SDL_MasksToPixelFormatEnum(
         bpp: i32,
         Rmask: u32,
@@ -203,26 +203,22 @@ extern "C" {
     ) -> u32;
 
     /// * pixel_format: 
-    #[link_name = "SDL_AllocFormat"]
     pub fn SDL_AllocFormat(
         pixel_format: u32,
     ) -> *mut SDL_PixelFormat;
 
     /// * format: 
-    #[link_name = "SDL_FreeFormat"]
     pub fn SDL_FreeFormat(
         format: *mut SDL_PixelFormat,
     ) -> c_void;
 
     /// * ncolors: 
-    #[link_name = "SDL_AllocPalette"]
     pub fn SDL_AllocPalette(
         ncolors: i32,
     ) -> *mut SDL_Palette;
 
     /// * format: 
     /// * palette: 
-    #[link_name = "SDL_SetPixelFormatPalette"]
     pub fn SDL_SetPixelFormatPalette(
         format: *mut SDL_PixelFormat,
         palette: *mut SDL_Palette,
@@ -232,7 +228,6 @@ extern "C" {
     /// * colors: 
     /// * firstcolor: 
     /// * ncolors: 
-    #[link_name = "SDL_SetPaletteColors"]
     pub fn SDL_SetPaletteColors(
         palette: *mut SDL_Palette,
         colors: *const SDL_Color,
@@ -241,7 +236,6 @@ extern "C" {
     ) -> i32;
 
     /// * palette: 
-    #[link_name = "SDL_FreePalette"]
     pub fn SDL_FreePalette(
         palette: *mut SDL_Palette,
     ) -> c_void;
@@ -250,7 +244,6 @@ extern "C" {
     /// * r: 
     /// * g: 
     /// * b: 
-    #[link_name = "SDL_MapRGB"]
     pub fn SDL_MapRGB(
         format: *const SDL_PixelFormat,
         r: Uint8,
@@ -263,7 +256,6 @@ extern "C" {
     /// * g: 
     /// * b: 
     /// * a: 
-    #[link_name = "SDL_MapRGBA"]
     pub fn SDL_MapRGBA(
         format: *const SDL_PixelFormat,
         r: Uint8,
@@ -277,7 +269,6 @@ extern "C" {
     /// * r: 
     /// * g: 
     /// * b: 
-    #[link_name = "SDL_GetRGB"]
     pub fn SDL_GetRGB(
         pixel: u32,
         format: *const SDL_PixelFormat,
@@ -292,7 +283,6 @@ extern "C" {
     /// * g: 
     /// * b: 
     /// * a: 
-    #[link_name = "SDL_GetRGBA"]
     pub fn SDL_GetRGBA(
         pixel: u32,
         format: *const SDL_PixelFormat,
@@ -304,7 +294,6 @@ extern "C" {
 
     /// * gamma: 
     /// * ramp: 
-    #[link_name = "SDL_CalculateGammaRamp"]
     pub fn SDL_CalculateGammaRamp(
         gamma: f32,
         ramp: *mut u16,

@@ -9,3 +9,5 @@ pub mod SDL_pixels;
 pub use SDL_pixels::*;
 pub mod SDL_blendmode;
 pub use SDL_blendmode::*;
+pub mod SDL_rwops;
+pub use SDL_rwops::*;

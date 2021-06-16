@@ -9,9 +9,9 @@ use std::{
 
 use crate::{Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
 
-fn escape_symbol(src: &str, i: i32) -> Cow<str> {
+fn escape_symbol(src: &str, i: usize) -> Cow<str> {
     match src {
-        "" => format!("arg{}", i).into(),
+        "" => format!("_{}", i).into(),
         "type" | "in" | "ref" => format!("r#{}", src).into(),
         _ => src.into(),
     }
@@ -53,7 +53,6 @@ fn rename_type(t: &str) -> String {
         "uint32_t" => "u32".into(),
         "uint64_t" => "u64".into(),
         //
-
         _ => t.into(),
     }
 }
@@ -152,6 +151,7 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
     w.write_fmt(format_args!(
         "
 #[repr({})]
+#[derive(Clone, Copy)]
 pub enum {} {{
 ",
         get_rust_type(&*e.base_type, false),
@@ -200,15 +200,18 @@ fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std
     w.write_fmt(format_args!(
         "
 #[repr(C)]
-pub struct {} {{
+#[derive(Clone, Copy)]
+pub {} {} {{
 ",
+        if s.is_union { "union" } else { "struct" },
         t.get_name()
     ))?;
 
-    for field in &s.fields {
+    for (i, field) in s.fields.iter().enumerate() {
+        let field_name = escape_symbol(&field.name, i);
         w.write_fmt(format_args!(
             "    pub {}: {},\n",
-            field.name,
+            &field_name,
             get_rust_type(&*field.field_type, false)
         ))?;
     }
@@ -248,10 +251,8 @@ fn write_function<W: Write>(
     f: &Function,
 ) -> Result<(), std::io::Error> {
     if let Some(export_name) = &f.export_name {
-
-        if export_name.len()==0
-        {
-            return Ok(())
+        if export_name.len() == 0 {
+            return Ok(());
         }
 
         let mut params = String::new();
@@ -290,8 +291,7 @@ fn write_function<W: Write>(
         }
 
         w.write_fmt(format_args!("{}", comment))?;
-        if export_name!=name
-        {
+        if export_name != name {
             w.write_fmt(format_args!("    #[link_name = \"{}\"]\n", export_name))?;
         }
         w.write_fmt(format_args!(
@@ -340,6 +340,21 @@ use super::*;
             true
         }
     });
+
+    // rename anonymous
+    let mut anonymous_count = 0;
+    for t in &types {
+        match &*t.get_decl() {
+            Decl::Struct(_) => {
+                if t.get_name().len() == 0 {
+                    // anonymous
+                    t.set_name(format!("anonymous_{}", anonymous_count));
+                    anonymous_count += 1;
+                }
+            }
+            _ => (),
+        }
+    }
 
     for t in types {
         match &*t.get_decl() {

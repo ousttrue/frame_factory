@@ -49,7 +49,6 @@ extern "C" {
     /// * srcAlphaFactor: 
     /// * dstAlphaFactor: 
     /// * alphaOperation: 
-    #[link_name = "SDL_ComposeCustomBlendMode"]
     pub fn SDL_ComposeCustomBlendMode(
         srcColorFactor: SDL_BlendFactor,
         dstColorFactor: SDL_BlendFactor,

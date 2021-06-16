@@ -136,11 +136,11 @@ impl Visitor for NamespaceVisitor
             }
     
             CXCursor_StructDecl | CXCursor_ClassDecl | CXCursor_UnionDecl => {
+                let s = Struct::parse(cursor, type_map);
                 let t = type_map.get_or_create_user_type(cursor);
                 self.members.push(t.clone());
                 if let Type::UserType(t) = &*t
                 {
-                    let s = Struct::parse(cursor, type_map);
                     t.set_struct(s);
                 }
             }

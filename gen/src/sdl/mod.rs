@@ -15,3 +15,5 @@ pub mod SDL_blit;
 pub use SDL_blit::*;
 pub mod SDL_surface;
 pub use SDL_surface::*;
+pub mod SDL_video;
+pub use SDL_video::*;

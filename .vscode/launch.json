@@ -68,6 +68,8 @@
                 }
             },
             "args": [
+                // Include
+                "-I${workspaceFolder}/_external/SDL/include",
                 // Export
                 "-E${workspaceFolder}/_external/SDL/include/SDL.h,SDL2.lib",
                 "-E${workspaceFolder}/_external/SDL/include/SDL_stdinc.h,SDL2.lib",
@@ -77,7 +79,7 @@
                 "-E${workspaceFolder}/_external/SDL/include/SDL_rwops.h,SDL2.lib",
                 "-E${workspaceFolder}/_external/SDL/src/video/SDL_blit.h,SDL2.lib",
                 "-E${workspaceFolder}/_external/SDL/include/SDL_surface.h,SDL2.lib",
-                // "-E${workspaceFolder}/_external/SDL/include/SDL_video.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_video.h,SDL2.lib",
                 // Define
                 // "-DIMGUI_API=__declspec(dllexport)",
                 // OUt

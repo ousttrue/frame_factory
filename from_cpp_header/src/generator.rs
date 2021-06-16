@@ -43,7 +43,9 @@ fn rename_type(t: &str) -> String {
     match t {
         "size_t" => "usize".into(),
         "va_list" => "va_list::VaList".into(),
+        //
         "Uint32" => "u32".into(),
+        "Uint16" => "u16".into(),
         _ => t.into(),
     }
 }
@@ -76,9 +78,9 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
             format!("[{}; {}]", element_type, size).into()
         }
         Type::UserType(u) => match &*u.get_decl() {
-            Decl::Enum(_) => u.get_name().clone().into(),
+            Decl::Enum(_) => u.get_name().to_owned().into(),
             Decl::Typedef(_) => rename_type(u.get_name().as_str()).into(),
-            Decl::Struct(_) => u.get_name().clone().into(),
+            Decl::Struct(_) => u.get_name().to_owned().into(),
             // to function pointer
             Decl::Function(f) => {
                 let mut params = String::new();
@@ -241,6 +243,12 @@ pub struct {} {{
 }
 
 fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), std::io::Error> {
+    if let Type::UserType(b) = &*d.base_type {
+        if b.get_name().as_str() == t.get_name().as_str() {
+            return Ok(());
+        }
+    }
+
     if is_function(&*d.base_type) {
         w.write_fmt(format_args!(
             "pub type {} = *mut c_void; // function pointer\n",
@@ -388,7 +396,7 @@ extern \"C\" {{
     let mut used: HashSet<String> = HashSet::new();
     for t in functions {
         if let Decl::Function(f) = &*t.get_decl() {
-            let mut name = t.get_name().clone();
+            let mut name = t.get_name().to_owned();
             while used.contains(&name) {
                 name.push('_');
             }

@@ -22,4 +22,14 @@ impl Typedef {
 
         Typedef { base_type }
     }
+
+    pub fn base_type_is_anonymous(&self) -> Option<Rc<Type>> {
+        if let Type::UserType(u) = &*self.base_type {
+            if u.get_name().len() == 0 {
+                return Some(self.base_type.clone());
+            }
+        }
+
+        None
+    }
 }

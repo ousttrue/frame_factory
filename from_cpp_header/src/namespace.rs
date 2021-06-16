@@ -101,12 +101,26 @@ impl Visitor for NamespaceVisitor
             }
     
             CXCursor_TypedefDecl => {
-                let t = type_map.get_or_create_user_type(cursor);
-                self.members.push(t.clone());
-                if let Type::UserType(t) = &*t
+
+                let mut resolved = false;
+                let def = Typedef::parse(cursor, type_map);
+                if let Some(t) = def.base_type_is_anonymous()
                 {
-                    let def = Typedef::parse(cursor, type_map);
-                    t.set_typedef(def);
+                    if let Type::UserType(u) = &*t
+                    {
+                        // resolve anonymous name type
+                        u.set_name(cx_string::CXString::cursor_spelling(cursor).to_string());
+                        resolved = true;
+                    }
+                }
+
+                if !resolved {
+                    let t = type_map.get_or_create_user_type(cursor);
+                    self.members.push(t.clone());
+                    if let Type::UserType(t) = &*t
+                    {
+                        t.set_typedef(def);
+                    }
                 }
             }
     

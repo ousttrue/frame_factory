@@ -76,9 +76,9 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
             format!("[{}; {}]", element_type, size).into()
         }
         Type::UserType(u) => match &*u.get_decl() {
-            Decl::Enum(_) => u.name.clone().into(),
-            Decl::Typedef(_) => rename_type(&u.name).into(),
-            Decl::Struct(_) => u.name.clone().into(),
+            Decl::Enum(_) => u.get_name().clone().into(),
+            Decl::Typedef(_) => rename_type(u.get_name().as_str()).into(),
+            Decl::Struct(_) => u.get_name().clone().into(),
             // to function pointer
             Decl::Function(f) => {
                 let mut params = String::new();
@@ -96,7 +96,7 @@ fn get_rust_type(t: &Type, is_const: bool) -> Cow<'static, str> {
                 )
                 .into()
             }
-            Decl::None => rename_type(&u.name).into(),
+            Decl::None => rename_type(&u.get_name()).into(),
         },
         _ => format!("unknown").into(),
     }
@@ -136,7 +136,6 @@ fn is_i32(t: &Rc<Type>) -> bool {
     }
 }
 
-
 fn write_definition(w: &mut impl Write, definition: &Define) {
     // pub const SDL_INIT_TIMER: i32 = 0x00000001;
     let name = &definition.values[0];
@@ -151,6 +150,9 @@ fn write_definition(w: &mut impl Write, definition: &Define) {
         if let Some(_) = caps.at(1) {
             is_unsinged = true;
         }
+    } else {
+        // TODO:
+        is_unsinged = true;
     }
 
     if is_unsinged {
@@ -175,7 +177,7 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
 pub enum {} {{
 ",
         get_rust_type(&*e.base_type, false),
-        t.name,
+        t.get_name(),
     ))?;
 
     let mut used: HashSet<i64> = HashSet::new();
@@ -188,8 +190,8 @@ pub enum {} {{
         }
 
         let mut name = entry.name.as_str();
-        if name.starts_with(&t.name) {
-            name = name.trim_start_matches(&t.name);
+        if name.starts_with(t.get_name().as_str()) {
+            name = name.trim_start_matches(t.get_name().as_str());
         }
 
         let value = if entry.value > 0 {
@@ -212,7 +214,7 @@ fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std
     }
 
     if s.fields.len() == 0 {
-        w.write_fmt(format_args!("pub type {} = c_void;\n", &t.name))?;
+        w.write_fmt(format_args!("pub type {} = c_void;\n", &t.get_name()))?;
 
         return Ok(());
     }
@@ -222,7 +224,7 @@ fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std
 #[repr(C)]
 pub struct {} {{
 ",
-        t.name
+        t.get_name()
     ))?;
 
     for field in &s.fields {
@@ -242,12 +244,12 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
     if is_function(&*d.base_type) {
         w.write_fmt(format_args!(
             "pub type {} = *mut c_void; // function pointer\n",
-            t.name,
+            t.get_name(),
         ))?;
     } else {
         w.write_fmt(format_args!(
             "pub type {} = {};\n",
-            t.name,
+            t.get_name(),
             get_rust_type(&*d.base_type, false)
         ))?;
     }
@@ -386,7 +388,7 @@ extern \"C\" {{
     let mut used: HashSet<String> = HashSet::new();
     for t in functions {
         if let Decl::Function(f) = &*t.get_decl() {
-            let mut name = t.name.clone();
+            let mut name = t.get_name().clone();
             while used.contains(&name) {
                 name.push('_');
             }

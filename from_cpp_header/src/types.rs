@@ -18,7 +18,7 @@ pub enum Decl {
 #[derive(Debug)]
 pub struct UserType {
     hash: u32,
-    pub name: String,
+    name: RefCell<String>,
     // location
     pub file: PathBuf,
     pub line: u32,
@@ -30,12 +30,20 @@ impl UserType {
     pub fn new(hash: u32, name: String, file: PathBuf, line: u32) -> UserType {
         UserType {
             hash,
-            name,
+            name: RefCell::new(name),
             file,
             line,
             count: RefCell::new(0),
             decl: RefCell::new(Decl::None),
         }
+    }
+
+    pub fn get_name(&self) -> Ref<String> {
+        self.name.borrow()
+    }
+
+    pub fn set_name(&self, name: String) {
+        self.name.replace(name);
     }
 
     pub fn increment(&self) {

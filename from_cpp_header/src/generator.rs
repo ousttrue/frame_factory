@@ -248,6 +248,12 @@ fn write_function<W: Write>(
     f: &Function,
 ) -> Result<(), std::io::Error> {
     if let Some(export_name) = &f.export_name {
+
+        if export_name.len()==0
+        {
+            return Ok(())
+        }
+
         let mut params = String::new();
         let pw = &mut params as &mut dyn std::fmt::Write;
         let mut comment = "\n".to_owned();
@@ -284,11 +290,12 @@ fn write_function<W: Write>(
         }
 
         w.write_fmt(format_args!("{}", comment))?;
+        if export_name!=name
+        {
+            w.write_fmt(format_args!("    #[link_name = \"{}\"]\n", export_name))?;
+        }
         w.write_fmt(format_args!(
-            "    #[link_name = \"{}\"]
-    pub fn {}({}) -> {};
-",
-            export_name,
+            "    pub fn {}({}) -> {};\n",
             name,
             params,
             get_rust_type(&*f.result, false)

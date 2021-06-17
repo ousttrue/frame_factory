@@ -6,6 +6,13 @@
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+// SDL_arraysize(array)(sizeof(array)/sizeof(array[0]))
+// SDL_TABLESIZE(table)SDL_arraysize(table)
+// SDL_STRINGIFY_ARG(arg)#arg
+// SDL_reinterpret_cast(type,expression)reinterpret_cast<type>(expression)
+// SDL_static_cast(type,expression)static_cast<type>(expression)
+// SDL_const_cast(type,expression)const_cast<type>(expression)
+// SDL_FOURCC(A,B,C,D)((SDL_static_cast(Uint32,SDL_static_cast(Uint8,(A)))<<0)|(SDL_static_cast(Uint32,SDL_static_cast(Uint8,(B)))<<8)|(SDL_static_cast(Uint32,SDL_static_cast(Uint8,(C)))<<16)|(SDL_static_cast(Uint32,SDL_static_cast(Uint8,(D)))<<24))
 pub const SDL_MAX_SINT8: i8 = 0x7F;
 //SDL_MIN_SINT8 ((Sint8)(~0x7F))
 pub const SDL_MAX_UINT8: u8 = 0xFF;
@@ -30,13 +37,32 @@ pub const SDL_MIN_UINT64: u32 = 0x0000000000000000;
 //SDL_PRIu32 "u"
 //SDL_PRIx32 "x"
 //SDL_PRIX32 "X"
+// SDL_IN_BYTECAP(x)_In_bytecount_(x)
+// SDL_INOUT_Z_CAP(x)_Inout_z_cap_(x)
+// SDL_OUT_Z_CAP(x)_Out_z_cap_(x)
+// SDL_OUT_CAP(x)_Out_cap_(x)
+// SDL_OUT_BYTECAP(x)_Out_bytecap_(x)
+// SDL_OUT_Z_BYTECAP(x)_Out_z_bytecap_(x)
 //SDL_PRINTF_FORMAT_STRING _Printf_format_string_
 //SDL_SCANF_FORMAT_STRING _Scanf_format_string_impl_
+// SDL_PRINTF_VARARG_FUNC(fmtargnumber)
+// SDL_SCANF_VARARG_FUNC(fmtargnumber)
+// SDL_COMPILE_TIME_ASSERT(name,x)typedefintSDL_compile_time_assert_##name[(x)*2-1]
+// SDL_stack_alloc(type,count)(type*)SDL_malloc(sizeof(type)*(count))
+// SDL_stack_free(data)SDL_free(data)
+// SDL_min(x,y)(((x)<(y))?(x):(y))
+// SDL_max(x,y)(((x)>(y))?(x):(y))
+// SDL_zero(x)SDL_memset(&(x),0,sizeof((x)))
+// SDL_zerop(x)SDL_memset((x),0,sizeof(*(x)))
+// SDL_zeroa(x)SDL_memset((x),0,sizeof((x)))
 //M_PI 3.14159265358979323846264338327950288
 //SDL_ICONV_ERROR (size_t)-1
 //SDL_ICONV_E2BIG (size_t)-2
 //SDL_ICONV_EILSEQ (size_t)-3
 //SDL_ICONV_EINVAL (size_t)-4
+// SDL_iconv_utf8_locale(S)SDL_iconv_string("","UTF-8",S,SDL_strlen(S)+1)
+// SDL_iconv_utf8_ucs2(S)(Uint16*)SDL_iconv_string("UCS-2-INTERNAL","UTF-8",S,SDL_strlen(S)+1)
+// SDL_iconv_utf8_ucs4(S)(Uint32*)SDL_iconv_string("UCS-4-INTERNAL","UTF-8",S,SDL_strlen(S)+1)
 
 #[repr(i32)]
 #[derive(Clone, Copy)]
@@ -135,6 +161,14 @@ extern "C" {
         overwrite: i32,
     ) -> i32;
 
+    /// * : 
+    /// * : 
+    #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
+    pub fn compare(
+        _0: *const c_void,
+        _1: *const c_void,
+    ) -> i32;
+
     /// * base: 
     /// * nmemb: 
     /// * size: 
@@ -145,14 +179,6 @@ extern "C" {
         size: usize,
         compare: *mut extern fn(*mut c_void,*mut c_void,) -> i32,
     ) -> c_void;
-
-    /// * : 
-    /// * : 
-    #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
-    pub fn compare(
-        _0: *const c_void,
-        _1: *const c_void,
-    ) -> i32;
 
     /// * x: 
     pub fn SDL_abs(
@@ -477,7 +503,7 @@ extern "C" {
     /// * str: 
     /// * radix: 
     pub fn SDL_lltoa(
-        value: Sint64,
+        value: i64,
         str: *mut i8,
         radix: i32,
     ) -> *mut i8;
@@ -486,7 +512,7 @@ extern "C" {
     /// * str: 
     /// * radix: 
     pub fn SDL_ulltoa(
-        value: Uint64,
+        value: u64,
         str: *mut i8,
         radix: i32,
     ) -> *mut i8;
@@ -526,7 +552,7 @@ extern "C" {
         str: *const i8,
         endp: *mut *mut i8,
         base: i32,
-    ) -> Sint64;
+    ) -> i64;
 
     /// * str: 
     /// * endp: 
@@ -535,7 +561,7 @@ extern "C" {
         str: *const i8,
         endp: *mut *mut i8,
         base: i32,
-    ) -> Uint64;
+    ) -> u64;
 
     /// * str: 
     /// * endp: 

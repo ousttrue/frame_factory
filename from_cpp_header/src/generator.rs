@@ -7,7 +7,9 @@ use std::{
     rc::Rc,
 };
 
-use crate::{Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType};
+use crate::{
+    c_macro, Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
+};
 
 fn escape_symbol(src: &str, i: usize) -> Cow<str> {
     match src {
@@ -41,8 +43,14 @@ fn rename_type(t: &str) -> String {
         "size_t" => "usize".into(),
         "va_list" => "va_list::VaList".into(),
         //
-        "Uint32" => "u32".into(),
+        "Sint8" => "i8".into(),
+        "Sint16" => "i16".into(),
+        "Sint32" => "i32".into(),
+        "Sint64" => "i64".into(),
+        "Uint8" => "u8".into(),
         "Uint16" => "u16".into(),
+        "Uint32" => "u32".into(),
+        "Uint64" => "u64".into(),
         //
         "int8_t" => "i8".into(),
         "int16_t" => "i16".into(),
@@ -379,8 +387,14 @@ use super::*;
     //
     for def in &type_map.defines {
         if def.path == export.header {
-            if let Some(code) = crate::c_macro::to_const(&def.tokens) {
-                w.write(code.as_bytes())?;
+            if def.is_function {
+                if let Some(code) = c_macro::to_func(&def.tokens) {
+                    w.write(code.as_bytes())?;
+                }
+            } else {
+                if let Some(code) = c_macro::to_const(&def.tokens) {
+                    w.write(code.as_bytes())?;
+                }
             }
         }
     }

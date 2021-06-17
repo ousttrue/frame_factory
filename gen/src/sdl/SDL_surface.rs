@@ -11,6 +11,9 @@ use super::*;
 //SDL_RLEACCEL 0x00000002
 //SDL_DONTFREE 0x00000004
 //SDL_SIMD_ALIGNED 0x00000008
+// SDL_MUSTLOCK(S)(((S)->flags&SDL_RLEACCEL)!=0)
+// SDL_LoadBMP(file)SDL_LoadBMP_RW(SDL_RWFromFile(file,"rb"),1)
+// SDL_SaveBMP(surface,file)SDL_SaveBMP_RW(surface,SDL_RWFromFile(file,"wb"),1)
 //SDL_BlitSurface SDL_UpperBlit
 //SDL_BlitScaled SDL_UpperBlitScaled
 
@@ -188,9 +191,9 @@ extern "C" {
     /// * b: 
     pub fn SDL_SetSurfaceColorMod(
         surface: *mut SDL_Surface,
-        r: Uint8,
-        g: Uint8,
-        b: Uint8,
+        r: u8,
+        g: u8,
+        b: u8,
     ) -> i32;
 
     /// * surface: 
@@ -199,23 +202,23 @@ extern "C" {
     /// * b: 
     pub fn SDL_GetSurfaceColorMod(
         surface: *mut SDL_Surface,
-        r: *mut Uint8,
-        g: *mut Uint8,
-        b: *mut Uint8,
+        r: *mut u8,
+        g: *mut u8,
+        b: *mut u8,
     ) -> i32;
 
     /// * surface: 
     /// * alpha: 
     pub fn SDL_SetSurfaceAlphaMod(
         surface: *mut SDL_Surface,
-        alpha: Uint8,
+        alpha: u8,
     ) -> i32;
 
     /// * surface: 
     /// * alpha: 
     pub fn SDL_GetSurfaceAlphaMod(
         surface: *mut SDL_Surface,
-        alpha: *mut Uint8,
+        alpha: *mut u8,
     ) -> i32;
 
     /// * surface: 

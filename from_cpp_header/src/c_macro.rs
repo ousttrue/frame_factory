@@ -77,3 +77,19 @@ pub fn to_const(tokens: &[String]) -> Option<String> {
             .name_value(name, &value),
     )
 }
+
+pub fn to_func(tokens: &[String]) -> Option<String> {
+    let name = &tokens[0];
+
+    let mut value = String::new();
+    for token in &tokens[1..] {
+        value.push_str(token);
+    }
+
+    let result = if value.contains("\\") {
+        format!("/* {}{} */\n", name, value)
+    } else {
+        format!("// {}{}\n", name, value)
+    };
+    Some(result)
+}

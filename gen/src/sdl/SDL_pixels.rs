@@ -8,6 +8,19 @@ extern crate va_list;
 use super::*;
 //SDL_ALPHA_OPAQUE 255
 //SDL_ALPHA_TRANSPARENT 0
+// SDL_DEFINE_PIXELFOURCC(A,B,C,D)SDL_FOURCC(A,B,C,D)
+// SDL_DEFINE_PIXELFORMAT(type,order,layout,bits,bytes)((1<<28)|((type)<<24)|((order)<<20)|((layout)<<16)|((bits)<<8)|((bytes)<<0))
+// SDL_PIXELFLAG(X)(((X)>>28)&0x0F)
+// SDL_PIXELTYPE(X)(((X)>>24)&0x0F)
+// SDL_PIXELORDER(X)(((X)>>20)&0x0F)
+// SDL_PIXELLAYOUT(X)(((X)>>16)&0x0F)
+// SDL_BITSPERPIXEL(X)(((X)>>8)&0xFF)
+// SDL_BYTESPERPIXEL(X)(SDL_ISPIXELFORMAT_FOURCC(X)?((((X)==SDL_PIXELFORMAT_YUY2)||((X)==SDL_PIXELFORMAT_UYVY)||((X)==SDL_PIXELFORMAT_YVYU))?2:1):(((X)>>0)&0xFF))
+// SDL_ISPIXELFORMAT_INDEXED(format)(!SDL_ISPIXELFORMAT_FOURCC(format)&&((SDL_PIXELTYPE(format)==SDL_PIXELTYPE_INDEX1)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_INDEX4)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_INDEX8)))
+// SDL_ISPIXELFORMAT_PACKED(format)(!SDL_ISPIXELFORMAT_FOURCC(format)&&((SDL_PIXELTYPE(format)==SDL_PIXELTYPE_PACKED8)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_PACKED16)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_PACKED32)))
+// SDL_ISPIXELFORMAT_ARRAY(format)(!SDL_ISPIXELFORMAT_FOURCC(format)&&((SDL_PIXELTYPE(format)==SDL_PIXELTYPE_ARRAYU8)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_ARRAYU16)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_ARRAYU32)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_ARRAYF16)||(SDL_PIXELTYPE(format)==SDL_PIXELTYPE_ARRAYF32)))
+// SDL_ISPIXELFORMAT_ALPHA(format)((SDL_ISPIXELFORMAT_PACKED(format)&&((SDL_PIXELORDER(format)==SDL_PACKEDORDER_ARGB)||(SDL_PIXELORDER(format)==SDL_PACKEDORDER_RGBA)||(SDL_PIXELORDER(format)==SDL_PACKEDORDER_ABGR)||(SDL_PIXELORDER(format)==SDL_PACKEDORDER_BGRA)))||(SDL_ISPIXELFORMAT_ARRAY(format)&&((SDL_PIXELORDER(format)==SDL_ARRAYORDER_ARGB)||(SDL_PIXELORDER(format)==SDL_ARRAYORDER_RGBA)||(SDL_PIXELORDER(format)==SDL_ARRAYORDER_ABGR)||(SDL_PIXELORDER(format)==SDL_ARRAYORDER_BGRA))))
+// SDL_ISPIXELFORMAT_FOURCC(format)((format)&&(SDL_PIXELFLAG(format)!=1))
 //SDL_Colour SDL_Color
 
 #[repr(i32)]
@@ -133,10 +146,10 @@ pub enum SDL_PixelFormatEnum {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct SDL_Color {
-    pub r: Uint8,
-    pub g: Uint8,
-    pub b: Uint8,
-    pub a: Uint8,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
 }
 
 #[repr(C)]
@@ -153,21 +166,21 @@ pub struct SDL_Palette {
 pub struct SDL_PixelFormat {
     pub format: u32,
     pub palette: *mut SDL_Palette,
-    pub BitsPerPixel: Uint8,
-    pub BytesPerPixel: Uint8,
-    pub padding: [Uint8; 2],
+    pub BitsPerPixel: u8,
+    pub BytesPerPixel: u8,
+    pub padding: [u8; 2],
     pub Rmask: u32,
     pub Gmask: u32,
     pub Bmask: u32,
     pub Amask: u32,
-    pub Rloss: Uint8,
-    pub Gloss: Uint8,
-    pub Bloss: Uint8,
-    pub Aloss: Uint8,
-    pub Rshift: Uint8,
-    pub Gshift: Uint8,
-    pub Bshift: Uint8,
-    pub Ashift: Uint8,
+    pub Rloss: u8,
+    pub Gloss: u8,
+    pub Bloss: u8,
+    pub Aloss: u8,
+    pub Rshift: u8,
+    pub Gshift: u8,
+    pub Bshift: u8,
+    pub Ashift: u8,
     pub refcount: i32,
     pub next: *mut SDL_PixelFormat,
 }
@@ -252,9 +265,9 @@ extern "C" {
     /// * b: 
     pub fn SDL_MapRGB(
         format: *const SDL_PixelFormat,
-        r: Uint8,
-        g: Uint8,
-        b: Uint8,
+        r: u8,
+        g: u8,
+        b: u8,
     ) -> u32;
 
     /// * format: 
@@ -264,10 +277,10 @@ extern "C" {
     /// * a: 
     pub fn SDL_MapRGBA(
         format: *const SDL_PixelFormat,
-        r: Uint8,
-        g: Uint8,
-        b: Uint8,
-        a: Uint8,
+        r: u8,
+        g: u8,
+        b: u8,
+        a: u8,
     ) -> u32;
 
     /// * pixel: 
@@ -278,9 +291,9 @@ extern "C" {
     pub fn SDL_GetRGB(
         pixel: u32,
         format: *const SDL_PixelFormat,
-        r: *mut Uint8,
-        g: *mut Uint8,
-        b: *mut Uint8,
+        r: *mut u8,
+        g: *mut u8,
+        b: *mut u8,
     ) -> c_void;
 
     /// * pixel: 
@@ -292,10 +305,10 @@ extern "C" {
     pub fn SDL_GetRGBA(
         pixel: u32,
         format: *const SDL_PixelFormat,
-        r: *mut Uint8,
-        g: *mut Uint8,
-        b: *mut Uint8,
-        a: *mut Uint8,
+        r: *mut u8,
+        g: *mut u8,
+        b: *mut u8,
+        a: *mut u8,
     ) -> c_void;
 
     /// * gamma: 

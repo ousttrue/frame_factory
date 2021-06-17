@@ -19,8 +19,8 @@ use super::*;
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct SDL_RWops {
-    pub size: *mut extern fn(*mut SDL_RWops,) -> Sint64,
-    pub seek: *mut extern fn(*mut SDL_RWops,Sint64,i32,) -> Sint64,
+    pub size: *mut extern fn(*mut SDL_RWops,) -> i64,
+    pub seek: *mut extern fn(*mut SDL_RWops,i64,i32,) -> i64,
     pub read: *mut extern fn(*mut SDL_RWops,*mut c_void,usize,usize,) -> usize,
     pub write: *mut extern fn(*mut SDL_RWops,*mut c_void,usize,usize,) -> usize,
     pub close: *mut extern fn(*mut SDL_RWops,) -> i32,
@@ -55,9 +55,9 @@ pub struct anonymous_2 {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct anonymous_3 {
-    pub base: *mut Uint8,
-    pub here: *mut Uint8,
-    pub stop: *mut Uint8,
+    pub base: *mut u8,
+    pub here: *mut u8,
+    pub stop: *mut u8,
 }
 
 #[repr(C)]
@@ -108,21 +108,21 @@ extern "C" {
     /// * context: 
     pub fn SDL_RWsize(
         context: *mut SDL_RWops,
-    ) -> Sint64;
+    ) -> i64;
 
     /// * context: 
     /// * offset: 
     /// * whence: 
     pub fn SDL_RWseek(
         context: *mut SDL_RWops,
-        offset: Sint64,
+        offset: i64,
         whence: i32,
-    ) -> Sint64;
+    ) -> i64;
 
     /// * context: 
     pub fn SDL_RWtell(
         context: *mut SDL_RWops,
-    ) -> Sint64;
+    ) -> i64;
 
     /// * context: 
     /// * ptr: 
@@ -170,7 +170,7 @@ extern "C" {
     /// * src: 
     pub fn SDL_ReadU8(
         src: *mut SDL_RWops,
-    ) -> Uint8;
+    ) -> u8;
 
     /// * src: 
     pub fn SDL_ReadLE16(
@@ -195,18 +195,18 @@ extern "C" {
     /// * src: 
     pub fn SDL_ReadLE64(
         src: *mut SDL_RWops,
-    ) -> Uint64;
+    ) -> u64;
 
     /// * src: 
     pub fn SDL_ReadBE64(
         src: *mut SDL_RWops,
-    ) -> Uint64;
+    ) -> u64;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteU8(
         dst: *mut SDL_RWops,
-        value: Uint8,
+        value: u8,
     ) -> usize;
 
     /// * dst: 
@@ -241,13 +241,13 @@ extern "C" {
     /// * value: 
     pub fn SDL_WriteLE64(
         dst: *mut SDL_RWops,
-        value: Uint64,
+        value: u64,
     ) -> usize;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteBE64(
         dst: *mut SDL_RWops,
-        value: Uint64,
+        value: u64,
     ) -> usize;
 }

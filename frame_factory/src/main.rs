@@ -170,6 +170,18 @@ extern "C" {
     fn _SDL_PollEvent(event: *mut c_void) -> i32;
 }
 
+macro_rules! T {
+    ($x:literal) => {
+        if $x.ends_with("\0")
+        {
+            $x.as_ptr() as *mut i8
+        }
+        else{
+            concat!($x, "\0").as_ptr() as *mut i8
+        }
+    };
+}
+
 pub fn main() -> Result<(), String> {
     unsafe {
         if sdl::SDL_Init(sdl::SDL_INIT_VIDEO | sdl::SDL_INIT_TIMER | sdl::SDL_INIT_GAMECONTROLLER)
@@ -179,8 +191,8 @@ pub fn main() -> Result<(), String> {
             // panic!("Error: %s\n", SDL_GetError());
         }
 
-        // let window_flags = (sdl::SDL_WINDOW_RESIZABLE | sdl::SDL_WINDOW_ALLOW_HIGHDPI);
-        // SDL_Window* window = SDL_CreateWindow("Dear ImGui SDL2+DirectX11 example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+        // let window_flags = sdl::SDL_WindowFlags::SDL_WINDOW_RESIZABLE | sdl::SDL_WindowFlags::SDL_WINDOW_ALLOW_HIGHDPI;
+        // let window = sdl::SDL_CreateWindow(T!("Dear ImGui SDL2+DirectX11 example"), sdl::SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 
         // let window = video_subsystem
         //     .window("rust-sdl2 demo: Video", 800, 600)

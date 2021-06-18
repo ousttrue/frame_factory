@@ -172,11 +172,9 @@ extern "C" {
 
 macro_rules! T {
     ($x:literal) => {
-        if $x.ends_with("\0")
-        {
+        if $x.ends_with("\0") {
             $x.as_ptr() as *mut i8
-        }
-        else{
+        } else {
             concat!($x, "\0").as_ptr() as *mut i8
         }
     };
@@ -192,7 +190,14 @@ pub fn main() -> Result<(), String> {
         }
 
         let window_flags = sdl::SDL_WINDOW_RESIZABLE | sdl::SDL_WINDOW_ALLOW_HIGHDPI;
-        // let window = sdl::SDL_CreateWindow(T!("Dear ImGui SDL2+DirectX11 example"), sdl::SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+        let window = sdl::SDL_CreateWindow(
+            T!("Dear ImGui SDL2+DirectX11 example"),
+            sdl::SDL_WINDOWPOS_CENTERED as i32,
+            sdl::SDL_WINDOWPOS_CENTERED as i32,
+            1280,
+            720,
+            window_flags as u32,
+        );
 
         // let window = video_subsystem
         //     .window("rust-sdl2 demo: Video", 800, 600)

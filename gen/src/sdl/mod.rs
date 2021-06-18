@@ -1,0 +1,27 @@
+#![allow(non_snake_case)]
+pub mod SDL;
+pub use SDL::*;
+pub mod SDL_stdinc;
+pub use SDL_stdinc::*;
+pub mod SDL_rect;
+pub use SDL_rect::*;
+pub mod SDL_pixels;
+pub use SDL_pixels::*;
+pub mod SDL_blendmode;
+pub use SDL_blendmode::*;
+pub mod SDL_rwops;
+pub use SDL_rwops::*;
+pub mod SDL_blit;
+pub use SDL_blit::*;
+pub mod SDL_surface;
+pub use SDL_surface::*;
+pub mod SDL_video;
+pub use SDL_video::*;
+pub mod SDL_version;
+pub use SDL_version::*;
+pub mod SDL_syswm;
+pub use SDL_syswm::*;
+pub mod SDL_keyboard;
+pub use SDL_keyboard::*;
+pub mod SDL_events;
+pub use SDL_events::*;

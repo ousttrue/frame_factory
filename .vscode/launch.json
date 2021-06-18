@@ -1,0 +1,179 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "frame_factory",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=frame_factory",
+                    "--bin=frame_factory"
+                ],
+                "filter": {
+                    "name": "frame_factory",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "from cpp header(imgui)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=from_cpp_header",
+                    "--bin=from_cpp_header"
+                ],
+                "filter": {
+                    "name": "from_cpp_header",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                // Export
+                "-E${workspaceFolder}/_external/imgui/imgui.h,imgui_static.lib",
+                "-E${workspaceFolder}/_external/imgui/backends/imgui_impl_sdl.h,imgui_static.lib",
+                "-E${workspaceFolder}/_external/imgui/backends/imgui_impl_dx11.h,imgui_static.lib",
+                // Define
+                // "-DIMGUI_API=__declspec(dllexport)",
+                // OUt
+                "-O${workspaceFolder}/gen/src/imgui",
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PATH": "${env:PATH};C:\\Program Files\\LLVM\\bin",
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "from cpp header(sdl)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=from_cpp_header",
+                    "--bin=from_cpp_header"
+                ],
+                "filter": {
+                    "name": "from_cpp_header",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                // Include
+                "-I${workspaceFolder}/_external/SDL/include",
+                // Export
+                "-E${workspaceFolder}/_external/SDL/include/SDL.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_stdinc.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_rect.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_pixels.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_blendmode.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_rwops.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/src/video/SDL_blit.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_surface.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_video.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_version.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_syswm.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_keyboard.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_events.h,SDL2.lib",
+                // Define
+                // "-DIMGUI_API=__declspec(dllexport)",
+                // OUt
+                "-O${workspaceFolder}/gen/src/sdl",
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PATH": "${env:PATH};C:\\Program Files\\LLVM\\bin",
+            },
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "from jsonschema",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=from_jsonschema",
+                    "--bin=from_jsonschema"
+                ],
+                "filter": {
+                    "name": "from_jsonschema",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "${workspaceFolder}/../glTF/specification/2.0/schema/glTF.schema.json",
+                "${workspaceFolder}/gltf2/src/generated"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "deserialize",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=gltf",
+                    "--bin=deserialize"
+                ],
+                "filter": {
+                    "name": "deserialize",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "${env:GLTF_SAMPLE_MODELS}/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf",
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'renderer'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=renderer"
+                ],
+                "filter": {
+                    "name": "renderer",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'link_test'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=imgui_raw",
+                    "--bin=link_test"
+                ],
+                "filter": {
+                    "name": "link_test",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "env": {
+                "PATH": "${workspaceFolder}\\..\\cpp\\build\\Debug\\bin;${env:PATH}"
+            },
+            "cwd": "${workspaceFolder}"
+        },
+    ]
+}

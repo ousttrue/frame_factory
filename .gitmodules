@@ -1,12 +1,12 @@
 [submodule "cpp/_external/imgui"]
-	path = cpp/_external/imgui
+	path = _external/imgui
 	url = https://github.com/ocornut/imgui.git
 [submodule "cpp/_external/json"]
-	path = cpp/_external/json
+	path = _external/json
 	url = https://github.com/nlohmann/json.git
 [submodule "glTF"]
-	path = glTF
+	path = _external/glTF
 	url = https://github.com/KhronosGroup/glTF.git
 [submodule "cpp/_external/SDL"]
-	path = cpp/_external/SDL
+	path = _external/SDL
 	url = https://github.com/libsdl-org/SDL.git

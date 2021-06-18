@@ -1,0 +1,13 @@
+[workspace]
+
+members = [
+    "gen",
+    "gltf2",
+    "scene",
+    "renderer",
+    "frame_factory",
+    #
+    # "sample",
+    "from_jsonschema",
+    "from_cpp_header",
+]

@@ -7,7 +7,8 @@ struct Matcher {
 impl Matcher {
     fn new() -> Matcher {
         Matcher {
-            hex: Regex::new(r"(\(\w+\))?([~])?(0x[0-9a-fA-F]+)(ll|u|ull)?").unwrap(),
+            // 0x00000001
+            hex: Regex::new(r"^(\(\w+\))?([~])?((?:0x)?[0-9a-fA-F]+)(ll|u|U|ull)?$").unwrap(),
         }
     }
 
@@ -38,7 +39,7 @@ impl Matcher {
                 format!("pub const {}: {} = {};\n", name, rust_type, hex)
             } else if let Some(suffix) = suffix {
                 let rust_type = match suffix {
-                    "u" => "u32",
+                    "u" | "U" => "u32",
                     "ull" => "u64",
                     "ll" => "i64",
                     _ => panic!(),
@@ -46,7 +47,7 @@ impl Matcher {
                 // unsigned
                 format!("pub const {}: {} = {};\n", name, rust_type, hex)
             } else {
-                format!("//{} {}\n", name, value)
+                format!("pub const {}: i32 = {};\n", name, value)
             }
         } else {
             format!("//{} {}\n", name, value)
@@ -62,6 +63,11 @@ pub fn to_const(tokens: &[String]) -> Option<String> {
     }
 
     let name = &tokens[0];
+
+    if ["SDL_Colour", "SDL_BlitSurface", "SDL_BlitScaled"].contains(&name.as_str()) {
+        return None;
+    }
+
     let mut value = String::new();
     for token in &tokens[1..] {
         value.push_str(token);

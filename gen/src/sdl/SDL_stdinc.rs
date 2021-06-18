@@ -13,22 +13,22 @@ use super::*;
 /* SDL_static_cast(type,expression)static_cast<type>(expression) */
 /* SDL_const_cast(type,expression)const_cast<type>(expression) */
 /* SDL_FOURCC(A,B,C,D)((SDL_static_cast(Uint32,SDL_static_cast(Uint8,(A)))<<0)|(SDL_static_cast(Uint32,SDL_static_cast(Uint8,(B)))<<8)|(SDL_static_cast(Uint32,SDL_static_cast(Uint8,(C)))<<16)|(SDL_static_cast(Uint32,SDL_static_cast(Uint8,(D)))<<24)) */
-pub const SDL_MAX_SINT8: i8 = 0x7F;
+//SDL_MAX_SINT8 ((Sint8)0x7F)
 //SDL_MIN_SINT8 ((Sint8)(~0x7F))
-pub const SDL_MAX_UINT8: u8 = 0xFF;
-pub const SDL_MIN_UINT8: u8 = 0x00;
-pub const SDL_MAX_SINT16: i16 = 0x7FFF;
+//SDL_MAX_UINT8 ((Uint8)0xFF)
+//SDL_MIN_UINT8 ((Uint8)0x00)
+//SDL_MAX_SINT16 ((Sint16)0x7FFF)
 //SDL_MIN_SINT16 ((Sint16)(~0x7FFF))
-pub const SDL_MAX_UINT16: u16 = 0xFFFF;
-pub const SDL_MIN_UINT16: u16 = 0x0000;
-pub const SDL_MAX_SINT32: i32 = 0x7FFFFFFF;
+//SDL_MAX_UINT16 ((Uint16)0xFFFF)
+//SDL_MIN_UINT16 ((Uint16)0x0000)
+//SDL_MAX_SINT32 ((Sint32)0x7FFFFFFF)
 //SDL_MIN_SINT32 ((Sint32)(~0x7FFFFFFF))
-pub const SDL_MAX_UINT32: u32 = 0xFFFFFFFF;
-pub const SDL_MIN_UINT32: u32 = 0x00000000;
-pub const SDL_MAX_SINT64: i64 = 0x7FFFFFFFFFFFFFFF;
-pub const SDL_MIN_SINT64: i64 = !0x7FFFFFFFFFFFFFFF;
-pub const SDL_MAX_UINT64: u64 = 0xFFFFFFFFFFFFFFFF;
-pub const SDL_MIN_UINT64: u32 = 0x0000000000000000;
+//SDL_MAX_UINT32 ((Uint32)0xFFFFFFFFu)
+//SDL_MIN_UINT32 ((Uint32)0x00000000)
+//SDL_MAX_SINT64 ((Sint64)0x7FFFFFFFFFFFFFFFll)
+//SDL_MIN_SINT64 ((Sint64)(~0x7FFFFFFFFFFFFFFFll))
+//SDL_MAX_UINT64 ((Uint64)0xFFFFFFFFFFFFFFFFull)
+//SDL_MIN_UINT64 ((Uint64)(0x0000000000000000ull))
 //SDL_PRIs64 "I64d"
 //SDL_PRIu64 "I64u"
 //SDL_PRIx64 "I64x"

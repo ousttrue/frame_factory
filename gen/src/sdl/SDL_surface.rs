@@ -6,16 +6,14 @@
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
-//SDL_SWSURFACE 0
-//SDL_PREALLOC 0x00000001
-//SDL_RLEACCEL 0x00000002
-//SDL_DONTFREE 0x00000004
-//SDL_SIMD_ALIGNED 0x00000008
+pub const SDL_SWSURFACE: i32 = 0;
+pub const SDL_PREALLOC: i32 = 0x00000001;
+pub const SDL_RLEACCEL: i32 = 0x00000002;
+pub const SDL_DONTFREE: i32 = 0x00000004;
+pub const SDL_SIMD_ALIGNED: i32 = 0x00000008;
 /* SDL_MUSTLOCK(S)(((S)->flags&SDL_RLEACCEL)!=0) */
 /* SDL_LoadBMP(file)SDL_LoadBMP_RW(SDL_RWFromFile(file,"rb"),1) */
 /* SDL_SaveBMP(surface,file)SDL_SaveBMP_RW(surface,SDL_RWFromFile(file,"wb"),1) */
-//SDL_BlitSurface SDL_UpperBlit
-//SDL_BlitScaled SDL_UpperBlitScaled
 
 #[repr(C)]
 #[derive(Clone, Copy)]

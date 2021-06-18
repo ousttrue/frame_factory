@@ -6,15 +6,15 @@
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
-//SDL_RWOPS_UNKNOWN 0U
-//SDL_RWOPS_WINFILE 1U
-//SDL_RWOPS_STDFILE 2U
-//SDL_RWOPS_JNIFILE 3U
-//SDL_RWOPS_MEMORY 4U
-//SDL_RWOPS_MEMORY_RO 5U
-//RW_SEEK_SET 0
-//RW_SEEK_CUR 1
-//RW_SEEK_END 2
+pub const SDL_RWOPS_UNKNOWN: u32 = 0;
+pub const SDL_RWOPS_WINFILE: u32 = 1;
+pub const SDL_RWOPS_STDFILE: u32 = 2;
+pub const SDL_RWOPS_JNIFILE: u32 = 3;
+pub const SDL_RWOPS_MEMORY: u32 = 4;
+pub const SDL_RWOPS_MEMORY_RO: u32 = 5;
+pub const RW_SEEK_SET: i32 = 0;
+pub const RW_SEEK_CUR: i32 = 1;
+pub const RW_SEEK_END: i32 = 2;
 
 #[repr(C)]
 #[derive(Clone, Copy)]

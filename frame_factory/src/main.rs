@@ -200,67 +200,63 @@ pub fn main() -> Result<(), String> {
             window_flags as u32,
         );
 
-        let wmInfo = MaybeUninit::<sdl::SDL_SysWMinfo>::zeroed();
+        let mut wmInfo = MaybeUninit::<sdl::SDL_SysWMinfo>::zeroed().assume_init();
+        // sdl::SDL_VERSION(&wmInfo.version);
+        sdl::SDL_GetWindowWMInfo_REAL(window, &mut wmInfo);
+        let addr = wmInfo.info.win.window as *mut c_void;
 
-        // let mut wm_info = [0 as u8; std::mem::size_of::<SDL_SysWMinfo>()];
-        // let p = wm_info.as_mut_ptr() as *mut SDL_SysWMinfo;
-        // SDL_GetWindowWMInfo(window.raw(), p);
-        // let info = p.as_mut().unwrap().info;
-        // let array: [u8; 8] = info.dummy[0..8].try_into().unwrap();
-        // let addr = u64::from_le_bytes(array);
+        let mut device = Device::create(addr as HWND).unwrap();
 
-        // let mut device = Device::create(addr as HWND).unwrap();
+        gen::imgui::CreateContext(ptr::null_mut());
+        let mut io = gen::imgui::GetIO().as_mut().unwrap();
+        io.ConfigFlags |= gen::imgui::ImGuiConfigFlags_::NavEnableKeyboard as i32; // Enable Keyboard Controls
+                                                                                  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+        io.ConfigFlags |= gen::imgui::ImGuiConfigFlags_::DockingEnable as i32; // Enable Docking
+        io.ConfigFlags |= gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32; // Enable Multi-Viewport / Platform Windows
+                                                                                //io.ConfigViewportsNoAutoMerge = true;
+                                                                                //io.ConfigViewportsNoTaskBarIcon = true;
 
-        // imgui_raw::CreateContext(ptr::null_mut());
-        // let mut io = imgui_raw::GetIO().as_mut().unwrap();
-        // io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::NavEnableKeyboard as i32; // Enable Keyboard Controls
-        //                                                                           //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-        // io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::DockingEnable as i32; // Enable Docking
-        // io.ConfigFlags |= imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32; // Enable Multi-Viewport / Platform Windows
-        //                                                                         //io.ConfigViewportsNoAutoMerge = true;
-        //                                                                         //io.ConfigViewportsNoTaskBarIcon = true;
+        // Setup Dear ImGui style
+        gen::imgui::StyleColorsDark(ptr::null_mut());
+        //gen::imgui::StyleColorsClassic();
 
-        // // Setup Dear ImGui style
-        // imgui_raw::StyleColorsDark(ptr::null_mut());
-        // //imgui_raw::StyleColorsClassic();
+        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+        let style = gen::imgui::GetStyle().as_mut().unwrap();
+        if (io.ConfigFlags & gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32) != 0 {
+            style.WindowRounding = 0.0f32;
+            style.Colors[gen::imgui::ImGuiCol_::WindowBg as usize].w = 1.0f32;
+        }
 
-        // // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-        // let style = imgui_raw::GetStyle().as_mut().unwrap();
-        // if (io.ConfigFlags & imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32) != 0 {
-        //     style.WindowRounding = 0.0f32;
-        //     style.Colors[imgui_raw::ImGuiCol_::WindowBg as usize].w = 1.0f32;
-        // }
+        // Setup Platform/Renderer backends
+        gen::imgui::ImGui_ImplSDL2_InitForD3D(window);
+        gen::imgui::ImGui_ImplDX11_Init(device.device as *mut c_void, device.context as *mut c_void);
 
-        // // Setup Platform/Renderer backends
-        // imgui_raw::ImGui_ImplSDL2_InitForD3D(window.raw() as *mut c_void);
-        // imgui_raw::ImGui_ImplDX11_Init(device.device as *mut c_void, device.context as *mut c_void);
+        // Load Fonts
+        // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use gen::imgui::PushFont()/PopFont() to select them.
+        // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+        // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+        // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+        // - Read 'docs/FONTS.md' for more instructions and details.
+        // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+        //io.Fonts->AddFontDefault();
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+        //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+        //IM_ASSERT(font != NULL);
 
-        // // Load Fonts
-        // // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use imgui_raw::PushFont()/PopFont() to select them.
-        // // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-        // // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-        // // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-        // // - Read 'docs/FONTS.md' for more instructions and details.
-        // // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-        // //io.Fonts->AddFontDefault();
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-        // //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-        // //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-        // //IM_ASSERT(font != NULL);
-
-        // // Our state
-        // let mut show_demo_window = true;
-        // let mut show_another_window = false;
-        // let mut clear_color = [
-        //     0.45f32,
-        //     0.55f32,
-        //     0.60f32,
-        //     1.00f32,
-        // ];
-        // let mut f = 0.0f32;
-        // let mut counter = 0;
+        // Our state
+        let mut show_demo_window = true;
+        let mut show_another_window = false;
+        let mut clear_color = [
+            0.45f32,
+            0.55f32,
+            0.60f32,
+            1.00f32,
+        ];
+        let mut f = 0.0f32;
+        let mut counter = 0;
 
         // // Main loop
         // let mut done = false;
@@ -268,7 +264,7 @@ pub fn main() -> Result<(), String> {
         //     let mut event = [0 as u8; std::mem::size_of::<SDL_Event>()];
         //     let p_event = event.as_mut_ptr() as *mut SDL_Event;
         //     while _SDL_PollEvent(p_event as *mut c_void) != 0 {
-        //         imgui_raw::ImGui_ImplSDL2_ProcessEvent(p_event as *mut c_void);
+        //         gen::imgui::ImGui_ImplSDL2_ProcessEvent(p_event as *mut c_void);
 
         //         if let Some(event) = p_event.as_ref() {
         //             match event.type_ {
@@ -292,71 +288,71 @@ pub fn main() -> Result<(), String> {
         //         }
         //     }
 
-        //     imgui_raw::ImGui_ImplDX11_NewFrame();
-        //     imgui_raw::ImGui_ImplSDL2_NewFrame(window.raw() as *mut c_void);
-        //     imgui_raw::NewFrame();
+        //     gen::imgui::ImGui_ImplDX11_NewFrame();
+        //     gen::imgui::ImGui_ImplSDL2_NewFrame(window.raw() as *mut c_void);
+        //     gen::imgui::NewFrame();
 
-        //     // 1. Show the big demo window (Most of the sample code is in imgui_raw::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        //     // 1. Show the big demo window (Most of the sample code is in gen::imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         //     if show_demo_window{
-        //         imgui_raw::ShowDemoWindow(&mut show_demo_window);
+        //         gen::imgui::ShowDemoWindow(&mut show_demo_window);
         //     }
 
         //     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         //     {
-        //         imgui_raw::Begin("Hello, world!\0".as_ptr() as *const i8, ptr::null_mut(), 0);                          // Create a window called "Hello, world!" and append into it.
+        //         gen::imgui::Begin("Hello, world!\0".as_ptr() as *const i8, ptr::null_mut(), 0);                          // Create a window called "Hello, world!" and append into it.
 
-        //         imgui_raw::Text("This is some useful text.".as_ptr() as *const i8);               // Display some text (you can use a format strings too)
-        //         imgui_raw::Checkbox("Demo Window".as_ptr() as *const i8, &mut show_demo_window);      // Edit bools storing our window open/close state
-        //         imgui_raw::Checkbox("Another Window".as_ptr() as *const i8, &mut show_another_window);
+        //         gen::imgui::Text("This is some useful text.".as_ptr() as *const i8);               // Display some text (you can use a format strings too)
+        //         gen::imgui::Checkbox("Demo Window".as_ptr() as *const i8, &mut show_demo_window);      // Edit bools storing our window open/close state
+        //         gen::imgui::Checkbox("Another Window".as_ptr() as *const i8, &mut show_another_window);
 
-        //         imgui_raw::SliderFloat("float".as_ptr() as *const i8, &mut f, 0.0f32, 1.0f32, "%.3f".as_ptr() as *const i8, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
+        //         gen::imgui::SliderFloat("float".as_ptr() as *const i8, &mut f, 0.0f32, 1.0f32, "%.3f".as_ptr() as *const i8, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
         //         let clear_color: [f32; 3] = clear_color[0..3].try_into().unwrap();
-        //         imgui_raw::ColorEdit3("clear color".as_ptr() as *const i8, clear_color, 0); // Edit 3 floats representing a color
+        //         gen::imgui::ColorEdit3("clear color".as_ptr() as *const i8, clear_color, 0); // Edit 3 floats representing a color
 
-        //         if imgui_raw::Button("Button".as_ptr() as *const i8, &imgui_raw::ImVec2{x: 0f32, y:0f32})                            // Buttons return true when clicked (most widgets return true when edited/activated)
+        //         if gen::imgui::Button("Button".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})                            // Buttons return true when clicked (most widgets return true when edited/activated)
         //         {
         //             counter+=1;
         //         }
-        //         imgui_raw::SameLine(0f32, -1f32);
-        //         // imgui_raw::TextV("counter = %d".as_ptr() as *const i8, counter);
+        //         gen::imgui::SameLine(0f32, -1f32);
+        //         // gen::imgui::TextV("counter = %d".as_ptr() as *const i8, counter);
 
-        //         // imgui_raw::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / imgui_raw::GetIO().Framerate, imgui_raw::GetIO().Framerate);
-        //         imgui_raw::End();
+        //         // gen::imgui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / gen::imgui::GetIO().Framerate, gen::imgui::GetIO().Framerate);
+        //         gen::imgui::End();
         //     }
 
         //     // 3. Show another simple window.
         //     if show_another_window
         //     {
-        //         imgui_raw::Begin("Another Window".as_ptr() as *const i8, &mut show_another_window, 0);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        //         imgui_raw::Text("Hello from another window!".as_ptr() as *const i8);
-        //         if imgui_raw::Button("Close Me".as_ptr() as *const i8, &imgui_raw::ImVec2{x: 0f32, y:0f32})
+        //         gen::imgui::Begin("Another Window".as_ptr() as *const i8, &mut show_another_window, 0);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+        //         gen::imgui::Text("Hello from another window!".as_ptr() as *const i8);
+        //         if gen::imgui::Button("Close Me".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})
         //         {
         //             show_another_window = false;
         //         }
-        //         imgui_raw::End();
+        //         gen::imgui::End();
         //     }
 
         //     // Rendering
-        //     imgui_raw::Render();
+        //     gen::imgui::Render();
         //     let clear_color_with_alpha = [ clear_color[0] * clear_color[3], clear_color[1] * clear_color[3], clear_color[2] * clear_color[3], clear_color[3] ];
         //     device.clear(&clear_color_with_alpha);
 
-        //     imgui_raw::ImGui_ImplDX11_RenderDrawData(imgui_raw::GetDrawData());
+        //     gen::imgui::ImGui_ImplDX11_RenderDrawData(gen::imgui::GetDrawData());
 
         //     // Update and Render additional Platform Windows
-        //     if (io.ConfigFlags & imgui_raw::ImGuiConfigFlags_::ViewportsEnable as i32)!=0
+        //     if (io.ConfigFlags & gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32)!=0
         //     {
-        //         imgui_raw::UpdatePlatformWindows();
-        //         imgui_raw::RenderPlatformWindowsDefault(ptr::null_mut(), ptr::null_mut());
+        //         gen::imgui::UpdatePlatformWindows();
+        //         gen::imgui::RenderPlatformWindowsDefault(ptr::null_mut(), ptr::null_mut());
         //     }
 
         //     device.present();
         // }
 
-        // // Cleanup
-        // imgui_raw::ImGui_ImplDX11_Shutdown();
-        // imgui_raw::ImGui_ImplSDL2_Shutdown();
-        // imgui_raw::DestroyContext(ptr::null_mut());
+        // Cleanup
+        gen::imgui::ImGui_ImplDX11_Shutdown();
+        gen::imgui::ImGui_ImplSDL2_Shutdown();
+        gen::imgui::DestroyContext(ptr::null_mut());
 
         Ok(())
     }

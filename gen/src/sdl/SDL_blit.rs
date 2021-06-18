@@ -25,7 +25,7 @@ use super::*;
 //SDL_CPU_SSE2 0x00000008
 //SDL_CPU_ALTIVEC_PREFETCH 0x00000010
 //SDL_CPU_ALTIVEC_NOPREFETCH 0x00000020
-// DECLARE_ALIGNED(t,v,a)__declspec(align(a))tv
+/* DECLARE_ALIGNED(t,v,a)__declspec(align(a))tv */
 /* RGB_FROM_PIXEL(Pixel,fmt,r,g,b)\
 {r=SDL_expand_byte[fmt->Rloss][((Pixel&fmt->Rmask)>>fmt->Rshift)];g=SDL_expand_byte[fmt->Gloss][((Pixel&fmt->Gmask)>>fmt->Gshift)];b=SDL_expand_byte[fmt->Bloss][((Pixel&fmt->Bmask)>>fmt->Bshift)];\
 } */
@@ -111,7 +111,7 @@ use super::*;
 /* DUFFS_LOOP4(pixel_copy_increment,width)\
 {intn=(width+3)/4;switch(width&3){case0:do{pixel_copy_increment;/* fallthrough */case3:pixel_copy_increment;/* fallthrough */case2:pixel_copy_increment;/* fallthrough */case1:pixel_copy_increment;/* fallthrough */}while(--n>0);}\
 } */
-// DUFFS_LOOP(pixel_copy_increment,width)DUFFS_LOOP8(pixel_copy_increment,width)
+/* DUFFS_LOOP(pixel_copy_increment,width)DUFFS_LOOP8(pixel_copy_increment,width) */
 /* DUFFS_LOOP_124(pixel_copy_increment1,pixel_copy_increment2,pixel_copy_increment4,width)\
 {intn=width;if(n&1){pixel_copy_increment1;n-=1;}if(n&2){pixel_copy_increment2;n-=2;}if(n&4){pixel_copy_increment4;n-=4;}if(n){n/=8;do{pixel_copy_increment4;pixel_copy_increment4;}while(--n>0);}\
 } */

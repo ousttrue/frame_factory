@@ -78,18 +78,51 @@ pub fn to_const(tokens: &[String]) -> Option<String> {
     )
 }
 
-pub fn to_func(tokens: &[String]) -> Option<String> {
-    let name = &tokens[0];
-
+fn join(tokens: &[String]) -> String {
     let mut value = String::new();
-    for token in &tokens[1..] {
+    for token in tokens {
         value.push_str(token);
     }
+    value
+}
+
+pub fn to_func(tokens: &[String]) -> Option<String> {
+    let name = &tokens[0];
+    let value = join(&tokens[1..]);
+
+    if value.contains("sizeof") || value.contains("?") || value.contains("_") {
+        return Some(format!("/* {}{} */\n", name, value));
+    }
+
+    match name.as_str() {
+        "SDL_TABLESIZE"
+        | "SDL_iconv_utf8_ucs2"
+        | "SDL_iconv_utf8_ucs4"
+        | "SDL_STRINGIFY_ARG"
+        | "SDL_MUSTLOCK"
+        | "SDL_LoadBMP"
+        | "SDL_stack_free" => {
+            return Some(format!("/* {}{} */\n", name, value));
+        }
+        _ => (),
+    };
 
     let result = if value.contains("\\") {
+        // multi line
         format!("/* {}{} */\n", name, value)
     } else {
-        format!("// {}{}\n", name, value)
+        // SDL_WINDOWPOS_CENTERED_DISPLAY(X)(SDL_WINDOWPOS_CENTERED_MASK|(X))
+        if tokens.len() > 4 && tokens[1] == "(" && tokens[3] == ")" {
+            // 1 args
+            format!(
+                "pub const fn {}({}: i32) -> i32{{{}}}\n",
+                tokens[0],
+                tokens[2],
+                &join(&tokens[4..])
+            )
+        } else {
+            format!("// {}{}\n", name, value)
+        }
     };
     Some(result)
 }

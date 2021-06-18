@@ -191,7 +191,7 @@ pub fn main() -> Result<(), String> {
             // panic!("Error: %s\n", SDL_GetError());
         }
 
-        // let window_flags = sdl::SDL_WindowFlags::SDL_WINDOW_RESIZABLE | sdl::SDL_WindowFlags::SDL_WINDOW_ALLOW_HIGHDPI;
+        let window_flags = sdl::SDL_WINDOW_RESIZABLE | sdl::SDL_WINDOW_ALLOW_HIGHDPI;
         // let window = sdl::SDL_CreateWindow(T!("Dear ImGui SDL2+DirectX11 example"), sdl::SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 
         // let window = video_subsystem

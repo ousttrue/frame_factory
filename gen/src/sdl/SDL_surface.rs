@@ -11,9 +11,9 @@ use super::*;
 //SDL_RLEACCEL 0x00000002
 //SDL_DONTFREE 0x00000004
 //SDL_SIMD_ALIGNED 0x00000008
-// SDL_MUSTLOCK(S)(((S)->flags&SDL_RLEACCEL)!=0)
-// SDL_LoadBMP(file)SDL_LoadBMP_RW(SDL_RWFromFile(file,"rb"),1)
-// SDL_SaveBMP(surface,file)SDL_SaveBMP_RW(surface,SDL_RWFromFile(file,"wb"),1)
+/* SDL_MUSTLOCK(S)(((S)->flags&SDL_RLEACCEL)!=0) */
+/* SDL_LoadBMP(file)SDL_LoadBMP_RW(SDL_RWFromFile(file,"rb"),1) */
+/* SDL_SaveBMP(surface,file)SDL_SaveBMP_RW(surface,SDL_RWFromFile(file,"wb"),1) */
 //SDL_BlitSurface SDL_UpperBlit
 //SDL_BlitScaled SDL_UpperBlitScaled
 

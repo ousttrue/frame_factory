@@ -93,8 +93,8 @@ pub enum SDL_DUMMY_ENUM {
     DUMMY_ENUM_VALUE = 0,
 }
 pub type SDL_compile_time_assert_enum = [i32; 1];
-pub type SDL_iconv_t = *mut _SDL_iconv_t;
 pub type _SDL_iconv_t = c_void;
+pub type SDL_iconv_t = *mut _SDL_iconv_t;
 
 #[link(name = "SDL2", kind = "static")]
 extern "C" {
@@ -161,14 +161,6 @@ extern "C" {
         overwrite: i32,
     ) -> i32;
 
-    /// * : 
-    /// * : 
-    #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
-    pub fn compare(
-        _0: *const c_void,
-        _1: *const c_void,
-    ) -> i32;
-
     /// * base: 
     /// * nmemb: 
     /// * size: 
@@ -179,6 +171,14 @@ extern "C" {
         size: usize,
         compare: *mut extern fn(*mut c_void,*mut c_void,) -> i32,
     ) -> c_void;
+
+    /// * : 
+    /// * : 
+    #[link_name = "?compare@?1??SDL_qsort@@9@3P6AHPEBX0@ZEA"]
+    pub fn compare(
+        _0: *const c_void,
+        _1: *const c_void,
+    ) -> i32;
 
     /// * x: 
     pub fn SDL_abs(

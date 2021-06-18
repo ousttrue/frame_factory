@@ -151,8 +151,8 @@ impl TypeMap {
 
         let name = cx_string::CXString::cursor_spelling(cursor).to_string();
         let location = cx_source_location::CXSourceLocation::from_cursor(cursor);
-        let (file, line) = location.get_path();
-        let t = Rc::new(Type::UserType(UserType::new(hash, name, file, line)));
+        let (file, line, column) = location.get_path();
+        let t = Rc::new(Type::UserType(UserType::new(hash, name, file, line, column)));
         self.map.insert(hash, t.clone());
         t
     }

@@ -22,17 +22,19 @@ pub struct UserType {
     // location
     pub file: PathBuf,
     pub line: u32,
+    pub column: u32,
     count: RefCell<u32>,
     decl: RefCell<Decl>,
 }
 
 impl UserType {
-    pub fn new(hash: u32, name: String, file: PathBuf, line: u32) -> UserType {
+    pub fn new(hash: u32, name: String, file: PathBuf, line: u32, column: u32) -> UserType {
         UserType {
             hash,
             name: RefCell::new(name),
             file,
             line,
+            column,
             count: RefCell::new(0),
             decl: RefCell::new(Decl::None),
         }

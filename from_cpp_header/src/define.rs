@@ -19,7 +19,7 @@ impl Define {
             return None;
         }
 
-        let (path, _) = cx_source_location::CXSourceLocation::from_cursor(cursor).get_path();
+        let (path, _, _) = cx_source_location::CXSourceLocation::from_cursor(cursor).get_path();
         let def = Define {
             tokens: token.get(),
             path,

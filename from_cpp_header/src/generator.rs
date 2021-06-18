@@ -1,11 +1,4 @@
-use std::{
-    borrow::Cow,
-    collections::HashSet,
-    fs::File,
-    io::{BufWriter, Write},
-    path::Path,
-    rc::Rc,
-};
+use std::{borrow::Cow, cmp::Ordering, collections::HashSet, fs::File, io::{BufWriter, Write}, path::Path, rc::Rc};
 
 use crate::{
     c_macro, Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
@@ -165,7 +158,14 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
         })
         .collect();
 
-    enums.sort_by(|a, b| a.line.cmp(&b.line));
+    enums.sort_by(|a, b| {
+        let line = a.line.cmp(&b.line);
+        if let Ordering::Equal = line {
+            a.column.cmp(&b.column)
+        } else {
+            line
+        }
+    });
 
     enums
 }

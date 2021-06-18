@@ -71,7 +71,7 @@ impl Visitor for StructVisitor {
             }
 
             _ => {
-                self.namespace_visitor.on_visit(cursor, type_map);
+                // self.namespace_visitor.on_visit(cursor, type_map);
             }
         };
 

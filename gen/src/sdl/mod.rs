@@ -17,3 +17,7 @@ pub mod SDL_surface;
 pub use SDL_surface::*;
 pub mod SDL_video;
 pub use SDL_video::*;
+pub mod SDL_version;
+pub use SDL_version::*;
+pub mod SDL_syswm;
+pub use SDL_syswm::*;

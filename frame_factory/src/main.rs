@@ -2,6 +2,7 @@ extern crate gen;
 
 use gen::sdl;
 use std::ffi::c_void;
+use std::mem::MaybeUninit;
 use std::ptr;
 use winapi::Interface;
 
@@ -199,13 +200,7 @@ pub fn main() -> Result<(), String> {
             window_flags as u32,
         );
 
-        // let window = video_subsystem
-        //     .window("rust-sdl2 demo: Video", 800, 600)
-        //     .position_centered()
-        //     .resizable()
-        //     .allow_highdpi()
-        //     .build()
-        //     .map_err(|e| e.to_string())?;
+        let wmInfo = MaybeUninit::<sdl::SDL_SysWMinfo>::zeroed();
 
         // let mut wm_info = [0 as u8; std::mem::size_of::<SDL_SysWMinfo>()];
         // let p = wm_info.as_mut_ptr() as *mut SDL_SysWMinfo;

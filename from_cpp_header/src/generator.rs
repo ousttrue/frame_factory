@@ -62,6 +62,9 @@ fn rename_type(t: &str) -> String {
         "uint32_t" => "u32".into(),
         "uint64_t" => "u64".into(),
         //
+        "HWND__" => "c_void".into(),
+        "HDC__" => "c_void".into(),
+        "HINSTANCE__" => "c_void".into(),
         _ => t.into(),
     }
 }

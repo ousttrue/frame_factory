@@ -1,6 +1,7 @@
 extern crate gen;
 
 use gen::sdl;
+use std::convert::TryInto;
 use std::ffi::c_void;
 use std::mem::MaybeUninit;
 use std::ptr;
@@ -259,93 +260,114 @@ pub fn main() -> Result<(), String> {
         // Main loop
         let mut done = false;
         while !done {
-
-            let event: sdl::SDL_Event = MaybeUninit::zeroed().assume_init();
+            let mut event: sdl::SDL_Event = MaybeUninit::zeroed().assume_init();
             // let p_event = event.as_mut_ptr() as *mut SDL_Event;
-            // while _SDL_PollEvent(p_event as *mut c_void) != 0 {
-            //     gen::imgui::ImGui_ImplSDL2_ProcessEvent(p_event as *mut c_void);
+            let p = &mut event as *mut sdl::SDL_Event;
+            while sdl::SDL_PollEvent(p) != 0 {
+                gen::imgui::ImGui_ImplSDL2_ProcessEvent(p as *const c_void);
 
-            //     if let Some(event) = p_event.as_ref() {
-            //         match event.type_ {
-            //                 256 /* SDL_QUIT */ => {
-            //                     done = true;
-            //                 },
-            //                 512 /* SDL_WINDOWEVENT */ => {
-            //                     if event.window.event == 14 /* SDL_WINDOWEVENT_CLOSE */ && event.window.windowID == window.id()
-            //                     {
-            //                         done = true;
-            //                     }
-            //                     if event.window.event == 14 /* SDL_WINDOWEVENT_RESIZED */ && event.window.windowID == window.id()
-            //                     {
-            //                         device.resize();
-            //                     }
-            //                 }
-            //                 _ =>{
+                match event.r#type {
+                                256 /* SDL_QUIT */ => {
+                                    done = true;
+                                },
+                                512 /* SDL_WINDOWEVENT */ => {
+                                    if event.window.event == sdl::SDL_WINDOWEVENT_CLOSE as u8 && event.window.windowID == sdl::SDL_GetWindowID(window)
+                                    {
+                                        done = true;
+                                    }
+                                    if event.window.event == sdl::SDL_WINDOWEVENT_RESIZED as u8 && event.window.windowID == sdl::SDL_GetWindowID(window)
+                                    {
+                                        device.resize();
+                                    }
+                                }
+                                _ =>{
 
-            //                 }
-            //             }
-            //     }
-            // }
+                                }
+                            }
+            }
 
-            //     gen::imgui::ImGui_ImplDX11_NewFrame();
-            //     gen::imgui::ImGui_ImplSDL2_NewFrame(window.raw() as *mut c_void);
-            //     gen::imgui::NewFrame();
+            gen::imgui::ImGui_ImplDX11_NewFrame();
+            gen::imgui::ImGui_ImplSDL2_NewFrame(window);
+            gen::imgui::NewFrame();
 
-            //     // 1. Show the big demo window (Most of the sample code is in gen::imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-            //     if show_demo_window{
-            //         gen::imgui::ShowDemoWindow(&mut show_demo_window);
-            //     }
+            // 1. Show the big demo window (Most of the sample code is in gen::imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+            if show_demo_window {
+                gen::imgui::ShowDemoWindow(&mut show_demo_window);
+            }
 
-            //     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-            //     {
-            //         gen::imgui::Begin("Hello, world!\0".as_ptr() as *const i8, ptr::null_mut(), 0);                          // Create a window called "Hello, world!" and append into it.
+            // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+            {
+                gen::imgui::Begin("Hello, world!\0".as_ptr() as *const i8, ptr::null_mut(), 0); // Create a window called "Hello, world!" and append into it.
 
-            //         gen::imgui::Text("This is some useful text.".as_ptr() as *const i8);               // Display some text (you can use a format strings too)
-            //         gen::imgui::Checkbox("Demo Window".as_ptr() as *const i8, &mut show_demo_window);      // Edit bools storing our window open/close state
-            //         gen::imgui::Checkbox("Another Window".as_ptr() as *const i8, &mut show_another_window);
+                gen::imgui::Text("This is some useful text.".as_ptr() as *const i8); // Display some text (you can use a format strings too)
+                gen::imgui::Checkbox("Demo Window".as_ptr() as *const i8, &mut show_demo_window); // Edit bools storing our window open/close state
+                gen::imgui::Checkbox(
+                    "Another Window".as_ptr() as *const i8,
+                    &mut show_another_window,
+                );
 
-            //         gen::imgui::SliderFloat("float".as_ptr() as *const i8, &mut f, 0.0f32, 1.0f32, "%.3f".as_ptr() as *const i8, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
-            //         let clear_color: [f32; 3] = clear_color[0..3].try_into().unwrap();
-            //         gen::imgui::ColorEdit3("clear color".as_ptr() as *const i8, clear_color, 0); // Edit 3 floats representing a color
+                gen::imgui::SliderFloat(
+                    "float".as_ptr() as *const i8,
+                    &mut f,
+                    0.0f32,
+                    1.0f32,
+                    "%.3f".as_ptr() as *const i8,
+                    0,
+                ); // Edit 1 float using a slider from 0.0f to 1.0f
+                let clear_color: [f32; 3] = clear_color[0..3].try_into().unwrap();
+                gen::imgui::ColorEdit3("clear color".as_ptr() as *const i8, clear_color, 0); // Edit 3 floats representing a color
 
-            //         if gen::imgui::Button("Button".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            //         {
-            //             counter+=1;
-            //         }
-            //         gen::imgui::SameLine(0f32, -1f32);
-            //         // gen::imgui::TextV("counter = %d".as_ptr() as *const i8, counter);
+                if gen::imgui::Button(
+                    "Button".as_ptr() as *const i8,
+                    &gen::imgui::ImVec2 { x: 0f32, y: 0f32 },
+                )
+                // Buttons return true when clicked (most widgets return true when edited/activated)
+                {
+                    counter += 1;
+                }
+                gen::imgui::SameLine(0f32, -1f32);
+                // gen::imgui::TextV("counter = %d".as_ptr() as *const i8, counter);
 
-            //         // gen::imgui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / gen::imgui::GetIO().Framerate, gen::imgui::GetIO().Framerate);
-            //         gen::imgui::End();
-            //     }
+                // gen::imgui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / gen::imgui::GetIO().Framerate, gen::imgui::GetIO().Framerate);
+                gen::imgui::End();
+            }
 
-            //     // 3. Show another simple window.
-            //     if show_another_window
-            //     {
-            //         gen::imgui::Begin("Another Window".as_ptr() as *const i8, &mut show_another_window, 0);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            //         gen::imgui::Text("Hello from another window!".as_ptr() as *const i8);
-            //         if gen::imgui::Button("Close Me".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})
-            //         {
-            //             show_another_window = false;
-            //         }
-            //         gen::imgui::End();
-            //     }
+            // 3. Show another simple window.
+            if show_another_window {
+                gen::imgui::Begin(
+                    "Another Window".as_ptr() as *const i8,
+                    &mut show_another_window,
+                    0,
+                ); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+                gen::imgui::Text("Hello from another window!".as_ptr() as *const i8);
+                if gen::imgui::Button(
+                    "Close Me".as_ptr() as *const i8,
+                    &gen::imgui::ImVec2 { x: 0f32, y: 0f32 },
+                ) {
+                    show_another_window = false;
+                }
+                gen::imgui::End();
+            }
 
-            //     // Rendering
-            //     gen::imgui::Render();
-            //     let clear_color_with_alpha = [ clear_color[0] * clear_color[3], clear_color[1] * clear_color[3], clear_color[2] * clear_color[3], clear_color[3] ];
-            //     device.clear(&clear_color_with_alpha);
+            // Rendering
+            gen::imgui::Render();
+            let clear_color_with_alpha = [
+                clear_color[0] * clear_color[3],
+                clear_color[1] * clear_color[3],
+                clear_color[2] * clear_color[3],
+                clear_color[3],
+            ];
+            device.clear(&clear_color_with_alpha);
 
-            //     gen::imgui::ImGui_ImplDX11_RenderDrawData(gen::imgui::GetDrawData());
+            gen::imgui::ImGui_ImplDX11_RenderDrawData(gen::imgui::GetDrawData());
 
-            //     // Update and Render additional Platform Windows
-            //     if (io.ConfigFlags & gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32)!=0
-            //     {
-            //         gen::imgui::UpdatePlatformWindows();
-            //         gen::imgui::RenderPlatformWindowsDefault(ptr::null_mut(), ptr::null_mut());
-            //     }
+            // Update and Render additional Platform Windows
+            if (io.ConfigFlags & gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32) != 0 {
+                gen::imgui::UpdatePlatformWindows();
+                gen::imgui::RenderPlatformWindowsDefault(ptr::null_mut(), ptr::null_mut());
+            }
 
-            //     device.present();
+            device.present();
         }
 
         // Cleanup

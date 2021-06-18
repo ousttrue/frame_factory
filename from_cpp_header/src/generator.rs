@@ -1,4 +1,12 @@
-use std::{borrow::Cow, cmp::Ordering, collections::HashSet, fs::File, io::{BufWriter, Write}, path::Path, rc::Rc};
+use std::{
+    borrow::Cow,
+    cmp::Ordering,
+    collections::HashSet,
+    fs::File,
+    io::{BufWriter, Write},
+    path::Path,
+    rc::Rc,
+};
 
 use crate::{
     c_macro, Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
@@ -111,8 +119,8 @@ fn get_rust_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
             }
         }
         Type::UserType(u) => match &*u.get_decl() {
-            Decl::Enum(_) => u.get_name().to_owned().into(),
-            Decl::Typedef(_) => rename_type(u.get_name().as_str()).into(),
+            Decl::Enum(e) => get_rust_type(&*e.base_type, context).into(),
+            Decl::Typedef(d) => get_rust_type(&*d.base_type, context).into(),
             Decl::Struct(_) => u.get_name().to_owned().into(),
             // to function pointer
             Decl::Function(f) => {
@@ -131,7 +139,10 @@ fn get_rust_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
                 )
                 .into()
             }
-            Decl::None => rename_type(&u.get_name()).into(),
+            Decl::None => {
+                let a = 0;
+                rename_type(&u.get_name()).into()
+            }
         },
         _ => format!("unknown").into(),
     }
@@ -181,31 +192,31 @@ fn is_i32(t: &Rc<Type>) -> bool {
 fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error> {
     assert!(is_i32(&e.base_type));
 
-    w.write_fmt(format_args!(
-        "
-#[repr({})]
-#[derive(Clone, Copy)]
-pub enum {} {{
-",
-        get_rust_type(
-            &*e.base_type,
-            TypeContext {
-                is_argument: false,
-                is_const: false
-            }
-        ),
-        t.get_name(),
-    ))?;
+    let base_type = get_rust_type(
+        &*e.base_type,
+        TypeContext {
+            is_argument: false,
+            is_const: false,
+        },
+    );
 
-    let mut used: HashSet<i64> = HashSet::new();
+    //     w.write_fmt(format_args!(
+    //         "
+    // #[repr({})]
+    // #[derive(Clone, Copy)]
+    // pub enum {} {{
+    // ",
+    //         get_rust_type(
+    //             &*e.base_type,
+    //             TypeContext {
+    //                 is_argument: false,
+    //                 is_const: false
+    //             }
+    //         ),
+    //         t.get_name(),
+    //     ))?;
+
     for entry in &e.entries {
-        let mut prefix = "";
-        if used.contains(&entry.value) {
-            prefix = "// ";
-        } else {
-            used.insert(entry.value);
-        }
-
         let mut name = entry.name.as_str();
         if name.starts_with(t.get_name().as_str()) {
             name = name.trim_start_matches(t.get_name().as_str());
@@ -217,10 +228,13 @@ pub enum {} {{
             entry.value.to_string()
         };
 
-        w.write_fmt(format_args!("    {}{} = {},\n", prefix, name, value))?;
+        w.write_fmt(format_args!(
+            "pub const {}: {} = {};\n",
+            name, base_type, value
+        ))?;
     }
 
-    w.write("}\n".as_bytes())?;
+    // w.write("}\n".as_bytes())?;
 
     Ok(())
 }

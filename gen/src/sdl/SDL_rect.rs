@@ -47,26 +47,26 @@ extern "C" {
     pub fn SDL_PointInRect(
         p: *const SDL_Point,
         r: *const SDL_Rect,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * r: 
     pub fn SDL_RectEmpty(
         r: *const SDL_Rect,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * a: 
     /// * b: 
     pub fn SDL_RectEquals(
         a: *const SDL_Rect,
         b: *const SDL_Rect,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * A: 
     /// * B: 
     pub fn SDL_HasIntersection(
         A: *const SDL_Rect,
         B: *const SDL_Rect,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * A: 
     /// * B: 
@@ -75,7 +75,7 @@ extern "C" {
         A: *const SDL_Rect,
         B: *const SDL_Rect,
         result: *mut SDL_Rect,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * A: 
     /// * B: 
@@ -95,7 +95,7 @@ extern "C" {
         count: i32,
         clip: *const SDL_Rect,
         result: *mut SDL_Rect,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * rect: 
     /// * X1: 
@@ -108,5 +108,5 @@ extern "C" {
         Y1: *mut i32,
         X2: *mut i32,
         Y2: *mut i32,
-    ) -> SDL_bool;
+    ) -> i32;
 }

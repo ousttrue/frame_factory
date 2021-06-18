@@ -63,13 +63,8 @@ pub const SDL_MIN_UINT64: u32 = 0x0000000000000000;
 // SDL_iconv_utf8_locale(S)SDL_iconv_string("","UTF-8",S,SDL_strlen(S)+1)
 // SDL_iconv_utf8_ucs2(S)(Uint16*)SDL_iconv_string("UCS-2-INTERNAL","UTF-8",S,SDL_strlen(S)+1)
 // SDL_iconv_utf8_ucs4(S)(Uint32*)SDL_iconv_string("UCS-4-INTERNAL","UTF-8",S,SDL_strlen(S)+1)
-
-#[repr(i32)]
-#[derive(Clone, Copy)]
-pub enum SDL_bool {
-    SDL_FALSE = 0,
-    SDL_TRUE = 0x1,
-}
+pub const SDL_FALSE: i32 = 0;
+pub const SDL_TRUE: i32 = 0x1;
 pub type Sint8 = i8;
 pub type Uint8 = u8;
 pub type Sint16 = i16;
@@ -86,12 +81,7 @@ pub type SDL_compile_time_assert_uint32 = [i32; 1];
 pub type SDL_compile_time_assert_sint32 = [i32; 1];
 pub type SDL_compile_time_assert_uint64 = [i32; 1];
 pub type SDL_compile_time_assert_sint64 = [i32; 1];
-
-#[repr(i32)]
-#[derive(Clone, Copy)]
-pub enum SDL_DUMMY_ENUM {
-    DUMMY_ENUM_VALUE = 0,
-}
+pub const DUMMY_ENUM_VALUE: i32 = 0;
 pub type SDL_compile_time_assert_enum = [i32; 1];
 pub type _SDL_iconv_t = c_void;
 pub type SDL_iconv_t = *mut _SDL_iconv_t;
@@ -101,21 +91,21 @@ extern "C" {
 
     /// * size: 
     pub fn SDL_malloc(
-        size: usize,
+        size: u64,
     ) -> *mut c_void;
 
     /// * nmemb: 
     /// * size: 
     pub fn SDL_calloc(
-        nmemb: usize,
-        size: usize,
+        nmemb: u64,
+        size: u64,
     ) -> *mut c_void;
 
     /// * mem: 
     /// * size: 
     pub fn SDL_realloc(
         mem: *mut c_void,
-        size: usize,
+        size: u64,
     ) -> *mut c_void;
 
     /// * mem: 
@@ -128,9 +118,9 @@ extern "C" {
     /// * realloc_func: 
     /// * free_func: 
     pub fn SDL_GetMemoryFunctions(
-        malloc_func: *mut extern fn(usize,) -> *mut c_void,
-        calloc_func: *mut extern fn(usize,usize,) -> *mut c_void,
-        realloc_func: *mut extern fn(*mut c_void,usize,) -> *mut c_void,
+        malloc_func: *mut extern fn(u64,) -> *mut c_void,
+        calloc_func: *mut extern fn(u64,u64,) -> *mut c_void,
+        realloc_func: *mut extern fn(*mut c_void,u64,) -> *mut c_void,
         free_func: *mut extern fn(*mut c_void,) -> c_void,
     ) -> c_void;
 
@@ -139,9 +129,9 @@ extern "C" {
     /// * realloc_func: 
     /// * free_func: 
     pub fn SDL_SetMemoryFunctions(
-        malloc_func: extern fn(usize,) -> *mut c_void,
-        calloc_func: extern fn(usize,usize,) -> *mut c_void,
-        realloc_func: extern fn(*mut c_void,usize,) -> *mut c_void,
+        malloc_func: extern fn(u64,) -> *mut c_void,
+        calloc_func: extern fn(u64,u64,) -> *mut c_void,
+        realloc_func: extern fn(*mut c_void,u64,) -> *mut c_void,
         free_func: extern fn(*mut c_void,) -> c_void,
     ) -> i32;
 
@@ -167,8 +157,8 @@ extern "C" {
     /// * compare: 
     pub fn SDL_qsort(
         base: *mut c_void,
-        nmemb: usize,
-        size: usize,
+        nmemb: u64,
+        size: u64,
         compare: *mut extern fn(*mut c_void,*mut c_void,) -> i32,
     ) -> c_void;
 
@@ -261,7 +251,7 @@ extern "C" {
     pub fn SDL_crc32(
         crc: u32,
         data: *const c_void,
-        len: usize,
+        len: u64,
     ) -> u32;
 
     /// * dst: 
@@ -270,7 +260,7 @@ extern "C" {
     pub fn SDL_memset(
         dst: *mut c_void,
         c: i32,
-        len: usize,
+        len: u64,
     ) -> *mut c_void;
 
     /// * dst: 
@@ -279,7 +269,7 @@ extern "C" {
     pub fn SDL_memset4(
         dst: *mut c_void,
         val: u32,
-        dwords: usize,
+        dwords: u64,
     ) -> c_void;
 
     /// * dst: 
@@ -288,7 +278,7 @@ extern "C" {
     pub fn SDL_memcpy(
         dst: *mut c_void,
         src: *const c_void,
-        len: usize,
+        len: u64,
     ) -> *mut c_void;
 
     /// * dst: 
@@ -297,7 +287,7 @@ extern "C" {
     pub fn SDL_memmove(
         dst: *mut c_void,
         src: *const c_void,
-        len: usize,
+        len: u64,
     ) -> *mut c_void;
 
     /// * s1: 
@@ -306,13 +296,13 @@ extern "C" {
     pub fn SDL_memcmp(
         s1: *const c_void,
         s2: *const c_void,
-        len: usize,
+        len: u64,
     ) -> i32;
 
     /// * wstr: 
     pub fn SDL_wcslen(
         wstr: *const u16,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * src: 
@@ -320,8 +310,8 @@ extern "C" {
     pub fn SDL_wcslcpy(
         dst: *mut u16,
         src: *const u16,
-        maxlen: usize,
-    ) -> usize;
+        maxlen: u64,
+    ) -> u64;
 
     /// * dst: 
     /// * src: 
@@ -329,8 +319,8 @@ extern "C" {
     pub fn SDL_wcslcat(
         dst: *mut u16,
         src: *const u16,
-        maxlen: usize,
-    ) -> usize;
+        maxlen: u64,
+    ) -> u64;
 
     /// * wstr: 
     pub fn SDL_wcsdup(
@@ -357,7 +347,7 @@ extern "C" {
     pub fn SDL_wcsncmp(
         str1: *const u16,
         str2: *const u16,
-        maxlen: usize,
+        maxlen: u64,
     ) -> i32;
 
     /// * str1: 
@@ -373,13 +363,13 @@ extern "C" {
     pub fn SDL_wcsncasecmp(
         str1: *const u16,
         str2: *const u16,
-        len: usize,
+        len: u64,
     ) -> i32;
 
     /// * str: 
     pub fn SDL_strlen(
         str: *const i8,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * src: 
@@ -387,8 +377,8 @@ extern "C" {
     pub fn SDL_strlcpy(
         dst: *mut i8,
         src: *const i8,
-        maxlen: usize,
-    ) -> usize;
+        maxlen: u64,
+    ) -> u64;
 
     /// * dst: 
     /// * src: 
@@ -396,8 +386,8 @@ extern "C" {
     pub fn SDL_utf8strlcpy(
         dst: *mut i8,
         src: *const i8,
-        dst_bytes: usize,
-    ) -> usize;
+        dst_bytes: u64,
+    ) -> u64;
 
     /// * dst: 
     /// * src: 
@@ -405,8 +395,8 @@ extern "C" {
     pub fn SDL_strlcat(
         dst: *mut i8,
         src: *const i8,
-        maxlen: usize,
-    ) -> usize;
+        maxlen: u64,
+    ) -> u64;
 
     /// * str: 
     pub fn SDL_strdup(
@@ -461,7 +451,7 @@ extern "C" {
     /// * str: 
     pub fn SDL_utf8strlen(
         str: *const i8,
-    ) -> usize;
+    ) -> u64;
 
     /// * value: 
     /// * str: 
@@ -583,7 +573,7 @@ extern "C" {
     pub fn SDL_strncmp(
         str1: *const i8,
         str2: *const i8,
-        maxlen: usize,
+        maxlen: u64,
     ) -> i32;
 
     /// * str1: 
@@ -599,7 +589,7 @@ extern "C" {
     pub fn SDL_strncasecmp(
         str1: *const i8,
         str2: *const i8,
-        len: usize,
+        len: u64,
     ) -> i32;
 
     /// * text: 
@@ -615,7 +605,7 @@ extern "C" {
     pub fn SDL_vsscanf(
         text: *const i8,
         fmt: *const i8,
-        ap: va_list::VaList,
+        ap: *mut i8,
     ) -> i32;
 
     /// * text: 
@@ -623,7 +613,7 @@ extern "C" {
     /// * fmt: 
     pub fn SDL_snprintf(
         text: *mut i8,
-        maxlen: usize,
+        maxlen: u64,
         fmt: *const i8,
     ) -> i32;
 
@@ -633,9 +623,9 @@ extern "C" {
     /// * ap: 
     pub fn SDL_vsnprintf(
         text: *mut i8,
-        maxlen: usize,
+        maxlen: u64,
         fmt: *const i8,
-        ap: va_list::VaList,
+        ap: *mut i8,
     ) -> i32;
 
     /// * x: 
@@ -873,11 +863,11 @@ extern "C" {
     pub fn SDL_iconv_open(
         tocode: *const i8,
         fromcode: *const i8,
-    ) -> SDL_iconv_t;
+    ) -> *mut _SDL_iconv_t;
 
     /// * cd: 
     pub fn SDL_iconv_close(
-        cd: SDL_iconv_t,
+        cd: *mut _SDL_iconv_t,
     ) -> i32;
 
     /// * cd: 
@@ -886,12 +876,12 @@ extern "C" {
     /// * outbuf: 
     /// * outbytesleft: 
     pub fn SDL_iconv(
-        cd: SDL_iconv_t,
+        cd: *mut _SDL_iconv_t,
         inbuf: *const *mut i8,
-        inbytesleft: *mut usize,
+        inbytesleft: *mut u64,
         outbuf: *mut *mut i8,
-        outbytesleft: *mut usize,
-    ) -> usize;
+        outbytesleft: *mut u64,
+    ) -> u64;
 
     /// * tocode: 
     /// * fromcode: 
@@ -901,7 +891,7 @@ extern "C" {
         tocode: *const i8,
         fromcode: *const i8,
         inbuf: *const i8,
-        inbytesleft: usize,
+        inbytesleft: u64,
     ) -> *mut i8;
 
     /// * dst: 
@@ -910,6 +900,6 @@ extern "C" {
     pub fn SDL_memcpy4(
         dst: *mut c_void,
         src: *const c_void,
-        dwords: usize,
+        dwords: u64,
     ) -> *mut c_void;
 }

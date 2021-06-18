@@ -21,8 +21,8 @@ use super::*;
 pub struct SDL_RWops {
     pub size: *mut extern fn(*mut SDL_RWops,) -> i64,
     pub seek: *mut extern fn(*mut SDL_RWops,i64,i32,) -> i64,
-    pub read: *mut extern fn(*mut SDL_RWops,*mut c_void,usize,usize,) -> usize,
-    pub write: *mut extern fn(*mut SDL_RWops,*mut c_void,usize,usize,) -> usize,
+    pub read: *mut extern fn(*mut SDL_RWops,*mut c_void,u64,u64,) -> u64,
+    pub write: *mut extern fn(*mut SDL_RWops,*mut c_void,u64,u64,) -> u64,
     pub close: *mut extern fn(*mut SDL_RWops,) -> i32,
     pub r#type: u32,
     pub hidden: anonymous_0,
@@ -39,7 +39,7 @@ pub union anonymous_0 {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct anonymous_1 {
-    pub append: SDL_bool,
+    pub append: i32,
     pub h: *mut c_void,
     pub buffer: anonymous_2,
 }
@@ -48,8 +48,8 @@ pub struct anonymous_1 {
 #[derive(Clone, Copy)]
 pub struct anonymous_2 {
     pub data: *mut c_void,
-    pub size: usize,
-    pub left: usize,
+    pub size: u64,
+    pub left: u64,
 }
 
 #[repr(C)]
@@ -81,7 +81,7 @@ extern "C" {
     /// * autoclose: 
     pub fn SDL_RWFromFP(
         fp: *mut c_void,
-        autoclose: SDL_bool,
+        autoclose: i32,
     ) -> *mut SDL_RWops;
 
     /// * mem: 
@@ -131,9 +131,9 @@ extern "C" {
     pub fn SDL_RWread(
         context: *mut SDL_RWops,
         ptr: *mut c_void,
-        size: usize,
-        maxnum: usize,
-    ) -> usize;
+        size: u64,
+        maxnum: u64,
+    ) -> u64;
 
     /// * context: 
     /// * ptr: 
@@ -142,9 +142,9 @@ extern "C" {
     pub fn SDL_RWwrite(
         context: *mut SDL_RWops,
         ptr: *const c_void,
-        size: usize,
-        num: usize,
-    ) -> usize;
+        size: u64,
+        num: u64,
+    ) -> u64;
 
     /// * context: 
     pub fn SDL_RWclose(
@@ -156,7 +156,7 @@ extern "C" {
     /// * freesrc: 
     pub fn SDL_LoadFile_RW(
         src: *mut SDL_RWops,
-        datasize: *mut usize,
+        datasize: *mut u64,
         freesrc: i32,
     ) -> *mut c_void;
 
@@ -164,7 +164,7 @@ extern "C" {
     /// * datasize: 
     pub fn SDL_LoadFile(
         file: *const i8,
-        datasize: *mut usize,
+        datasize: *mut u64,
     ) -> *mut c_void;
 
     /// * src: 
@@ -207,47 +207,47 @@ extern "C" {
     pub fn SDL_WriteU8(
         dst: *mut SDL_RWops,
         value: u8,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteLE16(
         dst: *mut SDL_RWops,
         value: u16,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteBE16(
         dst: *mut SDL_RWops,
         value: u16,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteLE32(
         dst: *mut SDL_RWops,
         value: u32,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteBE32(
         dst: *mut SDL_RWops,
         value: u32,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteLE64(
         dst: *mut SDL_RWops,
         value: u64,
-    ) -> usize;
+    ) -> u64;
 
     /// * dst: 
     /// * value: 
     pub fn SDL_WriteBE64(
         dst: *mut SDL_RWops,
         value: u64,
-    ) -> usize;
+    ) -> u64;
 }

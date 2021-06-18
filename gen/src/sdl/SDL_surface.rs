@@ -33,15 +33,10 @@ pub struct SDL_Surface {
     pub map: *mut SDL_BlitMap,
     pub refcount: i32,
 }
-
-#[repr(i32)]
-#[derive(Clone, Copy)]
-pub enum SDL_YUV_CONVERSION_MODE {
-    SDL_YUV_CONVERSION_JPEG = 0,
-    SDL_YUV_CONVERSION_BT601 = 0x1,
-    SDL_YUV_CONVERSION_BT709 = 0x2,
-    SDL_YUV_CONVERSION_AUTOMATIC = 0x3,
-}
+pub const SDL_YUV_CONVERSION_JPEG: i32 = 0;
+pub const SDL_YUV_CONVERSION_BT601: i32 = 0x1;
+pub const SDL_YUV_CONVERSION_BT709: i32 = 0x2;
+pub const SDL_YUV_CONVERSION_AUTOMATIC: i32 = 0x3;
 
 #[link(name = "SDL2", kind = "static")]
 extern "C" {
@@ -162,7 +157,7 @@ extern "C" {
     /// * surface: 
     pub fn SDL_HasSurfaceRLE(
         surface: *mut SDL_Surface,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * surface: 
     /// * flag: 
@@ -176,7 +171,7 @@ extern "C" {
     /// * surface: 
     pub fn SDL_HasColorKey(
         surface: *mut SDL_Surface,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * surface: 
     /// * key: 
@@ -225,14 +220,14 @@ extern "C" {
     /// * blendMode: 
     pub fn SDL_SetSurfaceBlendMode(
         surface: *mut SDL_Surface,
-        blendMode: SDL_BlendMode,
+        blendMode: i32,
     ) -> i32;
 
     /// * surface: 
     /// * blendMode: 
     pub fn SDL_GetSurfaceBlendMode(
         surface: *mut SDL_Surface,
-        blendMode: *mut SDL_BlendMode,
+        blendMode: *mut i32,
     ) -> i32;
 
     /// * surface: 
@@ -240,7 +235,7 @@ extern "C" {
     pub fn SDL_SetClipRect(
         surface: *mut SDL_Surface,
         rect: *const SDL_Rect,
-    ) -> SDL_bool;
+    ) -> i32;
 
     /// * surface: 
     /// * rect: 
@@ -379,15 +374,15 @@ extern "C" {
 
     /// * mode: 
     pub fn SDL_SetYUVConversionMode(
-        mode: SDL_YUV_CONVERSION_MODE,
+        mode: i32,
     ) -> c_void;
 
-    pub fn SDL_GetYUVConversionMode() -> SDL_YUV_CONVERSION_MODE;
+    pub fn SDL_GetYUVConversionMode() -> i32;
 
     /// * width: 
     /// * height: 
     pub fn SDL_GetYUVConversionModeForResolution(
         width: i32,
         height: i32,
-    ) -> SDL_YUV_CONVERSION_MODE;
+    ) -> i32;
 }

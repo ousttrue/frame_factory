@@ -114,7 +114,7 @@ impl Visitor for NamespaceVisitor
                     }
                 }
 
-                if !resolved {
+                {
                     let t = type_map.get_or_create_user_type(cursor);
                     self.members.push(t.clone());
                     if let Type::UserType(t) = &*t

@@ -15,7 +15,7 @@ use crate::{
 fn escape_symbol(src: &str, i: usize) -> Cow<str> {
     match src {
         "" => format!("_{}", i).into(),
-        "type" | "in" | "ref" => format!("r#{}", src).into(),
+        "type" | "in" | "ref" | "mod" => format!("r#{}", src).into(),
         _ => src.into(),
     }
 }

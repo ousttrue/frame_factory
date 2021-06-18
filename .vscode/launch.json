@@ -82,6 +82,8 @@
                 "-E${workspaceFolder}/_external/SDL/include/SDL_video.h,SDL2.lib",
                 "-E${workspaceFolder}/_external/SDL/include/SDL_version.h,SDL2.lib",
                 "-E${workspaceFolder}/_external/SDL/include/SDL_syswm.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_keyboard.h,SDL2.lib",
+                "-E${workspaceFolder}/_external/SDL/include/SDL_events.h,SDL2.lib",
                 // Define
                 // "-DIMGUI_API=__declspec(dllexport)",
                 // OUt

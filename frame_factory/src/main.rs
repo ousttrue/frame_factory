@@ -210,11 +210,11 @@ pub fn main() -> Result<(), String> {
         gen::imgui::CreateContext(ptr::null_mut());
         let mut io = gen::imgui::GetIO().as_mut().unwrap();
         io.ConfigFlags |= gen::imgui::ImGuiConfigFlags_::NavEnableKeyboard as i32; // Enable Keyboard Controls
-                                                                                  //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+                                                                                   //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
         io.ConfigFlags |= gen::imgui::ImGuiConfigFlags_::DockingEnable as i32; // Enable Docking
         io.ConfigFlags |= gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32; // Enable Multi-Viewport / Platform Windows
-                                                                                //io.ConfigViewportsNoAutoMerge = true;
-                                                                                //io.ConfigViewportsNoTaskBarIcon = true;
+                                                                                 //io.ConfigViewportsNoAutoMerge = true;
+                                                                                 //io.ConfigViewportsNoTaskBarIcon = true;
 
         // Setup Dear ImGui style
         gen::imgui::StyleColorsDark(ptr::null_mut());
@@ -229,7 +229,10 @@ pub fn main() -> Result<(), String> {
 
         // Setup Platform/Renderer backends
         gen::imgui::ImGui_ImplSDL2_InitForD3D(window);
-        gen::imgui::ImGui_ImplDX11_Init(device.device as *mut c_void, device.context as *mut c_void);
+        gen::imgui::ImGui_ImplDX11_Init(
+            device.device as *mut c_void,
+            device.context as *mut c_void,
+        );
 
         // Load Fonts
         // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use gen::imgui::PushFont()/PopFont() to select them.
@@ -249,105 +252,101 @@ pub fn main() -> Result<(), String> {
         // Our state
         let mut show_demo_window = true;
         let mut show_another_window = false;
-        let mut clear_color = [
-            0.45f32,
-            0.55f32,
-            0.60f32,
-            1.00f32,
-        ];
+        let mut clear_color = [0.45f32, 0.55f32, 0.60f32, 1.00f32];
         let mut f = 0.0f32;
         let mut counter = 0;
 
-        // // Main loop
-        // let mut done = false;
-        // while !done {
-        //     let mut event = [0 as u8; std::mem::size_of::<SDL_Event>()];
-        //     let p_event = event.as_mut_ptr() as *mut SDL_Event;
-        //     while _SDL_PollEvent(p_event as *mut c_void) != 0 {
-        //         gen::imgui::ImGui_ImplSDL2_ProcessEvent(p_event as *mut c_void);
+        // Main loop
+        let mut done = false;
+        while !done {
 
-        //         if let Some(event) = p_event.as_ref() {
-        //             match event.type_ {
-        //                 256 /* SDL_QUIT */ => {
-        //                     done = true;
-        //                 },
-        //                 512 /* SDL_WINDOWEVENT */ => {
-        //                     if event.window.event == 14 /* SDL_WINDOWEVENT_CLOSE */ && event.window.windowID == window.id()
-        //                     {
-        //                         done = true;
-        //                     }
-        //                     if event.window.event == 14 /* SDL_WINDOWEVENT_RESIZED */ && event.window.windowID == window.id()
-        //                     {
-        //                         device.resize();
-        //                     }
-        //                 }
-        //                 _ =>{
+            let event: sdl::SDL_Event = MaybeUninit::zeroed().assume_init();
+            // let p_event = event.as_mut_ptr() as *mut SDL_Event;
+            // while _SDL_PollEvent(p_event as *mut c_void) != 0 {
+            //     gen::imgui::ImGui_ImplSDL2_ProcessEvent(p_event as *mut c_void);
 
-        //                 }
-        //             }
-        //         }
-        //     }
+            //     if let Some(event) = p_event.as_ref() {
+            //         match event.type_ {
+            //                 256 /* SDL_QUIT */ => {
+            //                     done = true;
+            //                 },
+            //                 512 /* SDL_WINDOWEVENT */ => {
+            //                     if event.window.event == 14 /* SDL_WINDOWEVENT_CLOSE */ && event.window.windowID == window.id()
+            //                     {
+            //                         done = true;
+            //                     }
+            //                     if event.window.event == 14 /* SDL_WINDOWEVENT_RESIZED */ && event.window.windowID == window.id()
+            //                     {
+            //                         device.resize();
+            //                     }
+            //                 }
+            //                 _ =>{
 
-        //     gen::imgui::ImGui_ImplDX11_NewFrame();
-        //     gen::imgui::ImGui_ImplSDL2_NewFrame(window.raw() as *mut c_void);
-        //     gen::imgui::NewFrame();
+            //                 }
+            //             }
+            //     }
+            // }
 
-        //     // 1. Show the big demo window (Most of the sample code is in gen::imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        //     if show_demo_window{
-        //         gen::imgui::ShowDemoWindow(&mut show_demo_window);
-        //     }
+            //     gen::imgui::ImGui_ImplDX11_NewFrame();
+            //     gen::imgui::ImGui_ImplSDL2_NewFrame(window.raw() as *mut c_void);
+            //     gen::imgui::NewFrame();
 
-        //     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-        //     {
-        //         gen::imgui::Begin("Hello, world!\0".as_ptr() as *const i8, ptr::null_mut(), 0);                          // Create a window called "Hello, world!" and append into it.
+            //     // 1. Show the big demo window (Most of the sample code is in gen::imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+            //     if show_demo_window{
+            //         gen::imgui::ShowDemoWindow(&mut show_demo_window);
+            //     }
 
-        //         gen::imgui::Text("This is some useful text.".as_ptr() as *const i8);               // Display some text (you can use a format strings too)
-        //         gen::imgui::Checkbox("Demo Window".as_ptr() as *const i8, &mut show_demo_window);      // Edit bools storing our window open/close state
-        //         gen::imgui::Checkbox("Another Window".as_ptr() as *const i8, &mut show_another_window);
+            //     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+            //     {
+            //         gen::imgui::Begin("Hello, world!\0".as_ptr() as *const i8, ptr::null_mut(), 0);                          // Create a window called "Hello, world!" and append into it.
 
-        //         gen::imgui::SliderFloat("float".as_ptr() as *const i8, &mut f, 0.0f32, 1.0f32, "%.3f".as_ptr() as *const i8, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
-        //         let clear_color: [f32; 3] = clear_color[0..3].try_into().unwrap();
-        //         gen::imgui::ColorEdit3("clear color".as_ptr() as *const i8, clear_color, 0); // Edit 3 floats representing a color
+            //         gen::imgui::Text("This is some useful text.".as_ptr() as *const i8);               // Display some text (you can use a format strings too)
+            //         gen::imgui::Checkbox("Demo Window".as_ptr() as *const i8, &mut show_demo_window);      // Edit bools storing our window open/close state
+            //         gen::imgui::Checkbox("Another Window".as_ptr() as *const i8, &mut show_another_window);
 
-        //         if gen::imgui::Button("Button".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})                            // Buttons return true when clicked (most widgets return true when edited/activated)
-        //         {
-        //             counter+=1;
-        //         }
-        //         gen::imgui::SameLine(0f32, -1f32);
-        //         // gen::imgui::TextV("counter = %d".as_ptr() as *const i8, counter);
+            //         gen::imgui::SliderFloat("float".as_ptr() as *const i8, &mut f, 0.0f32, 1.0f32, "%.3f".as_ptr() as *const i8, 0);            // Edit 1 float using a slider from 0.0f to 1.0f
+            //         let clear_color: [f32; 3] = clear_color[0..3].try_into().unwrap();
+            //         gen::imgui::ColorEdit3("clear color".as_ptr() as *const i8, clear_color, 0); // Edit 3 floats representing a color
 
-        //         // gen::imgui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / gen::imgui::GetIO().Framerate, gen::imgui::GetIO().Framerate);
-        //         gen::imgui::End();
-        //     }
+            //         if gen::imgui::Button("Button".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})                            // Buttons return true when clicked (most widgets return true when edited/activated)
+            //         {
+            //             counter+=1;
+            //         }
+            //         gen::imgui::SameLine(0f32, -1f32);
+            //         // gen::imgui::TextV("counter = %d".as_ptr() as *const i8, counter);
 
-        //     // 3. Show another simple window.
-        //     if show_another_window
-        //     {
-        //         gen::imgui::Begin("Another Window".as_ptr() as *const i8, &mut show_another_window, 0);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        //         gen::imgui::Text("Hello from another window!".as_ptr() as *const i8);
-        //         if gen::imgui::Button("Close Me".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})
-        //         {
-        //             show_another_window = false;
-        //         }
-        //         gen::imgui::End();
-        //     }
+            //         // gen::imgui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / gen::imgui::GetIO().Framerate, gen::imgui::GetIO().Framerate);
+            //         gen::imgui::End();
+            //     }
 
-        //     // Rendering
-        //     gen::imgui::Render();
-        //     let clear_color_with_alpha = [ clear_color[0] * clear_color[3], clear_color[1] * clear_color[3], clear_color[2] * clear_color[3], clear_color[3] ];
-        //     device.clear(&clear_color_with_alpha);
+            //     // 3. Show another simple window.
+            //     if show_another_window
+            //     {
+            //         gen::imgui::Begin("Another Window".as_ptr() as *const i8, &mut show_another_window, 0);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            //         gen::imgui::Text("Hello from another window!".as_ptr() as *const i8);
+            //         if gen::imgui::Button("Close Me".as_ptr() as *const i8, &gen::imgui::ImVec2{x: 0f32, y:0f32})
+            //         {
+            //             show_another_window = false;
+            //         }
+            //         gen::imgui::End();
+            //     }
 
-        //     gen::imgui::ImGui_ImplDX11_RenderDrawData(gen::imgui::GetDrawData());
+            //     // Rendering
+            //     gen::imgui::Render();
+            //     let clear_color_with_alpha = [ clear_color[0] * clear_color[3], clear_color[1] * clear_color[3], clear_color[2] * clear_color[3], clear_color[3] ];
+            //     device.clear(&clear_color_with_alpha);
 
-        //     // Update and Render additional Platform Windows
-        //     if (io.ConfigFlags & gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32)!=0
-        //     {
-        //         gen::imgui::UpdatePlatformWindows();
-        //         gen::imgui::RenderPlatformWindowsDefault(ptr::null_mut(), ptr::null_mut());
-        //     }
+            //     gen::imgui::ImGui_ImplDX11_RenderDrawData(gen::imgui::GetDrawData());
 
-        //     device.present();
-        // }
+            //     // Update and Render additional Platform Windows
+            //     if (io.ConfigFlags & gen::imgui::ImGuiConfigFlags_::ViewportsEnable as i32)!=0
+            //     {
+            //         gen::imgui::UpdatePlatformWindows();
+            //         gen::imgui::RenderPlatformWindowsDefault(ptr::null_mut(), ptr::null_mut());
+            //     }
+
+            //     device.present();
+        }
 
         // Cleanup
         gen::imgui::ImGui_ImplDX11_Shutdown();

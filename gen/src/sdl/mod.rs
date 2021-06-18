@@ -21,3 +21,7 @@ pub mod SDL_version;
 pub use SDL_version::*;
 pub mod SDL_syswm;
 pub use SDL_syswm::*;
+pub mod SDL_keyboard;
+pub use SDL_keyboard::*;
+pub mod SDL_events;
+pub use SDL_events::*;

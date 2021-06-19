@@ -4,6 +4,7 @@ members = [
     "gen",
     "gltf2",
     "scene",
+    "com_ptr_util",
     "renderer",
     "frame_factory",
     #

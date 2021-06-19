@@ -1,9 +1,9 @@
 extern crate scene;
 extern crate image;
 extern crate gen;
+extern crate com_ptr_util;
 
 pub mod asset_manager;
-pub mod com_util;
 pub mod error;
 pub mod resource;
 

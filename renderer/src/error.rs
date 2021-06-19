@@ -2,7 +2,7 @@
 pub enum Error {
     NotImpl,
     StaticMessage(&'static str),
-    ComError(crate::com_util::ComError),
+    ComError(com_ptr_util::ComError),
     IOError(std::io::Error),
     Utf8Error(std::str::Utf8Error),
     LoadError(scene::LoadError),

@@ -7,7 +7,7 @@ use winapi::{
     um::{d3d11, d3dcommon},
 };
 
-use crate::com_util::{ComCreate, ComError};
+use com_ptr_util::{ComCreate, ComError};
 
 pub struct DX11 {
     pub d3d_device: ComPtr<d3d11::ID3D11Device>,

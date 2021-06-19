@@ -1,6 +1,6 @@
 use std::{ptr, rc::Rc};
 
-use crate::com_util::{ComCreate, ComError};
+use com_ptr_util::{ComCreate, ComError};
 use com_ptr::ComPtr;
 use winapi::{
     shared::{dxgiformat, dxgitype},

@@ -1,6 +1,8 @@
 use std::{collections::HashMap};
 
-use crate::com_util::ComCreate;
+use com_ptr_util::ComCreate;
+use com_ptr_util::ComError;
+
 use crate::scene::AccessorBytes;
 use com_ptr::ComPtr;
 use winapi::{
@@ -9,7 +11,6 @@ use winapi::{
     um::{d3d11, d3dcommon},
 };
 
-use crate::com_util::ComError;
 
 fn to_gltf(src: &str)->String
 {

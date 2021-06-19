@@ -13,6 +13,8 @@ macro_rules! T {
 
 mod gui;
 use gui::*;
+mod scene_view;
+use scene_view::*;
 
 use std::ffi::c_void;
 use std::mem::MaybeUninit;

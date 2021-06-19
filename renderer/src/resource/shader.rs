@@ -1,6 +1,6 @@
 use crate::{
     asset_manager::ShaderSource,
-    com_util::{ComCreate, ComError},
+    com_ptr_util::{ComCreate, ComError},
 };
 use com_ptr::ComPtr;
 use std::{ffi::CStr, ptr, str};

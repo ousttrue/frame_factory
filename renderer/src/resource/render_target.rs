@@ -6,7 +6,7 @@ use winapi::{
     um::d3d11,
 };
 
-use crate::com_util::{ComCreate, ComError};
+use com_ptr_util::{ComCreate, ComError};
 
 pub struct RenderTarget {
     width: f32,

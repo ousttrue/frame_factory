@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-winapi = { version = "0.3", features = [
+winapi = { version="0.3", features=[
     "impl-default",
     "winuser",
     "libloaderapi",
@@ -19,5 +19,6 @@ winapi = { version = "0.3", features = [
 com_ptr = "0.2.1"
 cgmath = "0.18.0"
 image = "0.23.14"
-scene = { path = "../scene" }
-gen = { path = "../gen" }
+scene = { path="../scene" }
+gen = { path="../gen" }
+com_ptr_util = { path="../com_ptr_util" }

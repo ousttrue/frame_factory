@@ -4,12 +4,16 @@ use std::{ffi::c_void, ptr};
 use gen::imgui;
 use gen::sdl;
 
+use crate::scene_view::SceneView;
+
 pub struct Gui {
     show_demo_window: bool,
     show_another_window: bool,
     pub clear_color: [f32; 4],
     f: f32,
     counter: i32,
+
+    scenes: Vec<SceneView>,
 }
 
 impl Drop for Gui {
@@ -69,6 +73,8 @@ impl Gui {
             clear_color: [0.45f32, 0.55f32, 0.60f32, 1.00f32],
             f: 0.0f32,
             counter: 0,
+
+            scenes: Vec::new(),
         }
     }
 
@@ -123,7 +129,7 @@ impl Gui {
                     //             ofn.Flags = OFN_FILEMUSTEXIST;
                     //             if (GetOpenFileNameA(&ofn))
                     //             {
-                    //                 if (auto scene = RustRenderer::load_gltf(ofn.lpstrFile))
+                    //                 if (let scene = RustRenderer::load_gltf(ofn.lpstrFile))
                     //                 {
                     //                     m_scenes.push_back(std::move(scene));
                     //                 }
@@ -202,6 +208,40 @@ impl Gui {
                 self.show_another_window = false;
             }
             imgui::End();
+        }
+
+        // 3d view
+        for scene in &self.scenes {
+            imgui::PushStyleVar(imgui::ImGuiStyleVar_WindowPadding, Default::default());
+            imgui::SetNextWindowSize(
+                &imgui::ImVec2 {
+                    x: 512f32,
+                    y: 512f32,
+                },
+                imgui::ImGuiCond_Once,
+            );
+            if imgui::Begin(
+                scene.name.as_ptr() as *mut i8,
+                ptr::null_mut(),
+                imgui::ImGuiWindowFlags_NoScrollbar | imgui::ImGuiWindowFlags_NoScrollWithMouse,
+            ) {
+                let size = imgui::GetContentRegionAvail();
+                let pos = imgui::GetWindowPos();
+                let frameHeight = imgui::GetFrameHeight();
+
+                // render
+                // let crop = state.Crop(
+                //     static_cast<int>(pos.x), static_cast<int>(pos.y + frameHeight),
+                //     static_cast<int>(size.x), static_cast<int>(size.y));
+                // let srv = scene.render(device, context);
+                // if (srv)
+                // {
+                //     imgui::ImageButton((ImTextureID)srv, size, ImVec2(0.0f, 0.0f),
+                //                     ImVec2(1.0f, 1.0f), 0);
+                // }
+            }
+            imgui::End();
+            imgui::PopStyleVar(1);
         }
     }
 

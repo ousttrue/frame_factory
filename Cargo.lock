@@ -195,6 +195,7 @@ name = "frame_factory"
 version = "0.1.0"
 dependencies = [
  "com_ptr",
+ "com_ptr_util",
  "gen",
  "renderer",
  "scene",

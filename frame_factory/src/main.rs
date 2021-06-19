@@ -1,4 +1,7 @@
 extern crate gen;
+use com_ptr::ComPtr;
+extern crate com_ptr_util;
+use com_ptr_util::ComCreate;
 use gen::sdl;
 
 macro_rules! T {
@@ -24,35 +27,15 @@ use winapi::shared::dxgi;
 use winapi::shared::dxgiformat;
 use winapi::shared::dxgitype;
 use winapi::shared::windef::HWND;
-use winapi::um::d3d11;
+use winapi::um::d3d11::{self, ID3D11Texture2D};
 use winapi::um::d3dcommon;
 use winapi::Interface;
 
 struct Device {
-    pub device: *mut d3d11::ID3D11Device,
-    pub context: *mut d3d11::ID3D11DeviceContext,
-    pub swapchain: *mut dxgi::IDXGISwapChain,
-    pub rendertarget: *mut d3d11::ID3D11RenderTargetView,
-}
-
-impl Drop for Device {
-    fn drop(&mut self) {
-        self.cleanup_render_target();
-        unsafe {
-            if let Some(swapchain) = self.swapchain.as_ref() {
-                swapchain.Release();
-                self.swapchain = ptr::null_mut();
-            }
-            if let Some(context) = self.context.as_ref() {
-                context.Release();
-                self.context = ptr::null_mut();
-            }
-            if let Some(device) = self.device.as_ref() {
-                device.Release();
-                self.device = ptr::null_mut();
-            }
-        }
-    }
+    pub device: ComPtr<d3d11::ID3D11Device>,
+    pub context: ComPtr<d3d11::ID3D11DeviceContext>,
+    pub swapchain: ComPtr<dxgi::IDXGISwapChain>,
+    pub rendertarget: Option<ComPtr<d3d11::ID3D11RenderTargetView>>,
 }
 
 #[allow(dead_code)]
@@ -91,13 +74,9 @@ impl Device {
             d3dcommon::D3D_FEATURE_LEVEL_10_0,
         ];
 
-        let mut device = Device {
-            device: ptr::null_mut(),
-            context: ptr::null_mut(),
-            swapchain: ptr::null_mut(),
-            rendertarget: ptr::null_mut(),
-        };
-
+        let mut device: *mut d3d11::ID3D11Device = ptr::null_mut();
+        let mut context: *mut d3d11::ID3D11DeviceContext = ptr::null_mut();
+        let mut swapchain: *mut dxgi::IDXGISwapChain = ptr::null_mut();
         let hr = unsafe {
             d3d11::D3D11CreateDeviceAndSwapChain(
                 ptr::null_mut(),
@@ -108,75 +87,76 @@ impl Device {
                 feature_level_array.len() as u32,
                 d3d11::D3D11_SDK_VERSION,
                 &sd,
-                &mut device.swapchain,
-                &mut device.device,
+                &mut swapchain,
+                &mut device,
                 &mut feature_level,
-                &mut device.context,
+                &mut context,
             )
         };
         if hr != 0 {
             return Err(hr);
         }
 
-        device.create_render_target();
+        let mut device = Device {
+            device: unsafe { ComPtr::from_raw(device) },
+            context: unsafe { ComPtr::from_raw(context) },
+            swapchain: unsafe { ComPtr::from_raw(swapchain) },
+            rendertarget: None,
+        };
+
+        device.create_render_target().unwrap();
 
         Ok(device)
     }
 
-    fn create_render_target(&mut self) {
-        let mut back_buffer: *mut d3d11::ID3D11Texture2D = ptr::null_mut();
-        let pp = &mut back_buffer as *mut *mut d3d11::ID3D11Texture2D;
+    fn create_render_target(&mut self) -> Result<(), com_ptr_util::ComError> {
+        let backbuffer: ComPtr<d3d11::ID3D11Texture2D> = ComPtr::create_if_success(|pp| unsafe {
+            self.swapchain.GetBuffer(
+                0,
+                &d3d11::ID3D11Texture2D::uuidof(),
+                pp as *mut *mut winapi::ctypes::c_void,
+            )
+        })?;
 
-        if let Some(swap_chain) = unsafe { self.swapchain.as_ref() } {
-            unsafe {
-                swap_chain.GetBuffer(
-                    0,
-                    &d3d11::ID3D11Texture2D::uuidof(),
-                    pp as *mut *mut winapi::ctypes::c_void,
-                )
-            };
-            if let Some(device) = unsafe { self.device.as_ref() } {
-                unsafe {
-                    device.CreateRenderTargetView(
-                        back_buffer as *mut d3d11::ID3D11Resource,
-                        ptr::null(),
-                        &mut self.rendertarget,
-                    )
-                };
-                if let Some(backbuffer) = unsafe { back_buffer.as_ref() } {
-                    unsafe { backbuffer.Release() };
-                }
-            }
-        }
-    }
+        let rendertarget = ComPtr::create_if_success(|pp| unsafe {
+            self.device.CreateRenderTargetView(
+                backbuffer.as_ptr() as *mut d3d11::ID3D11Resource,
+                ptr::null(),
+                pp,
+            )
+        })?;
 
-    fn cleanup_render_target(&mut self) {
-        if let Some(render_target) = unsafe { self.rendertarget.as_ref() } {
-            unsafe { render_target.Release() };
-            self.rendertarget = ptr::null_mut();
-        }
+        self.rendertarget = Some(rendertarget);
+
+        Ok(())
     }
 
     fn resize(&mut self) {
         // Release all outstanding references to the swap chain's buffers before resizing.
-        self.cleanup_render_target();
-        if let Some(swapchain) = unsafe { self.swapchain.as_mut() } {
-            unsafe { swapchain.ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0) };
-        }
-        self.create_render_target();
+        self.rendertarget = None;
+        unsafe {
+            self.swapchain
+                .ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0)
+        };
+        self.create_render_target().unwrap();
     }
 
     fn clear(&mut self, clear_color_with_alpha: &[f32; 4]) {
-        if let Some(context) = unsafe { self.context.as_mut() } {
-            unsafe { context.OMSetRenderTargets(1, &mut self.rendertarget, ptr::null_mut()) };
-            unsafe { context.ClearRenderTargetView(self.rendertarget, clear_color_with_alpha) };
+        if let Some(rendertarget) = &self.rendertarget {
+            unsafe {
+                self.context
+                    .OMSetRenderTargets(1, &rendertarget.as_ptr(), ptr::null_mut())
+            };
+            unsafe {
+                self.context
+                    .ClearRenderTargetView(rendertarget.as_ptr(), clear_color_with_alpha)
+            };
         }
     }
 
     fn present(&mut self) {
-        if let Some(swapchain) = unsafe { self.swapchain.as_mut() } {
-            unsafe { swapchain.Present(1, 0) }; // Present with vsync
-        }
+        // Present with vsync
+        unsafe { self.swapchain.Present(1, 0) };
     }
 }
 
@@ -212,11 +192,7 @@ pub fn main() -> Result<(), String> {
 
         let mut device = Device::create(addr as HWND).unwrap();
 
-        let mut gui = Gui::new(
-            window,
-            device.device as *mut c_void,
-            device.context as *mut c_void,
-        );
+        let mut gui = Gui::new(window, &device.device, &device.context);
 
         // Main loop
         let mut done = false;
@@ -248,11 +224,7 @@ pub fn main() -> Result<(), String> {
             }
 
             // gui
-            gui.update(
-                window,
-                device.device as *mut c_void,
-                device.context as *mut c_void,
-            );
+            gui.update(window, &device.device, &device.context);
 
             // d3d
             let clear_color_with_alpha = [

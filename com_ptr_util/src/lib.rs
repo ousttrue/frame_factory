@@ -10,7 +10,7 @@ pub enum ComError {
 
 pub trait ComCreate {
     type Item: Interface;
-    fn create_if_success<F>(f: F) -> Result<ComPtr<Self::Item>, ComError>
+    fn create_if_success<F>(pp: F) -> Result<ComPtr<Self::Item>, ComError>
     where
         F: FnOnce(*mut *mut Self::Item) -> HRESULT;
 }

@@ -1,8 +1,11 @@
 use std::default::Default;
 use std::{ffi::c_void, ptr};
 
+use com_ptr::ComPtr;
 use gen::imgui;
 use gen::sdl;
+use winapi::um::commdlg::OPENFILENAMEA;
+use winapi::um::d3d11;
 
 use crate::scene_view::SceneView;
 
@@ -27,7 +30,11 @@ impl Drop for Gui {
 }
 
 impl Gui {
-    pub unsafe fn new(sdl_window: *mut c_void, device: *mut c_void, context: *mut c_void) -> Gui {
+    pub unsafe fn new(
+        sdl_window: *mut c_void,
+        device: &ComPtr<d3d11::ID3D11Device>,
+        context: &ComPtr<d3d11::ID3D11DeviceContext>,
+    ) -> Gui {
         imgui::CreateContext(ptr::null_mut());
         let mut io = imgui::GetIO().as_mut().unwrap();
         io.ConfigFlags |= imgui::ImGuiConfigFlags_NavEnableKeyboard as i32; // Enable Keyboard Controls
@@ -50,7 +57,10 @@ impl Gui {
 
         // Setup Platform/Renderer backends
         imgui::ImGui_ImplSDL2_InitForD3D(sdl_window);
-        imgui::ImGui_ImplDX11_Init(device, context);
+        imgui::ImGui_ImplDX11_Init(
+            device.as_ptr() as *mut c_void,
+            context.as_ptr() as *mut c_void,
+        );
 
         // Load Fonts
         // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use imgui::PushFont()/PopFont() to select them.
@@ -113,27 +123,25 @@ impl Gui {
         if imgui::BeginMenuBar() {
             if imgui::BeginMenu(T!("File"), true) {
                 if imgui::MenuItem(T!("Open"), T!("Ctrl+O"), false, true) {
-                    //             char strCustom[256] = {0};
-                    //             char strFile[MAX_PATH] = {0};
-                    //             OPENFILENAMEA ofn = {0};
-                    //             ofn.lStructSize = sizeof(OPENFILENAME);
-                    //             ofn.hwndOwner = nullptr;
-                    //             ofn.lpstrFilter = "glb files {*.glb}\0*.glb\0"
-                    //                               "All files {*.*}\0*.*\0"
-                    //                               "\0";
-                    //             ofn.lpstrCustomFilter = strCustom;
-                    //             ofn.nMaxCustFilter = sizeof(strCustom);
-                    //             ofn.nFilterIndex = 0;
-                    //             ofn.lpstrFile = strFile;
-                    //             ofn.nMaxFile = MAX_PATH;
-                    //             ofn.Flags = OFN_FILEMUSTEXIST;
-                    //             if (GetOpenFileNameA(&ofn))
-                    //             {
-                    //                 if (let scene = RustRenderer::load_gltf(ofn.lpstrFile))
-                    //                 {
-                    //                     m_scenes.push_back(std::move(scene));
-                    //                 }
-                    //             }
+                    let mut strCustom = [0; 256];
+                    let mut strFile = [0; winapi::shared::minwindef::MAX_PATH];
+                    let mut ofn = OPENFILENAMEA {
+                        lStructSize: std::mem::size_of::<OPENFILENAMEA>() as u32,
+                        hwndOwner: ptr::null_mut(),
+                        lpstrFilter: T!("glb files {*.glb}\0*.glb\0All files {*.*}\0*.*\0\0"),
+                        lpstrCustomFilter: strCustom.as_mut_ptr(),
+                        nMaxCustFilter: std::mem::size_of_val(&strCustom) as u32,
+                        nFilterIndex: 0,
+                        lpstrFile: strFile.as_mut_ptr(),
+                        nMaxFile: std::mem::size_of_val(&strFile) as u32,
+                        Flags: winapi::um::commdlg::OFN_FILEMUSTEXIST,
+                        ..Default::default()
+                    };
+                    if winapi::um::commdlg::GetOpenFileNameA(&mut ofn) != 0 {
+                        if let Some(scene) = SceneView::load_gltf(&strFile) {
+                            self.scenes.push(scene);
+                        }
+                    }
                 }
                 imgui::EndMenu();
             }
@@ -143,7 +151,11 @@ impl Gui {
         imgui::PopStyleVar(2);
     }
 
-    pub unsafe fn gui(&mut self, device: *mut c_void, context: *mut c_void) {
+    pub unsafe fn gui(
+        &mut self,
+        device: &ComPtr<d3d11::ID3D11Device>,
+        context: &ComPtr<d3d11::ID3D11DeviceContext>,
+    ) {
         // 1. Show the big demo window (Most of the sample code is in imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if self.show_demo_window {
             imgui::ShowDemoWindow(&mut self.show_demo_window);
@@ -211,8 +223,8 @@ impl Gui {
         }
 
         // 3d view
-        for scene in &self.scenes {
-            imgui::PushStyleVar(imgui::ImGuiStyleVar_WindowPadding, Default::default());
+        for scene in &mut self.scenes {
+            imgui::PushStyleVar_(imgui::ImGuiStyleVar_WindowPadding, &Default::default());
             imgui::SetNextWindowSize(
                 &imgui::ImVec2 {
                     x: 512f32,
@@ -233,12 +245,25 @@ impl Gui {
                 // let crop = state.Crop(
                 //     static_cast<int>(pos.x), static_cast<int>(pos.y + frameHeight),
                 //     static_cast<int>(size.x), static_cast<int>(size.y));
-                // let srv = scene.render(device, context);
-                // if (srv)
-                // {
-                //     imgui::ImageButton((ImTextureID)srv, size, ImVec2(0.0f, 0.0f),
-                //                     ImVec2(1.0f, 1.0f), 0);
-                // }
+                if let Some(srv) = scene.render(device, context, size.x as u32, size.y as u32) {
+                    imgui::ImageButton(
+                        srv.as_ptr() as *mut c_void,
+                        &size,
+                        &Default::default(),
+                        &imgui::ImVec2 {
+                            x: 1.0f32,
+                            y: 1.0f32,
+                        },
+                        0,
+                        &Default::default(),
+                        &imgui::ImVec4 {
+                            x: 1f32,
+                            y: 1f32,
+                            z: 1f32,
+                            w: 1f32,
+                        },
+                    );
+                }
             }
             imgui::End();
             imgui::PopStyleVar(1);
@@ -248,8 +273,8 @@ impl Gui {
     pub unsafe fn update(
         &mut self,
         window: *mut c_void,
-        device: *mut c_void,
-        context: *mut c_void,
+        device: &ComPtr<d3d11::ID3D11Device>,
+        context: &ComPtr<d3d11::ID3D11DeviceContext>,
     ) {
         imgui::ImGui_ImplDX11_NewFrame();
         imgui::ImGui_ImplSDL2_NewFrame(window);

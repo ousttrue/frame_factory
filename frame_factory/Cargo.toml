@@ -13,12 +13,16 @@ version = "0.3"
 features = [
     "impl-default",
     "winuser",
+    "commdlg",
     "libloaderapi",
     "dxgi",
     "d3d11",
     "d3dcompiler",
     "d3d11sdklayers",
 ]
+
+[dependencies.com_ptr_util]
+path = "../com_ptr_util"
 
 [dependencies.gen]
 path = "../gen"

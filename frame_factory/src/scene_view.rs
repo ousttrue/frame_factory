@@ -1,4 +1,4 @@
-use std::ptr;
+use std::{ffi::{CStr, CString}, ptr};
 
 use com_ptr::ComPtr;
 use frame_factory::{FRAME_FACTORY_scene_load, FRAME_FACTORY_scene_render, FRAME_FACTORY_shutdown};
@@ -33,14 +33,15 @@ impl Drop for SceneView {
 }
 
 impl SceneView {
-    pub fn load_gltf(path: &str) -> Option<SceneView> {
-        let scene_id = FRAME_FACTORY_scene_load(path.as_ptr() as *mut i8);
+    pub fn load_gltf(path: &[i8]) -> Option<SceneView> {
+        let scene_id = FRAME_FACTORY_scene_load(path.as_ptr());
         if scene_id == 0 {
             return None;
         }
 
+        let cstr = unsafe{CStr::from_ptr(path.as_ptr())}.to_owned();
         Some(SceneView {
-            name: format!("{}##view{}", path, next_view_id()),
+            name: format!("{}##view{}\0", cstr.to_string_lossy(), next_view_id()),
             scene_id: scene_id,
             width: 0,
             height: 0,

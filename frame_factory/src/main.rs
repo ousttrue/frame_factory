@@ -1,9 +1,9 @@
 extern crate gen;
+use gen::sdl;
 
 mod gui;
 use gui::*;
 
-use gen::sdl;
 use std::ffi::c_void;
 use std::mem::MaybeUninit;
 use std::ptr;

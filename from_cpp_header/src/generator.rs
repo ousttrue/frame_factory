@@ -219,6 +219,18 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
     Ok(())
 }
 
+fn has_default_type(t: &Rc<Type>) -> bool {
+    match &**t {
+        Type::Pointer(_) => true,
+        Type::Array(_, _) => true,
+        Type::UserType(u) => match &*u.get_decl() {
+            Decl::Typedef(d) => has_default_type(&d.base_type),
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
 fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std::io::Error> {
     if s.fields.len() == 0 && s.definition.is_some() {
         return Ok(());
@@ -230,12 +242,19 @@ fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std
         return Ok(());
     }
 
+    let derive_default = if s.fields.iter().any(|f| has_default_type(&f.field_type)) {
+        ""
+    } else {
+        ", Default"
+    };
+
     w.write_fmt(format_args!(
         "
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy{})]
 pub {} {} {{
 ",
+        derive_default,
         if s.is_union { "union" } else { "struct" },
         t.get_name()
     ))?;

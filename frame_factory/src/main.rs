@@ -219,12 +219,10 @@ pub fn main() -> Result<(), String> {
         // Main loop
         let mut done = false;
         while !done {
-
             // SDL event
             let mut event: sdl::SDL_Event = MaybeUninit::zeroed().assume_init();
             let p = &mut event as *mut sdl::SDL_Event;
             while sdl::SDL_PollEvent(p) != 0 {
-
                 gui.sdl_event(p);
 
                 match event.r#type {
@@ -248,7 +246,11 @@ pub fn main() -> Result<(), String> {
             }
 
             // gui
-            gui.on_frame(window);
+            gui.update(
+                window,
+                device.device as *mut c_void,
+                device.context as *mut c_void,
+            );
 
             // d3d
             let clear_color_with_alpha = [

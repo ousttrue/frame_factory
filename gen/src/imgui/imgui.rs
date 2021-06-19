@@ -89,14 +89,14 @@ pub type ImS64 = i64;
 pub type ImU64 = u64;
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImVec2 {
     pub x: f32,
     pub y: f32,
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImVec4 {
     pub x: f32,
     pub y: f32,
@@ -721,7 +721,7 @@ pub struct ImGuiSizeCallbackData {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImGuiWindowClass {
     pub ClassId: u32,
     pub ParentViewportId: u32,
@@ -748,7 +748,7 @@ pub struct ImGuiPayload {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImGuiTableColumnSortSpecs {
     pub ColumnUserID: u32,
     pub ColumnIndex: i16,
@@ -765,7 +765,7 @@ pub struct ImGuiTableSortSpecs {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImGuiOnceUponAFrame {
     pub RefFrame: i32,
 }
@@ -791,7 +791,7 @@ pub struct ImGuiStorage {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImGuiListClipper {
     pub DisplayStart: i32,
     pub DisplayEnd: i32,
@@ -803,7 +803,7 @@ pub struct ImGuiListClipper {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImColor {
     pub Value: ImVec4,
 }
@@ -822,7 +822,7 @@ pub struct ImDrawCmd {
 pub type ImDrawIdx = u16;
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImDrawVert {
     pub pos: ImVec2,
     pub uv: ImVec2,
@@ -930,7 +930,7 @@ pub struct ImFontConfig {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImFontGlyph {
     pub Colored: u32,
     pub Visible: u32,
@@ -1083,7 +1083,7 @@ pub struct ImGuiPlatformIO {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct ImGuiPlatformMonitor {
     pub MainPos: ImVec2,
     pub MainSize: ImVec2,

@@ -1,4 +1,5 @@
 use std::{ffi::c_void, ptr};
+use std::default::Default;
 
 use gen::imgui;
 use gen::sdl;
@@ -54,12 +55,12 @@ impl Gui {
         // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
         // - Read 'docs/FONTS.md' for more instructions and details.
         // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-        //io.Fonts->AddFontDefault();
-        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-        //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-        //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+        //io.Fonts.AddFontDefault();
+        //io.Fonts.AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+        //io.Fonts.AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+        //io.Fonts.AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+        //io.Fonts.AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+        //ImFont* font = io.Fonts.AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts.GetGlyphRangesJapanese());
         //IM_ASSERT(font != NULL);
 
         Gui {
@@ -75,11 +76,67 @@ impl Gui {
         imgui::ImGui_ImplSDL2_ProcessEvent(p as *const c_void);
     }
 
-    pub unsafe fn on_frame(&mut self, window: *mut c_void) {
-        imgui::ImGui_ImplDX11_NewFrame();
-        imgui::ImGui_ImplSDL2_NewFrame(window);
-        imgui::NewFrame();
+    pub unsafe fn docking_sace(&mut self) {
+        let window_flags = imgui::ImGuiWindowFlags_MenuBar | imgui::ImGuiWindowFlags_NoDocking;
 
+        {
+            let viewport = imgui::GetMainViewport().as_ref().unwrap();
+            imgui::SetNextWindowPos(&viewport.WorkPos, 0, &Default::default());
+            // imgui::SetNextWindowSize(viewport.WorkSize);
+            // imgui::SetNextWindowViewport(viewport.ID);
+            // imgui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+            // imgui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+            // window_flags |= ImGuiWindowFlags_NoTitleBar |
+            //                 ImGuiWindowFlags_NoCollapse |
+            //                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+            // window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus |
+            //                 ImGuiWindowFlags_NoNavFocus;
+        }
+        // if (imgui::Begin("Master Window", nullptr, window_flags))
+        // {
+        //     // Declare Central dockspace
+        //     ImGuiID dockspace_id = imgui::GetID("MyDockSpace");
+        //     imgui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f),
+        //                      ImGuiDockNodeFlags_None);
+        // }
+
+        // if (imgui::BeginMenuBar())
+        // {
+        //     if (imgui::BeginMenu("File"))
+        //     {
+        //         if (imgui::MenuItem("Open", "Ctrl+O"))
+        //         {
+        //             char strCustom[256] = {0};
+        //             char strFile[MAX_PATH] = {0};
+        //             OPENFILENAMEA ofn = {0};
+        //             ofn.lStructSize = sizeof(OPENFILENAME);
+        //             ofn.hwndOwner = nullptr;
+        //             ofn.lpstrFilter = "glb files {*.glb}\0*.glb\0"
+        //                               "All files {*.*}\0*.*\0"
+        //                               "\0";
+        //             ofn.lpstrCustomFilter = strCustom;
+        //             ofn.nMaxCustFilter = sizeof(strCustom);
+        //             ofn.nFilterIndex = 0;
+        //             ofn.lpstrFile = strFile;
+        //             ofn.nMaxFile = MAX_PATH;
+        //             ofn.Flags = OFN_FILEMUSTEXIST;
+        //             if (GetOpenFileNameA(&ofn))
+        //             {
+        //                 if (auto scene = RustRenderer::load_gltf(ofn.lpstrFile))
+        //                 {
+        //                     m_scenes.push_back(std::move(scene));
+        //                 }
+        //             }
+        //         }
+        //         imgui::EndMenu();
+        //     }
+        //     imgui::EndMenuBar();
+        // }
+        // imgui::End();
+        // imgui::PopStyleVar(2);
+    }
+
+    pub unsafe fn gui(&mut self, device: *mut c_void, context: *mut c_void) {
         // 1. Show the big demo window (Most of the sample code is in imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if self.show_demo_window {
             imgui::ShowDemoWindow(&mut self.show_demo_window);
@@ -145,6 +202,20 @@ impl Gui {
             }
             imgui::End();
         }
+    }
+
+    pub unsafe fn update(
+        &mut self,
+        window: *mut c_void,
+        device: *mut c_void,
+        context: *mut c_void,
+    ) {
+        imgui::ImGui_ImplDX11_NewFrame();
+        imgui::ImGui_ImplSDL2_NewFrame(window);
+        imgui::NewFrame();
+
+        self.docking_sace();
+        self.gui(device, context);
 
         // Rendering
         imgui::Render();

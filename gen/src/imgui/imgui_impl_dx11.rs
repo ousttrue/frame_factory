@@ -4,11 +4,8 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]        
 use std::ffi::c_void;
-
-use super::ImDrawData;
-
 extern crate va_list;
-
+use super::*;
 pub type ID3D11Device = c_void;
 pub type ID3D11DeviceContext = c_void;
 

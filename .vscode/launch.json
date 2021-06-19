@@ -38,6 +38,8 @@
                 }
             },
             "args": [
+                // Include
+                "-I${workspaceFolder}/_external/imgui",
                 // Export
                 "-E${workspaceFolder}/_external/imgui/imgui.h,imgui_static.lib",
                 "-E${workspaceFolder}/_external/imgui/backends/imgui_impl_sdl.h,imgui_static.lib",

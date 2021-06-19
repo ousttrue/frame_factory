@@ -151,18 +151,18 @@ fn get_rust_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
     }
 }
 
-fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
+fn get_sorted_entries<'a, F: Fn(&UserType) -> bool>(
     type_map: &'a TypeMap,
     path: &Path,
     f: F,
 ) -> Vec<&'a UserType> {
-    let mut enums: Vec<&UserType> = type_map
+    let mut user_types: Vec<&UserType> = type_map
         .map
         .iter()
         .filter_map(|(_k, v)| {
             if let Type::UserType(t) = &**v {
                 if t.file == path {
-                    if f(&*t.get_decl()) {
+                    if f(&*t) {
                         return Some(t);
                     }
                 }
@@ -172,7 +172,7 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
         })
         .collect();
 
-    enums.sort_by(|a, b| {
+    user_types.sort_by(|a, b| {
         let line = a.line.cmp(&b.line);
         if let Ordering::Equal = line {
             a.column.cmp(&b.column)
@@ -181,7 +181,7 @@ fn get_sorted_entries<'a, F: Fn(&Decl) -> bool>(
         }
     });
 
-    enums
+    user_types
 }
 
 fn is_i32(t: &Rc<Type>) -> bool {
@@ -203,28 +203,7 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
         },
     );
 
-    //     w.write_fmt(format_args!(
-    //         "
-    // #[repr({})]
-    // #[derive(Clone, Copy)]
-    // pub enum {} {{
-    // ",
-    //         get_rust_type(
-    //             &*e.base_type,
-    //             TypeContext {
-    //                 is_argument: false,
-    //                 is_const: false
-    //             }
-    //         ),
-    //         t.get_name(),
-    //     ))?;
-
     for entry in &e.entries {
-        let mut name = entry.name.as_str();
-        if name.starts_with(t.get_name().as_str()) {
-            name = name.trim_start_matches(t.get_name().as_str());
-        }
-
         let value = if entry.value > 0 {
             format!("0x{:x}", entry.value as i32)
         } else {
@@ -233,11 +212,9 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
 
         w.write_fmt(format_args!(
             "pub const {}: {} = {};\n",
-            name, base_type, value
+            entry.name, base_type, value
         ))?;
     }
-
-    // w.write("}\n".as_bytes())?;
 
     Ok(())
 }
@@ -385,6 +362,9 @@ fn write_function<W: Write>(
     Ok(())
 }
 
+///
+/// entry point
+///
 pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(), std::io::Error> {
     let mut w = BufWriter::new(f);
     w.write_fmt(format_args!(
@@ -399,10 +379,31 @@ use super::*;
 "
     ))?;
 
+    let functions = get_sorted_entries(type_map, &export.header, |u| {
+        if u.get_name().starts_with("operator ") {
+            return false;
+        }
+
+        if let Decl::Function(_) = &*u.get_decl() {
+            true
+        } else {
+            false
+        }
+    });
+
     //
     // defines
     //
     for def in &type_map.defines {
+        if functions
+            .iter()
+            .find(|f| f.get_name().as_str() == &def.tokens[0])
+            .is_some()
+        {
+            // skip
+            continue;
+        }
+
         if def.path == export.header {
             if def.is_function {
                 if let Some(code) = c_macro::to_func(&def.tokens) {
@@ -419,8 +420,8 @@ use super::*;
     //
     // enum, struct, typedef
     //
-    let types = get_sorted_entries(type_map, &export.header, |d| {
-        if let Decl::Function(_) = d {
+    let types = get_sorted_entries(type_map, &export.header, |u| {
+        if let Decl::Function(_) = &*u.get_decl() {
             false
         } else {
             true
@@ -473,14 +474,6 @@ extern \"C\" {{
 ",
         link_name, kind
     ))?;
-
-    let functions = get_sorted_entries(type_map, &export.header, |d| {
-        if let Decl::Function(_) = d {
-            true
-        } else {
-            false
-        }
-    });
 
     let mut used: HashSet<String> = HashSet::new();
     for t in functions {

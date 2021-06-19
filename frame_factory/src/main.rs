@@ -2,6 +2,7 @@ extern crate gen;
 use com_ptr::ComPtr;
 extern crate com_ptr_util;
 use com_ptr_util::ComCreate;
+use frame_factory::FRAME_FACTORY_asset_path;
 use gen::sdl;
 
 macro_rules! T {
@@ -192,6 +193,9 @@ pub fn main() -> Result<(), String> {
 
         let mut device = Device::create(addr as HWND).unwrap();
 
+        let args: Vec<String> = std::env::args().collect();
+        let assets = format!("{}\0", args[1]);
+        FRAME_FACTORY_asset_path(assets.as_ptr() as *const i8);
         let mut gui = Gui::new(window, &device.device, &device.context);
 
         // Main loop

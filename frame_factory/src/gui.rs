@@ -237,16 +237,22 @@ impl Gui {
                 ptr::null_mut(),
                 imgui::ImGuiWindowFlags_NoScrollbar | imgui::ImGuiWindowFlags_NoScrollWithMouse,
             ) {
-                let size = imgui::GetContentRegionAvail();
-                let pos = imgui::GetWindowPos();
+                let mut size = Default::default();
+                imgui::pGetContentRegionAvail(&mut size);
+                let mut pos = Default::default();
+                imgui::pGetWindowPos(&mut pos);
                 let frameHeight = imgui::GetFrameHeight();
                 // https://forum.dlang.org/thread/dkamxcamwttszxwwxttv@forum.dlang.org
+
+                let mut state = scene::ScreenState::default();
+                state.width = size.x as i16;
+                state.height = size.y as i16;
 
                 // render
                 // let crop = state.Crop(
                 //     static_cast<int>(pos.x), static_cast<int>(pos.y + frameHeight),
                 //     static_cast<int>(size.x), static_cast<int>(size.y));
-                if let Some(srv) = scene.render(device, context, size.x as u32, size.y as u32) {
+                if let Ok(srv) = scene.render(device, context, &state) {
                     imgui::ImageButton(
                         srv.as_ptr() as *mut c_void,
                         &size,

@@ -47,7 +47,21 @@ impl Matcher {
                 // unsigned
                 format!("pub const {}: {} = {};\n", name, rust_type, hex)
             } else {
-                format!("pub const {}: i32 = {};\n", name, value)
+                let mut value_type = "i32";
+                if value.starts_with("0x") {
+                    if let Ok(u) = u32::from_str_radix("value", 16) {
+                        if u > (i32::MAX as u32) {
+                            value_type = "u32";
+                        }
+                    }
+                } else {
+                    if let Ok(u) = u32::from_str_radix("value", 10) {
+                        if u > i32::MAX as u32 {
+                            value_type = "u32";
+                        }
+                    }
+                }
+                format!("pub const {}: {} = {};\n", name, value_type, value)
             }
         } else {
             format!("//{} {}\n", name, value)

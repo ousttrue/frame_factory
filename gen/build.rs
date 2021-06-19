@@ -2,16 +2,13 @@ use std::path::Path;
 
 fn main() {
     let cargo_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let root_dir = Path::new(&cargo_dir).parent().unwrap();
+    let cargo_dir = Path::new(&cargo_dir);
+    let root_dir = cargo_dir.parent().unwrap();
     println!("{}", root_dir.to_string_lossy());
     assert!(root_dir.exists());
     let imgui_src_dir = root_dir.join("_external/imgui");
     let sdl_src_dir = root_dir.join("_external/SDL");
-
-    // println!(
-    //     "cargo:rustc-link-search=native={}/lib",
-    //     imgui_dir
-    // );
+    let util_dir = cargo_dir.join("cpp");
 
     cc::Build::new()
         .cpp(true)
@@ -30,6 +27,7 @@ fn main() {
         .file(imgui_src_dir.join("imgui_demo.cpp"))
         .file(imgui_src_dir.join("backends/imgui_impl_win32.cpp"))
         .file(imgui_src_dir.join("backends/imgui_impl_dx11.cpp"))
+        .file(util_dir.join("imgui_util.cpp"))
         .include(&imgui_src_dir)
         .file(imgui_src_dir.join("backends/imgui_impl_sdl.cpp"))
         .include(sdl_src_dir.join("include"))

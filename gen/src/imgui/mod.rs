@@ -5,3 +5,5 @@ pub mod imgui_impl_sdl;
 pub use imgui_impl_sdl::*;
 pub mod imgui_impl_dx11;
 pub use imgui_impl_dx11::*;
+pub mod imgui_util;
+pub use imgui_util::*;

@@ -19,7 +19,9 @@
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "${workspaceFolder}/assets"
+            ],
             "cwd": "${workspaceFolder}",
         },
         {
@@ -44,6 +46,7 @@
                 "-E${workspaceFolder}/_external/imgui/imgui.h,imgui_static.lib",
                 "-E${workspaceFolder}/_external/imgui/backends/imgui_impl_sdl.h,imgui_static.lib",
                 "-E${workspaceFolder}/_external/imgui/backends/imgui_impl_dx11.h,imgui_static.lib",
+                "-E${workspaceFolder}/gen/cpp/imgui_util.h,imgui_static.lib",
                 // Define
                 // "-DIMGUI_API=__declspec(dllexport)",
                 // OUt

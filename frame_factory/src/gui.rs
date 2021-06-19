@@ -1,5 +1,5 @@
-use std::{ffi::c_void, ptr};
 use std::default::Default;
+use std::{ffi::c_void, ptr};
 
 use gen::imgui;
 use gen::sdl;
@@ -77,63 +77,64 @@ impl Gui {
     }
 
     pub unsafe fn docking_sace(&mut self) {
-        let window_flags = imgui::ImGuiWindowFlags_MenuBar | imgui::ImGuiWindowFlags_NoDocking;
+        let mut window_flags = imgui::ImGuiWindowFlags_MenuBar | imgui::ImGuiWindowFlags_NoDocking;
 
         {
             let viewport = imgui::GetMainViewport().as_ref().unwrap();
             imgui::SetNextWindowPos(&viewport.WorkPos, 0, &Default::default());
-            // imgui::SetNextWindowSize(viewport.WorkSize);
-            // imgui::SetNextWindowViewport(viewport.ID);
-            // imgui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-            // imgui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-            // window_flags |= ImGuiWindowFlags_NoTitleBar |
-            //                 ImGuiWindowFlags_NoCollapse |
-            //                 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-            // window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus |
-            //                 ImGuiWindowFlags_NoNavFocus;
+            imgui::SetNextWindowSize(&viewport.WorkSize, 0);
+            imgui::SetNextWindowViewport(viewport.ID);
+            imgui::PushStyleVar(imgui::ImGuiStyleVar_WindowRounding, 0.0f32);
+            imgui::PushStyleVar(imgui::ImGuiStyleVar_WindowBorderSize, 0.0f32);
+            window_flags |= imgui::ImGuiWindowFlags_NoTitleBar
+                | imgui::ImGuiWindowFlags_NoCollapse
+                | imgui::ImGuiWindowFlags_NoResize
+                | imgui::ImGuiWindowFlags_NoMove;
+            window_flags |=
+                imgui::ImGuiWindowFlags_NoBringToFrontOnFocus | imgui::ImGuiWindowFlags_NoNavFocus;
         }
-        // if (imgui::Begin("Master Window", nullptr, window_flags))
-        // {
-        //     // Declare Central dockspace
-        //     ImGuiID dockspace_id = imgui::GetID("MyDockSpace");
-        //     imgui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f),
-        //                      ImGuiDockNodeFlags_None);
-        // }
+        if imgui::Begin(T!("Master Window"), ptr::null_mut(), window_flags) {
+            // Declare Central dockspace
+            let dockspace_id = imgui::GetID(T!("MyDockSpace"));
+            imgui::DockSpace(
+                dockspace_id,
+                &Default::default(),
+                imgui::ImGuiDockNodeFlags_None,
+                ptr::null_mut(),
+            );
+        }
 
-        // if (imgui::BeginMenuBar())
-        // {
-        //     if (imgui::BeginMenu("File"))
-        //     {
-        //         if (imgui::MenuItem("Open", "Ctrl+O"))
-        //         {
-        //             char strCustom[256] = {0};
-        //             char strFile[MAX_PATH] = {0};
-        //             OPENFILENAMEA ofn = {0};
-        //             ofn.lStructSize = sizeof(OPENFILENAME);
-        //             ofn.hwndOwner = nullptr;
-        //             ofn.lpstrFilter = "glb files {*.glb}\0*.glb\0"
-        //                               "All files {*.*}\0*.*\0"
-        //                               "\0";
-        //             ofn.lpstrCustomFilter = strCustom;
-        //             ofn.nMaxCustFilter = sizeof(strCustom);
-        //             ofn.nFilterIndex = 0;
-        //             ofn.lpstrFile = strFile;
-        //             ofn.nMaxFile = MAX_PATH;
-        //             ofn.Flags = OFN_FILEMUSTEXIST;
-        //             if (GetOpenFileNameA(&ofn))
-        //             {
-        //                 if (auto scene = RustRenderer::load_gltf(ofn.lpstrFile))
-        //                 {
-        //                     m_scenes.push_back(std::move(scene));
-        //                 }
-        //             }
-        //         }
-        //         imgui::EndMenu();
-        //     }
-        //     imgui::EndMenuBar();
-        // }
-        // imgui::End();
-        // imgui::PopStyleVar(2);
+        if imgui::BeginMenuBar() {
+            if imgui::BeginMenu(T!("File"), true) {
+                if imgui::MenuItem(T!("Open"), T!("Ctrl+O"), false, true) {
+                    //             char strCustom[256] = {0};
+                    //             char strFile[MAX_PATH] = {0};
+                    //             OPENFILENAMEA ofn = {0};
+                    //             ofn.lStructSize = sizeof(OPENFILENAME);
+                    //             ofn.hwndOwner = nullptr;
+                    //             ofn.lpstrFilter = "glb files {*.glb}\0*.glb\0"
+                    //                               "All files {*.*}\0*.*\0"
+                    //                               "\0";
+                    //             ofn.lpstrCustomFilter = strCustom;
+                    //             ofn.nMaxCustFilter = sizeof(strCustom);
+                    //             ofn.nFilterIndex = 0;
+                    //             ofn.lpstrFile = strFile;
+                    //             ofn.nMaxFile = MAX_PATH;
+                    //             ofn.Flags = OFN_FILEMUSTEXIST;
+                    //             if (GetOpenFileNameA(&ofn))
+                    //             {
+                    //                 if (auto scene = RustRenderer::load_gltf(ofn.lpstrFile))
+                    //                 {
+                    //                     m_scenes.push_back(std::move(scene));
+                    //                 }
+                    //             }
+                }
+                imgui::EndMenu();
+            }
+            imgui::EndMenuBar();
+        }
+        imgui::End();
+        imgui::PopStyleVar(2);
     }
 
     pub unsafe fn gui(&mut self, device: *mut c_void, context: *mut c_void) {

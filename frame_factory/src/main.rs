@@ -1,6 +1,16 @@
 extern crate gen;
 use gen::sdl;
 
+macro_rules! T {
+    ($x:literal) => {
+        if $x.ends_with("\0") {
+            $x.as_ptr() as *mut i8
+        } else {
+            concat!($x, "\0").as_ptr() as *mut i8
+        }
+    };
+}
+
 mod gui;
 use gui::*;
 
@@ -172,16 +182,6 @@ impl Device {
 extern "C" {
     #[link_name = "SDL_PollEvent"]
     fn _SDL_PollEvent(event: *mut c_void) -> i32;
-}
-
-macro_rules! T {
-    ($x:literal) => {
-        if $x.ends_with("\0") {
-            $x.as_ptr() as *mut i8
-        } else {
-            concat!($x, "\0").as_ptr() as *mut i8
-        }
-    };
 }
 
 pub fn main() -> Result<(), String> {

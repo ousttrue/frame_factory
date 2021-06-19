@@ -22,16 +22,19 @@ fn next_view_id() -> u32 {
 }
 
 #[derive(Debug)]
+struct TextureWithSRV {
+    texture: ComPtr<d3d11::ID3D11Texture2D>,
+    srv: ComPtr<d3d11::ID3D11ShaderResourceView>,
+}
+
+#[derive(Debug)]
 pub struct SceneView {
     pub name: String,
     scene_id: u32,
     width: i16,
     height: i16,
 
-    texture_srv: Option<(
-        ComPtr<d3d11::ID3D11Texture2D>,
-        ComPtr<d3d11::ID3D11ShaderResourceView>,
-    )>,
+    texture_srv: Option<TextureWithSRV>,
 }
 
 impl Drop for SceneView {
@@ -102,10 +105,10 @@ impl SceneView {
                 )
             })?;
 
-            self.texture_srv = Some((texture, srv));
+            self.texture_srv = Some(TextureWithSRV { texture, srv });
         }
 
-        let (texture, srv) = &self.texture_srv.as_ref().unwrap();
+        let TextureWithSRV { texture, srv } = &self.texture_srv.as_ref().unwrap();
         if FRAME_FACTORY_scene_render(
             self.scene_id,
             device.as_ptr(),

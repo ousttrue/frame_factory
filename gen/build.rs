@@ -17,6 +17,7 @@ fn main() {
         .cpp(true)
         // .warnings(true)
         // .flag("-std=c++17")
+        .flag("/std:c++latest")
         // .flag("-Wall")
         // .flag("-Wextra")
         // .flag("-v")

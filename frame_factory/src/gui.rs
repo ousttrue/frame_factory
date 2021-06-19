@@ -240,6 +240,7 @@ impl Gui {
                 let size = imgui::GetContentRegionAvail();
                 let pos = imgui::GetWindowPos();
                 let frameHeight = imgui::GetFrameHeight();
+                // https://forum.dlang.org/thread/dkamxcamwttszxwwxttv@forum.dlang.org
 
                 // render
                 // let crop = state.Crop(

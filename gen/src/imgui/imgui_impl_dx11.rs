@@ -2,10 +2,11 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub type ID3D11Device = c_void;
 pub type ID3D11DeviceContext = c_void;
 

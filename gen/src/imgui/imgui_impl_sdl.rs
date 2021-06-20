@@ -2,10 +2,11 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub type SDL_Window = c_void;
 pub type SDL_Event = c_void;
 

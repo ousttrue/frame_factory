@@ -232,13 +232,13 @@ fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io
 
 fn has_default_type(t: &Rc<Type>) -> bool {
     match &**t {
-        Type::Pointer(_) => true,
-        Type::Array(_, _) => true,
+        Type::Pointer(_) => false,
+        Type::Array(_, _) => false,
         Type::UserType(u) => match &*u.get_decl() {
             Decl::Typedef(d) => has_default_type(&d.base_type),
-            _ => false,
+            _ => true,
         },
-        _ => false,
+        _ => true,
     }
 }
 
@@ -319,77 +319,71 @@ fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), s
     Ok(())
 }
 
-fn write_function<W: Write>(
-    w: &mut W,
-    name: &str,
-    _t: &UserType,
-    f: &Function,
-) -> Result<(), std::io::Error> {
-    if let Some(export_name) = &f.export_name {
-        if export_name.len() == 0 {
-            return Ok(());
+fn write_function(name: &str, _t: &UserType, f: &Function) -> Option<String> {
+    let export_name = f.export_name.as_ref()?;
+    if export_name.len() == 0 {
+        return None;
+    }
+
+    let mut params = String::new();
+    let pw = &mut params as &mut dyn std::fmt::Write;
+    let mut comment = "\n".to_owned();
+    let cw = &mut comment as &mut dyn std::fmt::Write;
+
+    if f.params.len() > 0 {
+        pw.write_str("\n").unwrap();
+
+        let mut i = 0;
+        for param in &f.params {
+            pw.write_fmt(format_args!(
+                "        {}: {},\n",
+                escape_symbol(&param.name, i),
+                get_rust_type(
+                    &*param.param_type,
+                    TypeContext {
+                        is_argument: true,
+                        is_const: param.is_const
+                    }
+                )
+            ))
+            .unwrap();
+
+            // default value
+            let default_value = if let Some(default_value) = &param.default_value {
+                default_value
+            } else {
+                ""
+            };
+            cw.write_fmt(format_args!(
+                "    /// * {}: {}\n",
+                param.name, default_value
+            ))
+            .unwrap();
+
+            i += 1;
         }
 
-        let mut params = String::new();
-        let pw = &mut params as &mut dyn std::fmt::Write;
-        let mut comment = "\n".to_owned();
-        let cw = &mut comment as &mut dyn std::fmt::Write;
+        pw.write_str("    ").unwrap();
+    }
 
-        if f.params.len() > 0 {
-            pw.write_str("\n").unwrap();
-
-            let mut i = 0;
-            for param in &f.params {
-                pw.write_fmt(format_args!(
-                    "        {}: {},\n",
-                    escape_symbol(&param.name, i),
-                    get_rust_type(
-                        &*param.param_type,
-                        TypeContext {
-                            is_argument: true,
-                            is_const: param.is_const
-                        }
-                    )
-                ))
-                .unwrap();
-
-                // default value
-                let default_value = if let Some(default_value) = &param.default_value {
-                    default_value
-                } else {
-                    ""
-                };
-                cw.write_fmt(format_args!(
-                    "    /// * {}: {}\n",
-                    param.name, default_value
-                ))
-                .unwrap();
-
-                i += 1;
+    let mut result = comment;
+    if export_name != name {
+        result.push_str(&format!("    #[link_name = \"{}\"]\n", export_name));
+    }
+    result.push_str(&format!(
+        "    pub fn {}({}) -> {};",
+        name,
+        params,
+        get_rust_type(
+            &*f.result,
+            TypeContext {
+                is_argument: false,
+                is_const: false
             }
+        )
+    ));
 
-            pw.write_str("    ").unwrap();
-        }
-
-        w.write_fmt(format_args!("{}", comment))?;
-        if export_name != name {
-            w.write_fmt(format_args!("    #[link_name = \"{}\"]\n", export_name))?;
-        }
-        w.write_fmt(format_args!(
-            "    pub fn {}({}) -> {};\n",
-            name,
-            params,
-            get_rust_type(
-                &*f.result,
-                TypeContext {
-                    is_argument: false,
-                    is_const: false
-                }
-            )
-        ))?;
-    };
-
-    Ok(())
+    Some(result)
 }
 
 #[derive(Serialize)]
@@ -422,16 +416,13 @@ use super::*;
 
 {% for t in types -%}
 {% if t.user_type == 'enum' -%}
-{# ### enum ### -#}
 {% for e in t.entries -%}
 pub const {{e.name}}: {{t.base_type}} = {{e.value}};
 {% endfor -%}
 {% elif t.user_type == 'struct' -%}
-
 {% if t.entries | length == 0 -%}
-#[repr(transparent)]
-pub struct {{t.name}};
-{% else -%}
+pub type {{t.name}} = c_void;
+{% else %}
 #[repr(C)]
 #[derive(Clone, Copy{% if t.has_default -%}, Default{% else -%}{% endif -%})]
 pub struct {{t.name}} {
@@ -441,6 +432,14 @@ pub struct {{t.name}} {
 {% endif -%}
 {% endif -%}
 {% endfor -%}
+
+{% if functions | length > 0 %}
+#[link(name = \"{{link_name}}\", kind = \"{{link_kind}}\")]
+extern \"C\" {
+{% for f in functions %}{{f}}
+{% endfor -%}
+}
+{% endif -%}
 ";
 
 ///
@@ -563,69 +562,56 @@ pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(),
         .collect();
     context.insert("types", &types);
 
-    //     for t in types {
-    //         match &*t.get_decl() {
-    //             Decl::Enum(d) => write_enum(&mut w, t, d)?,
-    //             Decl::Struct(d) => write_struct(&mut w, t, d)?,
-    //             Decl::Typedef(d) => write_typedef(&mut w, t, d)?,
-    //             _ => (),
-    //         }
-    //     }
+    //
+    // functions
+    //
+    let link_name;
+    let link_kind;
+    if export.link.ends_with(".dll") {
+        link_name = export.link.trim_end_matches(".dll");
+        link_kind = "dylib";
+    } else if export.link.ends_with(".lib") {
+        link_name = export.link.trim_end_matches(".lib");
+        link_kind = "static";
+    } else {
+        panic!();
+    }
+    context.insert("link_name", link_name);
+    context.insert("link_kind", link_kind);
 
+    let functions = get_sorted_entries(type_map, &export.header, |u| {
+        if u.get_name().starts_with("operator ") {
+            return false;
+        }
+
+        if let Decl::Function(_) = &*u.get_decl() {
+            true
+        } else {
+            false
+        }
+    });
+
+    let mut function_texts: Vec<String> = Vec::new();
+
+    let mut used: HashSet<String> = HashSet::new();
+    for t in functions {
+        if let Decl::Function(f) = &*t.get_decl() {
+            let mut name = t.get_name().to_owned();
+            while used.contains(&name) {
+                name.push('_');
+            }
+            if let Some(value) = write_function(&name, t, f) {
+                function_texts.push(value);
+            }
+            used.insert(name);
+        }
+    }
+
+    context.insert("functions", &function_texts);
+
+    // render tera template
     let rendered = tera.render("template.rs", &context).unwrap();
     w.write(rendered.as_bytes())?;
-
-    // let functions = get_sorted_entries(type_map, &export.header, |u| {
-    //     if u.get_name().starts_with("operator ") {
-    //         return false;
-    //     }
-
-    //     if let Decl::Function(_) = &*u.get_decl() {
-    //         true
-    //     } else {
-    //         false
-    //     }
-    // });
-
-    //     //
-    //     // functions
-    //     //
-    //     let link_name;
-    //     let kind;
-    //     if export.link.ends_with(".dll") {
-    //         link_name = export.link.trim_end_matches(".dll");
-    //         kind = "dylib";
-    //     } else if export.link.ends_with(".lib") {
-    //         link_name = export.link.trim_end_matches(".lib");
-    //         kind = "static";
-    //     } else {
-    //         panic!();
-    //     }
-
-    //     w.write_fmt(format_args!(
-    //         "
-    // #[link(name = \"{}\", kind = \"{}\")]
-    // extern \"C\" {{
-    // ",
-    //         link_name, kind
-    //     ))?;
-
-    //     let mut used: HashSet<String> = HashSet::new();
-    //     for t in functions {
-    //         if let Decl::Function(f) = &*t.get_decl() {
-    //             let mut name = t.get_name().to_owned();
-    //             while used.contains(&name) {
-    //                 name.push('_');
-    //             }
-    //             write_function(&mut w, &name, t, f)?;
-    //             used.insert(name);
-    //         }
-    //     }
-
-    //     w.write_fmt(format_args!(
-    //         "}}
-    // "
-    //     ))?;
 
     Ok(())
 }

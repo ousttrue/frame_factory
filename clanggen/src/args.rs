@@ -9,7 +9,6 @@ pub struct Args {
     pub exports: Vec<Export>,
     pub compile_args: Vec<String>,
     pub out_dir: PathBuf,
-    pub template: PathBuf,
 }
 
 impl Args {
@@ -17,7 +16,6 @@ impl Args {
         let mut exports: Vec<Export> = Vec::new();
         let mut compile_args: Vec<String> = Vec::new();
         let mut dst = std::path::PathBuf::new();
-        let mut template = Default::default();
 
         for arg in args {
             match &arg[0..2] {
@@ -34,9 +32,6 @@ impl Args {
                 "-O" => {
                     dst = Path::new(&arg[2..]).to_owned();
                 }
-                "-T" => {
-                    template = Path::new(&arg[2..]).to_owned();
-                }
                 _ => panic!(),
             }
         }
@@ -45,7 +40,6 @@ impl Args {
             exports,
             compile_args,
             out_dir: dst,
-            template,
         }
     }
 

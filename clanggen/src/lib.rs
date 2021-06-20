@@ -1,4 +1,5 @@
 extern crate tera;
+extern crate serde;
 
 use std::{
     io::stdout,
@@ -72,8 +73,6 @@ pub fn run(args: &[String]) -> Result<(), Error> {
     });
     // root_namespace.debug_print("");
 
-    let template = std::fs::read_to_string(args.template).map_err(|e| Error::IOError(e))?;
-
     // generate
     let mut mod_content = "#![allow(non_snake_case)]\n".to_owned();
 
@@ -82,7 +81,7 @@ pub fn run(args: &[String]) -> Result<(), Error> {
         let export_name = export.header.file_stem().unwrap().to_string_lossy();
         let path = format!("{}/{}.rs", args.out_dir.to_string_lossy(), export_name);
         let mut f = std::fs::File::create(&path).map_err(|e| Error::IOError(e))?;
-        generator::generate(&mut f, &type_map, export, &template).map_err(|e| Error::IOError(e))?;
+        generator::generate(&mut f, &type_map, export).map_err(|e| Error::IOError(e))?;
 
         mod_content.push_str(&format!(
             "pub mod {};\npub use {}::*;\n",

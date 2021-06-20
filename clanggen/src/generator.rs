@@ -8,6 +8,7 @@ use std::{
     rc::Rc,
 };
 
+use serde::Serialize;
 use tera::Tera;
 
 use crate::{
@@ -191,6 +192,14 @@ fn is_i32(t: &Rc<Type>) -> bool {
         true
     } else {
         false
+    }
+}
+
+fn enum_value(value: i64) -> String {
+    if value > 0 {
+        format!("0x{:x}", value as i32)
+    } else {
+        value.to_string()
     }
 }
 
@@ -383,15 +392,45 @@ fn write_function<W: Write>(
     Ok(())
 }
 
+#[derive(Serialize)]
+struct TemplateUserTypeEntry {
+    name: String,
+    value: String,
+}
+
+#[derive(Serialize)]
+struct TemplateUserType {
+    user_type: &'static str,
+    base_type: String,
+    entries: Vec<TemplateUserTypeEntry>,
+}
+
+const template: &str = "// this is generated.
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+#![allow(dead_code)]
+use std::ffi::c_void;
+extern crate va_list;
+use super::*;
+
+{% for define in defines -%}
+{{define}}
+{% endfor -%}
+
+{% for t in types -%}
+{% if t.user_type == 'enum' -%}
+{% for e in t.entries -%}
+pub const {{e.name}}: {{t.base_type}} = {{e.value}};
+{% endfor -%}
+{% endif -%}
+{% endfor -%}
+";
+
 ///
 /// entry point
 ///
-pub fn generate(
-    f: &mut File,
-    type_map: &TypeMap,
-    export: &Export,
-    template: &str,
-) -> Result<(), std::io::Error> {
+pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(), std::io::Error> {
     let mut w = BufWriter::new(f);
 
     let mut tera = Tera::default();
@@ -417,24 +456,72 @@ pub fn generate(
             }
         })
         .collect();
-
     context.insert("defines", &defines);
-    let rendered = tera.render("template.rs", &context).unwrap();
-    w.write(rendered.as_bytes())?;
 
-    // for def in &type_map.defines {
-    //     if def.path == export.header {
-    //         if def.is_function {
-    //             if let Some(code) = c_macro::to_func(&def.tokens) {
-    //                 w.write(code.as_bytes())?;
-    //             }
-    //         } else {
-    //             if let Some(code) = c_macro::to_const(&def.tokens) {
-    //                 w.write(code.as_bytes())?;
-    //             }
+    //
+    // enum, struct, typedef
+    //
+    let types = get_sorted_entries(type_map, &export.header, |u| {
+        if let Decl::Function(_) = &*u.get_decl() {
+            false
+        } else {
+            true
+        }
+    });
+
+    // rename anonymous struct / union
+    let mut anonymous_count = 0;
+    for t in &types {
+        match &*t.get_decl() {
+            Decl::Struct(_) => {
+                if t.get_name().len() == 0 {
+                    // anonymous
+                    t.set_name(format!("anonymous_{}", anonymous_count));
+                    anonymous_count += 1;
+                }
+            }
+            _ => (),
+        }
+    }
+
+    let types: Vec<TemplateUserType> = types
+        .iter()
+        .filter_map(|u| match &*u.get_decl() {
+            Decl::Enum(e) => Some(TemplateUserType {
+                user_type: "enum",
+                base_type: get_rust_type(
+                    &*e.base_type,
+                    TypeContext {
+                        is_argument: false,
+                        is_const: false,
+                    },
+                )
+                .to_string(),
+                entries: e
+                    .entries
+                    .iter()
+                    .map(|e| TemplateUserTypeEntry {
+                        name: e.name.clone(),
+                        value: enum_value(e.value),
+                    })
+                    .collect(),
+            }),
+            _ => None,
+        })
+        .collect();
+    context.insert("types", &types);
+
+    //     for t in types {
+    //         match &*t.get_decl() {
+    //             Decl::Enum(d) => write_enum(&mut w, t, d)?,
+    //             Decl::Struct(d) => write_struct(&mut w, t, d)?,
+    //             Decl::Typedef(d) => write_typedef(&mut w, t, d)?,
+    //             _ => (),
     //         }
     //     }
-    // }
+
+    let rendered = tera.render("template.rs", &context).unwrap();
+    w.write(rendered.as_bytes())?;
 
     // let functions = get_sorted_entries(type_map, &export.header, |u| {
     //     if u.get_name().starts_with("operator ") {
@@ -447,41 +534,6 @@ pub fn generate(
     //         false
     //     }
     // });
-
-    //     //
-    //     // enum, struct, typedef
-    //     //
-    //     let types = get_sorted_entries(type_map, &export.header, |u| {
-    //         if let Decl::Function(_) = &*u.get_decl() {
-    //             false
-    //         } else {
-    //             true
-    //         }
-    //     });
-
-    //     // rename anonymous
-    //     let mut anonymous_count = 0;
-    //     for t in &types {
-    //         match &*t.get_decl() {
-    //             Decl::Struct(_) => {
-    //                 if t.get_name().len() == 0 {
-    //                     // anonymous
-    //                     t.set_name(format!("anonymous_{}", anonymous_count));
-    //                     anonymous_count += 1;
-    //                 }
-    //             }
-    //             _ => (),
-    //         }
-    //     }
-
-    //     for t in types {
-    //         match &*t.get_decl() {
-    //             Decl::Enum(d) => write_enum(&mut w, t, d)?,
-    //             Decl::Struct(d) => write_struct(&mut w, t, d)?,
-    //             Decl::Typedef(d) => write_typedef(&mut w, t, d)?,
-    //             _ => (),
-    //         }
-    //     }
 
     //     //
     //     // functions

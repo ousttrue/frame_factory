@@ -40,8 +40,6 @@
                 }
             },
             "args": [
-                // template
-                "-T${workspaceFolder}/clanggen/template.rs",
                 // Include
                 "-I${workspaceFolder}/_external/imgui",
                 // Export
@@ -75,9 +73,6 @@
                 }
             },
             "args": [
-                // template
-                "-T${workspaceFolder}/clanggen/template.rs",
-
                 // Include
                 "-I${workspaceFolder}/_external/SDL/include",
                 // Export

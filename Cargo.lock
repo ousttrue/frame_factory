@@ -140,6 +140,7 @@ version = "0.1.0"
 dependencies = [
  "clang-sys",
  "regex 0.1.80",
+ "serde",
  "tera",
 ]
 

@@ -18,7 +18,7 @@ macro_rules! T {
 mod gui;
 use gui::*;
 mod scene_view;
-use scene_view::*;
+
 
 use std::ffi::c_void;
 use std::mem::MaybeUninit;
@@ -28,7 +28,7 @@ use winapi::shared::dxgi;
 use winapi::shared::dxgiformat;
 use winapi::shared::dxgitype;
 use winapi::shared::windef::HWND;
-use winapi::um::d3d11::{self, ID3D11Texture2D};
+use winapi::um::d3d11::{self};
 use winapi::um::d3dcommon;
 use winapi::Interface;
 

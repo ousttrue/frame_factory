@@ -12,7 +12,7 @@ use serde::Serialize;
 use tera::Tera;
 
 use crate::{
-    c_macro, Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
+    c_macro, Decl, Export, Function, Primitives, Type, TypeMap, UserType,
 };
 
 fn escape_symbol(src: &str, i: usize) -> Cow<str> {
@@ -21,25 +21,6 @@ fn escape_symbol(src: &str, i: usize) -> Cow<str> {
         "type" | "in" | "ref" | "mod" => format!("r#{}", src).into(),
         _ => src.into(),
     }
-}
-
-// typedef => typedef => pointer => typedef
-fn is_function(t: &Type) -> bool {
-    match &*t {
-        Type::Pointer(p) => {
-            return is_function(p);
-        }
-        Type::UserType(u) => match &*u.get_decl() {
-            Decl::Function(_f) => {
-                return true;
-            }
-            Decl::Typedef(d) => return is_function(&*d.base_type),
-            _ => (),
-        },
-        _ => (),
-    }
-
-    false
 }
 
 fn rename_type(t: &str) -> String {
@@ -145,10 +126,7 @@ fn get_rust_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
                 )
                 .into()
             }
-            Decl::None => {
-                let a = 0;
-                rename_type(&u.get_name()).into()
-            }
+            Decl::None => rename_type(&u.get_name()).into(),
         },
         _ => format!("unknown").into(),
     }
@@ -187,14 +165,6 @@ fn get_sorted_entries<'a, F: Fn(&UserType) -> bool>(
     user_types
 }
 
-fn is_i32(t: &Rc<Type>) -> bool {
-    if let Type::Primitive(Primitives::I32) = &**t {
-        true
-    } else {
-        false
-    }
-}
-
 fn enum_value(value: i64) -> String {
     if value > 0 {
         format!("0x{:x}", value as i32)
@@ -203,120 +173,16 @@ fn enum_value(value: i64) -> String {
     }
 }
 
-fn write_enum<W: Write>(w: &mut W, t: &UserType, e: &Enum) -> Result<(), std::io::Error> {
-    assert!(is_i32(&e.base_type));
-
-    let base_type = get_rust_type(
-        &*e.base_type,
-        TypeContext {
-            is_argument: false,
-            is_const: false,
-        },
-    );
-
-    for entry in &e.entries {
-        let value = if entry.value > 0 {
-            format!("0x{:x}", entry.value as i32)
-        } else {
-            entry.value.to_string()
-        };
-
-        w.write_fmt(format_args!(
-            "pub const {}: {} = {};\n",
-            entry.name, base_type, value
-        ))?;
-    }
-
-    Ok(())
-}
-
 fn has_default_type(t: &Rc<Type>) -> bool {
     match &**t {
         Type::Pointer(_) => false,
         Type::Array(_, _) => false,
         Type::UserType(u) => match &*u.get_decl() {
             Decl::Typedef(d) => has_default_type(&d.base_type),
-            _ => true,
+            _ => false,
         },
         _ => true,
     }
-}
-
-fn write_struct<W: Write>(w: &mut W, t: &UserType, s: &Struct) -> Result<(), std::io::Error> {
-    if s.fields.len() == 0 && s.definition.is_some() {
-        return Ok(());
-    }
-
-    if s.fields.len() == 0 {
-        w.write_fmt(format_args!("pub type {} = c_void;\n", &t.get_name()))?;
-
-        return Ok(());
-    }
-
-    let derive_default = if s.fields.iter().any(|f| has_default_type(&f.field_type)) {
-        ""
-    } else {
-        ", Default"
-    };
-
-    w.write_fmt(format_args!(
-        "
-#[repr(C)]
-#[derive(Clone, Copy{})]
-pub {} {} {{
-",
-        derive_default,
-        if s.is_union { "union" } else { "struct" },
-        t.get_name()
-    ))?;
-
-    for (i, field) in s.fields.iter().enumerate() {
-        let field_name = escape_symbol(&field.name, i);
-        w.write_fmt(format_args!(
-            "    pub {}: {},\n",
-            &field_name,
-            get_rust_type(
-                &*field.field_type,
-                TypeContext {
-                    is_argument: false,
-                    is_const: false
-                }
-            )
-        ))?;
-    }
-
-    w.write("}\n".as_bytes())?;
-
-    Ok(())
-}
-
-fn write_typedef<W: Write>(w: &mut W, t: &UserType, d: &Typedef) -> Result<(), std::io::Error> {
-    if let Type::UserType(b) = &*d.base_type {
-        if b.get_name().as_str() == t.get_name().as_str() {
-            return Ok(());
-        }
-    }
-
-    if is_function(&*d.base_type) {
-        w.write_fmt(format_args!(
-            "pub type {} = *mut c_void; // function pointer\n",
-            t.get_name(),
-        ))?;
-    } else {
-        w.write_fmt(format_args!(
-            "pub type {} = {};\n",
-            t.get_name(),
-            get_rust_type(
-                &*d.base_type,
-                TypeContext {
-                    is_argument: false,
-                    is_const: false
-                }
-            )
-        ))?;
-    }
-
-    Ok(())
 }
 
 fn write_function(name: &str, _t: &UserType, f: &Function) -> Option<String> {
@@ -401,11 +267,13 @@ struct TemplateUserType {
     has_default: bool,
 }
 
-const template: &str = "// this is generated.
+const TEMPLATE: &str = "// this is generated.
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
@@ -449,7 +317,7 @@ pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(),
     let mut w = BufWriter::new(f);
 
     let mut tera = Tera::default();
-    tera.add_raw_template("template.rs", template).unwrap();
+    tera.add_raw_template("template.rs", TEMPLATE).unwrap();
     // Using the tera Context struct
     let mut context = tera::Context::new();
 

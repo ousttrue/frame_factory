@@ -123,22 +123,22 @@ impl Gui {
         if imgui::BeginMenuBar() {
             if imgui::BeginMenu(T!("File"), true) {
                 if imgui::MenuItem(T!("Open"), T!("Ctrl+O"), false, true) {
-                    let mut strCustom = [0; 256];
-                    let mut strFile = [0; winapi::shared::minwindef::MAX_PATH];
+                    let mut str_custom = [0; 256];
+                    let mut str_file = [0; winapi::shared::minwindef::MAX_PATH];
                     let mut ofn = OPENFILENAMEA {
                         lStructSize: std::mem::size_of::<OPENFILENAMEA>() as u32,
                         hwndOwner: ptr::null_mut(),
                         lpstrFilter: T!("glb files {*.glb}\0*.glb\0All files {*.*}\0*.*\0\0"),
-                        lpstrCustomFilter: strCustom.as_mut_ptr(),
-                        nMaxCustFilter: std::mem::size_of_val(&strCustom) as u32,
+                        lpstrCustomFilter: str_custom.as_mut_ptr(),
+                        nMaxCustFilter: std::mem::size_of_val(&str_custom) as u32,
                         nFilterIndex: 0,
-                        lpstrFile: strFile.as_mut_ptr(),
-                        nMaxFile: std::mem::size_of_val(&strFile) as u32,
+                        lpstrFile: str_file.as_mut_ptr(),
+                        nMaxFile: std::mem::size_of_val(&str_file) as u32,
                         Flags: winapi::um::commdlg::OFN_FILEMUSTEXIST,
                         ..Default::default()
                     };
                     if winapi::um::commdlg::GetOpenFileNameA(&mut ofn) != 0 {
-                        if let Some(scene) = SceneView::load_gltf(&strFile) {
+                        if let Some(scene) = SceneView::load_gltf(&str_file) {
                             self.scenes.push(scene);
                         }
                     }
@@ -241,8 +241,8 @@ impl Gui {
                 imgui::pGetContentRegionAvail(&mut size);
                 let mut pos = Default::default();
                 imgui::pGetWindowPos(&mut pos);
-                let frameHeight = imgui::GetFrameHeight();
                 // https://forum.dlang.org/thread/dkamxcamwttszxwwxttv@forum.dlang.org
+                // let frame_height = imgui::GetFrameHeight();
 
                 let mut state = scene::ScreenState::default();
                 state.width = size.x as i16;

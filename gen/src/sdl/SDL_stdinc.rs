@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 /* SDL_arraysize(array)(sizeof(array)/sizeof(array[0])) */
 /* SDL_TABLESIZE(table)SDL_arraysize(table) */
 /* SDL_STRINGIFY_ARG(arg)#arg */
@@ -65,26 +68,8 @@ use super::*;
 /* SDL_iconv_utf8_ucs4(S)(Uint32*)SDL_iconv_string("UCS-4-INTERNAL","UTF-8",S,SDL_strlen(S)+1) */
 pub const SDL_FALSE: i32 = 0;
 pub const SDL_TRUE: i32 = 0x1;
-pub type Sint8 = i8;
-pub type Uint8 = u8;
-pub type Sint16 = i16;
-pub type Uint16 = u16;
-pub type Sint32 = i32;
-pub type Uint32 = u32;
-pub type Sint64 = i64;
-pub type Uint64 = u64;
-pub type SDL_compile_time_assert_uint8 = [i32; 1];
-pub type SDL_compile_time_assert_sint8 = [i32; 1];
-pub type SDL_compile_time_assert_uint16 = [i32; 1];
-pub type SDL_compile_time_assert_sint16 = [i32; 1];
-pub type SDL_compile_time_assert_uint32 = [i32; 1];
-pub type SDL_compile_time_assert_sint32 = [i32; 1];
-pub type SDL_compile_time_assert_uint64 = [i32; 1];
-pub type SDL_compile_time_assert_sint64 = [i32; 1];
 pub const DUMMY_ENUM_VALUE: i32 = 0;
-pub type SDL_compile_time_assert_enum = [i32; 1];
 pub type _SDL_iconv_t = c_void;
-pub type SDL_iconv_t = *mut _SDL_iconv_t;
 
 #[link(name = "SDL2", kind = "static")]
 extern "C" {

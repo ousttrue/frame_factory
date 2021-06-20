@@ -2,27 +2,30 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
 
+
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_Point {
     pub x: i32,
     pub y: i32,
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_FPoint {
     pub x: f32,
     pub y: f32,
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_Rect {
     pub x: i32,
     pub y: i32,
@@ -31,7 +34,7 @@ pub struct SDL_Rect {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_FRect {
     pub x: f32,
     pub y: f32,

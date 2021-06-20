@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub const SDL_SWSURFACE: i32 = 0;
 pub const SDL_PREALLOC: i32 = 0x00000001;
 pub const SDL_RLEACCEL: i32 = 0x00000002;

@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub const SDL_RELEASED: i32 = 0;
 pub const SDL_PRESSED: i32 = 1;
 //SDL_TEXTEDITINGEVENT_TEXT_SIZE (32)
@@ -73,14 +76,14 @@ pub const SDL_USEREVENT: i32 = 0x8000;
 pub const SDL_LASTEVENT: i32 = 0xffff;
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_CommonEvent {
     pub r#type: u32,
     pub timestamp: u32,
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_DisplayEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -93,7 +96,7 @@ pub struct SDL_DisplayEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_WindowEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -140,7 +143,7 @@ pub struct SDL_TextInputEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_MouseMotionEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -154,7 +157,7 @@ pub struct SDL_MouseMotionEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_MouseButtonEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -169,7 +172,7 @@ pub struct SDL_MouseButtonEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_MouseWheelEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -181,7 +184,7 @@ pub struct SDL_MouseWheelEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_JoyAxisEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -195,7 +198,7 @@ pub struct SDL_JoyAxisEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_JoyBallEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -209,7 +212,7 @@ pub struct SDL_JoyBallEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_JoyHatEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -221,7 +224,7 @@ pub struct SDL_JoyHatEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_JoyButtonEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -233,7 +236,7 @@ pub struct SDL_JoyButtonEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_JoyDeviceEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -241,7 +244,7 @@ pub struct SDL_JoyDeviceEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_ControllerAxisEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -255,7 +258,7 @@ pub struct SDL_ControllerAxisEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_ControllerButtonEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -267,7 +270,7 @@ pub struct SDL_ControllerButtonEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_ControllerDeviceEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -275,7 +278,7 @@ pub struct SDL_ControllerDeviceEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_ControllerTouchpadEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -298,7 +301,7 @@ pub struct SDL_ControllerSensorEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_AudioDeviceEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -310,7 +313,7 @@ pub struct SDL_AudioDeviceEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_TouchFingerEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -325,7 +328,7 @@ pub struct SDL_TouchFingerEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_MultiGestureEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -339,7 +342,7 @@ pub struct SDL_MultiGestureEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_DollarGestureEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -370,14 +373,14 @@ pub struct SDL_SensorEvent {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_QuitEvent {
     pub r#type: u32,
     pub timestamp: u32,
 }
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_OSEvent {
     pub r#type: u32,
     pub timestamp: u32,
@@ -404,7 +407,7 @@ pub struct SDL_SysWMEvent {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub union SDL_Event {
+pub struct SDL_Event {
     pub r#type: u32,
     pub common: SDL_CommonEvent,
     pub display: SDL_DisplayEvent,
@@ -436,7 +439,6 @@ pub union SDL_Event {
     pub drop: SDL_DropEvent,
     pub padding: [u8; 56],
 }
-pub type SDL_compile_time_assert_SDL_Event = [i32; 1];
 pub const SDL_ADDEVENT: i32 = 0;
 pub const SDL_PEEKEVENT: i32 = 0x1;
 pub const SDL_GETEVENT: i32 = 0x2;

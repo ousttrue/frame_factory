@@ -2,7 +2,9 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
@@ -32,7 +34,7 @@ pub struct SDL_SysWMmsg {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub union anonymous_0 {
+pub struct anonymous_0 {
     pub win: anonymous_1,
     pub dummy: i32,
 }
@@ -56,7 +58,7 @@ pub struct SDL_SysWMinfo {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub union anonymous_2 {
+pub struct anonymous_2 {
     pub win: anonymous_3,
     pub dummy: [u8; 64],
 }

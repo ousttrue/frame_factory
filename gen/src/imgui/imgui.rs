@@ -3,6 +3,8 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 #![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
@@ -755,7 +757,7 @@ pub struct ImGuiListClipper {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct ImColor {
     pub Value: ImVec4,
 }
@@ -773,7 +775,7 @@ pub struct ImDrawCmd {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct ImDrawVert {
     pub pos: ImVec2,
     pub uv: ImVec2,
@@ -1034,7 +1036,7 @@ pub struct ImGuiPlatformIO {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct ImGuiPlatformMonitor {
     pub MainPos: ImVec2,
     pub MainSize: ImVec2,

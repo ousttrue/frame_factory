@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub const SDL_ALPHA_OPAQUE: i32 = 255;
 pub const SDL_ALPHA_TRANSPARENT: i32 = 0;
 /* SDL_DEFINE_PIXELFOURCC(A,B,C,D)SDL_FOURCC(A,B,C,D) */
@@ -113,7 +116,7 @@ pub const SDL_PIXELFORMAT_NV21: i32 = 0x3132564e;
 pub const SDL_PIXELFORMAT_EXTERNAL_OES: i32 = 0x2053454f;
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_Color {
     pub r: u8,
     pub g: u8,

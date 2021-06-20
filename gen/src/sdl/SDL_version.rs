@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub const SDL_MAJOR_VERSION: i32 = 2;
 pub const SDL_MINOR_VERSION: i32 = 0;
 pub const SDL_PATCHLEVEL: i32 = 15;
@@ -17,7 +20,7 @@ pub const SDL_PATCHLEVEL: i32 = 15;
 /* SDL_VERSION_ATLEAST(X,Y,Z)(SDL_COMPILEDVERSION>=SDL_VERSIONNUM(X,Y,Z)) */
 
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct SDL_version {
     pub major: u8,
     pub minor: u8,

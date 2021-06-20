@@ -36,7 +36,7 @@ impl Matcher {
                     "(Uint64)" => "u64",
                     _ => panic!(),
                 };
-                format!("pub const {}: {} = {};\n", name, rust_type, hex)
+                format!("pub const {}: {} = {};", name, rust_type, hex)
             } else if let Some(suffix) = suffix {
                 let rust_type = match suffix {
                     "u" | "U" => "u32",
@@ -45,7 +45,7 @@ impl Matcher {
                     _ => panic!(),
                 };
                 // unsigned
-                format!("pub const {}: {} = {};\n", name, rust_type, hex)
+                format!("pub const {}: {} = {};", name, rust_type, hex)
             } else {
                 let mut value_type = "i32";
                 if value.starts_with("0x") {
@@ -61,10 +61,10 @@ impl Matcher {
                         }
                     }
                 }
-                format!("pub const {}: {} = {};\n", name, value_type, value)
+                format!("pub const {}: {} = {};", name, value_type, value)
             }
         } else {
-            format!("//{} {}\n", name, value)
+            format!("//{} {}", name, value)
         }
     }
 }
@@ -111,7 +111,7 @@ pub fn to_func(tokens: &[String]) -> Option<String> {
     let value = join(&tokens[1..]);
 
     if value.contains("sizeof") || value.contains("?") || value.contains("_") {
-        return Some(format!("/* {}{} */\n", name, value));
+        return Some(format!("/* {}{} */", name, value));
     }
 
     match name.as_str() {
@@ -122,26 +122,26 @@ pub fn to_func(tokens: &[String]) -> Option<String> {
         | "SDL_MUSTLOCK"
         | "SDL_LoadBMP"
         | "SDL_stack_free" => {
-            return Some(format!("/* {}{} */\n", name, value));
+            return Some(format!("/* {}{} */", name, value));
         }
         _ => (),
     };
 
     let result = if value.contains("\\") {
         // multi line
-        format!("/* {}{} */\n", name, value)
+        format!("/* {}{} */", name, value)
     } else {
         // SDL_WINDOWPOS_CENTERED_DISPLAY(X)(SDL_WINDOWPOS_CENTERED_MASK|(X))
         if tokens.len() > 4 && tokens[1] == "(" && tokens[3] == ")" {
             // 1 args
             format!(
-                "pub const fn {}({}: i32) -> i32{{{}}}\n",
+                "pub const fn {}({}: i32) -> i32{{{}}}",
                 tokens[0],
                 tokens[2],
                 &join(&tokens[4..])
             )
         } else {
-            format!("// {}{}\n", name, value)
+            format!("// {}{}", name, value)
         }
     };
     Some(result)

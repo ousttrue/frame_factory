@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 //IMGUI_VERSION "1.83 WIP"
 pub const IMGUI_VERSION_NUM: i32 = 18209;
 /* IMGUI_CHECKVERSION()ImGui::DebugCheckVersionAndDataLayout(IMGUI_VERSION,sizeof(ImGuiIO),sizeof(ImGuiStyle),sizeof(ImVec2),sizeof(ImVec4),sizeof(ImDrawVert),sizeof(ImDrawIdx)) */
@@ -38,55 +41,6 @@ pub const IM_COL32_A_MASK: u32 = 0xFF000000;
 pub type ImDrawListSharedData = c_void;
 pub type ImFontBuilderIO = c_void;
 pub type ImGuiContext = c_void;
-pub type ImGuiCol = i32;
-pub type ImGuiCond = i32;
-pub type ImGuiDataType = i32;
-pub type ImGuiDir = i32;
-pub type ImGuiKey = i32;
-pub type ImGuiNavInput = i32;
-pub type ImGuiMouseButton = i32;
-pub type ImGuiMouseCursor = i32;
-pub type ImGuiSortDirection = i32;
-pub type ImGuiStyleVar = i32;
-pub type ImGuiTableBgTarget = i32;
-pub type ImDrawFlags = i32;
-pub type ImDrawListFlags = i32;
-pub type ImFontAtlasFlags = i32;
-pub type ImGuiBackendFlags = i32;
-pub type ImGuiButtonFlags = i32;
-pub type ImGuiColorEditFlags = i32;
-pub type ImGuiConfigFlags = i32;
-pub type ImGuiComboFlags = i32;
-pub type ImGuiDockNodeFlags = i32;
-pub type ImGuiDragDropFlags = i32;
-pub type ImGuiFocusedFlags = i32;
-pub type ImGuiHoveredFlags = i32;
-pub type ImGuiInputTextFlags = i32;
-pub type ImGuiKeyModFlags = i32;
-pub type ImGuiPopupFlags = i32;
-pub type ImGuiSelectableFlags = i32;
-pub type ImGuiSliderFlags = i32;
-pub type ImGuiTabBarFlags = i32;
-pub type ImGuiTabItemFlags = i32;
-pub type ImGuiTableFlags = i32;
-pub type ImGuiTableColumnFlags = i32;
-pub type ImGuiTableRowFlags = i32;
-pub type ImGuiTreeNodeFlags = i32;
-pub type ImGuiViewportFlags = i32;
-pub type ImGuiWindowFlags = i32;
-pub type ImTextureID = *mut c_void;
-pub type ImGuiID = u32;
-pub type ImWchar16 = u16;
-pub type ImWchar32 = u32;
-pub type ImWchar = u16;
-pub type ImS8 = i8;
-pub type ImU8 = u8;
-pub type ImS16 = i16;
-pub type ImU16 = u16;
-pub type ImS32 = i32;
-pub type ImU32 = u32;
-pub type ImS64 = i64;
-pub type ImU64 = u64;
 
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
@@ -803,7 +757,7 @@ pub struct ImGuiListClipper {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct ImColor {
     pub Value: ImVec4,
 }
@@ -819,10 +773,9 @@ pub struct ImDrawCmd {
     pub UserCallback: extern fn(*mut ImDrawList,*mut ImDrawCmd,) -> c_void,
     pub UserCallbackData: *mut c_void,
 }
-pub type ImDrawIdx = u16;
 
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct ImDrawVert {
     pub pos: ImVec2,
     pub uv: ImVec2,
@@ -1083,7 +1036,7 @@ pub struct ImGuiPlatformIO {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct ImGuiPlatformMonitor {
     pub MainPos: ImVec2,
     pub MainSize: ImVec2,
@@ -1091,7 +1044,6 @@ pub struct ImGuiPlatformMonitor {
     pub WorkSize: ImVec2,
     pub DpiScale: f32,
 }
-pub type ImDrawCornerFlags = i32;
 pub const ImDrawCornerFlags_None: i32 = 0x100;
 pub const ImDrawCornerFlags_TopLeft: i32 = 0x10;
 pub const ImDrawCornerFlags_TopRight: i32 = 0x20;

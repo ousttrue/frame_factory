@@ -1,3 +1,6 @@
+extern crate tera;
+extern crate serde;
+
 use std::{
     io::stdout,
     io::{stderr, Write},
@@ -40,8 +43,8 @@ pub use type_struct::*;
 mod define;
 pub use define::*;
 
-mod generator;
 mod c_macro;
+mod generator;
 
 pub fn run(args: &[String]) -> Result<(), Error> {
     // args

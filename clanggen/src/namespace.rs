@@ -102,7 +102,6 @@ impl Visitor for NamespaceVisitor
     
             CXCursor_TypedefDecl => {
 
-                let mut resolved = false;
                 let def = Typedef::parse(cursor, type_map);
                 if let Some(t) = def.base_type_is_anonymous()
                 {
@@ -110,7 +109,6 @@ impl Visitor for NamespaceVisitor
                     {
                         // resolve anonymous name type
                         u.set_name(cx_string::CXString::cursor_spelling(cursor).to_string());
-                        resolved = true;
                     }
                 }
 

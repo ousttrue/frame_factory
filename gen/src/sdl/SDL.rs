@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub const SDL_INIT_TIMER: u32 = 0x00000001;
 pub const SDL_INIT_AUDIO: u32 = 0x00000010;
 pub const SDL_INIT_VIDEO: u32 = 0x00000020;

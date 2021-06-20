@@ -2,10 +2,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
-#![allow(dead_code)]        
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_parens)]
 use std::ffi::c_void;
 extern crate va_list;
 use super::*;
+
 pub const SDL_RWOPS_UNKNOWN: u32 = 0;
 pub const SDL_RWOPS_WINFILE: u32 = 1;
 pub const SDL_RWOPS_STDFILE: u32 = 2;
@@ -30,7 +33,7 @@ pub struct SDL_RWops {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub union anonymous_0 {
+pub struct anonymous_0 {
     pub windowsio: anonymous_1,
     pub mem: anonymous_3,
     pub unknown: anonymous_4,

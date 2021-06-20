@@ -403,6 +403,8 @@ struct TemplateUserType {
     user_type: &'static str,
     base_type: String,
     entries: Vec<TemplateUserTypeEntry>,
+    name: String,
+    has_default: bool,
 }
 
 const template: &str = "// this is generated.
@@ -420,9 +422,23 @@ use super::*;
 
 {% for t in types -%}
 {% if t.user_type == 'enum' -%}
+{# ### enum ### -#}
 {% for e in t.entries -%}
 pub const {{e.name}}: {{t.base_type}} = {{e.value}};
 {% endfor -%}
+{% elif t.user_type == 'struct' -%}
+
+{% if t.entries | length == 0 -%}
+#[repr(transparent)]
+pub struct {{t.name}};
+{% else -%}
+#[repr(C)]
+#[derive(Clone, Copy{% if t.has_default -%}, Default{% else -%}{% endif -%})]
+pub struct {{t.name}} {
+{%for e in t.entries %}    pub {{e.name}}: {{e.value}},
+{% endfor -%}
+}
+{% endif -%}
 {% endif -%}
 {% endfor -%}
 ";
@@ -489,6 +505,8 @@ pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(),
         .filter_map(|u| match &*u.get_decl() {
             Decl::Enum(e) => Some(TemplateUserType {
                 user_type: "enum",
+                name: u.get_name().clone(),
+                has_default: false,
                 base_type: get_rust_type(
                     &*e.base_type,
                     TypeContext {
@@ -506,6 +524,40 @@ pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(),
                     })
                     .collect(),
             }),
+            Decl::Struct(s) => {
+                if s.fields.len() == 0 && s.definition.is_some() {
+                    return None;
+                }
+
+                // if s.fields.len() == 0 {
+                //     w.write_fmt(format_args!("pub type {} = c_void;\n", &t.get_name()))?;
+
+                //     return Ok(());
+                // }
+
+                Some(TemplateUserType {
+                    user_type: "struct",
+                    name: u.get_name().clone(),
+                    has_default: s.fields.iter().all(|f| has_default_type(&f.field_type)),
+                    base_type: Default::default(),
+                    entries: s
+                        .fields
+                        .iter()
+                        .enumerate()
+                        .map(|(i, f)| TemplateUserTypeEntry {
+                            name: escape_symbol(&f.name, i).to_string(),
+                            value: get_rust_type(
+                                &*f.field_type,
+                                TypeContext {
+                                    is_argument: false,
+                                    is_const: false,
+                                },
+                            )
+                            .to_string(),
+                        })
+                        .collect(),
+                })
+            }
             _ => None,
         })
         .collect();

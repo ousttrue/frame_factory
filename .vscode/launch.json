@@ -31,11 +31,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--package=from_cpp_header",
-                    "--bin=from_cpp_header"
+                    "--package=clanggen",
+                    "--bin=clanggen"
                 ],
                 "filter": {
-                    "name": "from_cpp_header",
+                    "name": "clanggen",
                     "kind": "bin"
                 }
             },
@@ -64,11 +64,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--package=from_cpp_header",
-                    "--bin=from_cpp_header"
+                    "--package=clanggen",
+                    "--bin=clanggen"
                 ],
                 "filter": {
-                    "name": "from_cpp_header",
+                    "name": "clanggen",
                     "kind": "bin"
                 }
             },

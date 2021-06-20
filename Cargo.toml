@@ -10,5 +10,5 @@ members = [
     #
     # "sample",
     "from_jsonschema",
-    "from_cpp_header",
+    "clanggen",
 ]

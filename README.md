@@ -25,7 +25,7 @@ c++ frontend, rust d3d11 renderer
 
 Read glTF's JsonSchema and generate rust code for serde_json.
 
-## rust/from_cpp_header 🔧
+## rust/clanggen 🔧
 
 Read imgui.h and generate rust code for c++ ffi. Shared the imgui.dll between c++ and rust.
 

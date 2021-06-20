@@ -90,6 +90,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "clanggen"
+version = "0.1.0"
+dependencies = [
+ "clang-sys",
+ "regex",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -200,14 +208,6 @@ dependencies = [
  "renderer",
  "scene",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "from_cpp_header"
-version = "0.1.0"
-dependencies = [
- "clang-sys",
- "regex",
 ]
 
 [[package]]

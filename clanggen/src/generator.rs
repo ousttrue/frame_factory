@@ -8,6 +8,8 @@ use std::{
     rc::Rc,
 };
 
+use tera::Tera;
+
 use crate::{
     c_macro, Decl, Enum, Export, Function, Primitives, Struct, Type, TypeMap, Typedef, UserType,
 };
@@ -384,132 +386,142 @@ fn write_function<W: Write>(
 ///
 /// entry point
 ///
-pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(), std::io::Error> {
+pub fn generate(
+    f: &mut File,
+    type_map: &TypeMap,
+    export: &Export,
+    template: &str,
+) -> Result<(), std::io::Error> {
     let mut w = BufWriter::new(f);
-    w.write_fmt(format_args!(
-        "// this is generated.
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-#![allow(dead_code)]        
-use std::ffi::c_void;
-extern crate va_list;
-use super::*;
-"
-    ))?;
 
-    let functions = get_sorted_entries(type_map, &export.header, |u| {
-        if u.get_name().starts_with("operator ") {
-            return false;
-        }
-
-        if let Decl::Function(_) = &*u.get_decl() {
-            true
-        } else {
-            false
-        }
-    });
+    let mut tera = Tera::default();
+    tera.add_raw_template("template.rs", template).unwrap();
+    // Using the tera Context struct
+    let mut context = tera::Context::new();
 
     //
     // defines
     //
-    for def in &type_map.defines {
-        if functions
-            .iter()
-            .find(|f| f.get_name().as_str() == &def.tokens[0])
-            .is_some()
-        {
-            // skip
-            continue;
-        }
-
-        if def.path == export.header {
-            if def.is_function {
-                if let Some(code) = c_macro::to_func(&def.tokens) {
-                    w.write(code.as_bytes())?;
+    let defines: Vec<String> = type_map
+        .defines
+        .iter()
+        .filter_map(|def| {
+            if def.path == export.header {
+                if def.is_function {
+                    c_macro::to_func(&def.tokens)
+                } else {
+                    c_macro::to_const(&def.tokens)
                 }
             } else {
-                if let Some(code) = c_macro::to_const(&def.tokens) {
-                    w.write(code.as_bytes())?;
-                }
+                None
             }
-        }
-    }
+        })
+        .collect();
 
-    //
-    // enum, struct, typedef
-    //
-    let types = get_sorted_entries(type_map, &export.header, |u| {
-        if let Decl::Function(_) = &*u.get_decl() {
-            false
-        } else {
-            true
-        }
-    });
+    context.insert("defines", &defines);
+    let rendered = tera.render("template.rs", &context).unwrap();
+    w.write(rendered.as_bytes())?;
 
-    // rename anonymous
-    let mut anonymous_count = 0;
-    for t in &types {
-        match &*t.get_decl() {
-            Decl::Struct(_) => {
-                if t.get_name().len() == 0 {
-                    // anonymous
-                    t.set_name(format!("anonymous_{}", anonymous_count));
-                    anonymous_count += 1;
-                }
-            }
-            _ => (),
-        }
-    }
+    // for def in &type_map.defines {
+    //     if def.path == export.header {
+    //         if def.is_function {
+    //             if let Some(code) = c_macro::to_func(&def.tokens) {
+    //                 w.write(code.as_bytes())?;
+    //             }
+    //         } else {
+    //             if let Some(code) = c_macro::to_const(&def.tokens) {
+    //                 w.write(code.as_bytes())?;
+    //             }
+    //         }
+    //     }
+    // }
 
-    for t in types {
-        match &*t.get_decl() {
-            Decl::Enum(d) => write_enum(&mut w, t, d)?,
-            Decl::Struct(d) => write_struct(&mut w, t, d)?,
-            Decl::Typedef(d) => write_typedef(&mut w, t, d)?,
-            _ => (),
-        }
-    }
+    // let functions = get_sorted_entries(type_map, &export.header, |u| {
+    //     if u.get_name().starts_with("operator ") {
+    //         return false;
+    //     }
 
-    //
-    // functions
-    //
-    let link_name;
-    let kind;
-    if export.link.ends_with(".dll") {
-        link_name = export.link.trim_end_matches(".dll");
-        kind = "dylib";
-    } else if export.link.ends_with(".lib") {
-        link_name = export.link.trim_end_matches(".lib");
-        kind = "static";
-    } else {
-        panic!();
-    }
+    //     if let Decl::Function(_) = &*u.get_decl() {
+    //         true
+    //     } else {
+    //         false
+    //     }
+    // });
 
-    w.write_fmt(format_args!(
-        "
-#[link(name = \"{}\", kind = \"{}\")]
-extern \"C\" {{
-",
-        link_name, kind
-    ))?;
+    //     //
+    //     // enum, struct, typedef
+    //     //
+    //     let types = get_sorted_entries(type_map, &export.header, |u| {
+    //         if let Decl::Function(_) = &*u.get_decl() {
+    //             false
+    //         } else {
+    //             true
+    //         }
+    //     });
 
-    let mut used: HashSet<String> = HashSet::new();
-    for t in functions {
-        if let Decl::Function(f) = &*t.get_decl() {
-            let mut name = t.get_name().to_owned();
-            while used.contains(&name) {
-                name.push('_');
-            }
-            write_function(&mut w, &name, t, f)?;
-            used.insert(name);
-        }
-    }
+    //     // rename anonymous
+    //     let mut anonymous_count = 0;
+    //     for t in &types {
+    //         match &*t.get_decl() {
+    //             Decl::Struct(_) => {
+    //                 if t.get_name().len() == 0 {
+    //                     // anonymous
+    //                     t.set_name(format!("anonymous_{}", anonymous_count));
+    //                     anonymous_count += 1;
+    //                 }
+    //             }
+    //             _ => (),
+    //         }
+    //     }
 
-    w.write_fmt(format_args!(
-        "}}
-"
-    ))?;
+    //     for t in types {
+    //         match &*t.get_decl() {
+    //             Decl::Enum(d) => write_enum(&mut w, t, d)?,
+    //             Decl::Struct(d) => write_struct(&mut w, t, d)?,
+    //             Decl::Typedef(d) => write_typedef(&mut w, t, d)?,
+    //             _ => (),
+    //         }
+    //     }
+
+    //     //
+    //     // functions
+    //     //
+    //     let link_name;
+    //     let kind;
+    //     if export.link.ends_with(".dll") {
+    //         link_name = export.link.trim_end_matches(".dll");
+    //         kind = "dylib";
+    //     } else if export.link.ends_with(".lib") {
+    //         link_name = export.link.trim_end_matches(".lib");
+    //         kind = "static";
+    //     } else {
+    //         panic!();
+    //     }
+
+    //     w.write_fmt(format_args!(
+    //         "
+    // #[link(name = \"{}\", kind = \"{}\")]
+    // extern \"C\" {{
+    // ",
+    //         link_name, kind
+    //     ))?;
+
+    //     let mut used: HashSet<String> = HashSet::new();
+    //     for t in functions {
+    //         if let Decl::Function(f) = &*t.get_decl() {
+    //             let mut name = t.get_name().to_owned();
+    //             while used.contains(&name) {
+    //                 name.push('_');
+    //             }
+    //             write_function(&mut w, &name, t, f)?;
+    //             used.insert(name);
+    //         }
+    //     }
+
+    //     w.write_fmt(format_args!(
+    //         "}}
+    // "
+    //     ))?;
 
     Ok(())
 }

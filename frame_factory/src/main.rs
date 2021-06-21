@@ -19,7 +19,6 @@ mod gui;
 use gui::*;
 mod scene_view;
 
-
 use std::ffi::c_void;
 use std::mem::MaybeUninit;
 use std::ptr;
@@ -204,41 +203,51 @@ pub fn main() -> Result<(), String> {
             // SDL event
             let mut event: sdl::SDL_Event = MaybeUninit::zeroed().assume_init();
             let p = &mut event as *mut sdl::SDL_Event;
+            let mut wheel = 0;
             while sdl::SDL_PollEvent(p) != 0 {
                 gui.sdl_event(p);
 
-                match event.r#type {
-                                256 /* SDL_QUIT */ => {
-                                    done = true;
-                                },
-                                512 /* SDL_WINDOWEVENT */ => {
-                                    if event.window.event == sdl::SDL_WINDOWEVENT_CLOSE as u8 && event.window.windowID == sdl::SDL_GetWindowID(window)
-                                    {
-                                        done = true;
-                                    }
-                                    if event.window.event == sdl::SDL_WINDOWEVENT_RESIZED as u8 && event.window.windowID == sdl::SDL_GetWindowID(window)
-                                    {
-                                        device.resize();
-                                    }
-                                }
-                                _ =>{
-
-                                }
-                            }
+                match event.r#type as i32 {
+                    sdl::SDL_QUIT => {
+                        done = true;
+                    }
+                    sdl::SDL_WINDOWEVENT => {
+                        if event.window.event == sdl::SDL_WINDOWEVENT_CLOSE as u8
+                            && event.window.windowID == sdl::SDL_GetWindowID(window)
+                        {
+                            done = true;
+                        }
+                        if event.window.event == sdl::SDL_WINDOWEVENT_RESIZED as u8
+                            && event.window.windowID == sdl::SDL_GetWindowID(window)
+                        {
+                            device.resize();
+                        }
+                    }
+                    sdl::SDL_MOUSEWHEEL => {
+                        wheel += event.wheel.y;
+                    }
+                    _ => {}
+                }
             }
 
             let mut w = 0;
             let mut h = 0;
             sdl::SDL_GetWindowSize(window, &mut w, &mut h);
 
-            // sdl::SDL_GetMouseState
+            let mut x = 0;
+            let mut y = 0;
+            let mouse_flag = sdl::SDL_GetMouseState(&mut x, &mut y);
 
-            let state = scene::ScreenState
-            {
-                width: w as i16,
-                height: h as i16,
-                ..Default::default()
-            };
+            let state = scene::ScreenState::new(
+                w as i16,
+                h as i16,
+                x as i16,
+                y as i16,
+                (mouse_flag & 1) != 0,
+                (mouse_flag & 2) != 0,
+                (mouse_flag & 4) != 0,
+                wheel,
+            );
 
             // gui
             gui.update(window, &device.device, &device.context, &state);

@@ -33,7 +33,7 @@ pub struct SDL_RWops {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct anonymous_0 {
+pub union anonymous_0 {
     pub windowsio: anonymous_1,
     pub mem: anonymous_3,
     pub unknown: anonymous_4,

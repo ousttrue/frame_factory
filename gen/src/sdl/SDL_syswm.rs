@@ -34,7 +34,7 @@ pub struct SDL_SysWMmsg {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct anonymous_0 {
+pub union anonymous_0 {
     pub win: anonymous_1,
     pub dummy: i32,
 }
@@ -58,7 +58,7 @@ pub struct SDL_SysWMinfo {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct anonymous_2 {
+pub union anonymous_2 {
     pub win: anonymous_3,
     pub dummy: [u8; 64],
 }

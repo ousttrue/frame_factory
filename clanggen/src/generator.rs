@@ -11,9 +11,7 @@ use std::{
 use serde::Serialize;
 use tera::Tera;
 
-use crate::{
-    c_macro, Decl, Export, Function, Primitives, Type, TypeMap, UserType,
-};
+use crate::{c_macro, Decl, Export, Function, Primitives, Type, TypeMap, UserType};
 
 fn escape_symbol(src: &str, i: usize) -> Cow<str> {
     match src {
@@ -287,13 +285,13 @@ use super::*;
 {% for e in t.entries -%}
 pub const {{e.name}}: {{t.base_type}} = {{e.value}};
 {% endfor -%}
-{% elif t.user_type == 'struct' -%}
+{% elif t.user_type == 'struct' or t.user_type == 'union' -%}
 {% if t.entries | length == 0 -%}
 pub type {{t.name}} = c_void;
 {% else %}
 #[repr(C)]
 #[derive(Clone, Copy{% if t.has_default -%}, Default{% else -%}{% endif -%})]
-pub struct {{t.name}} {
+pub {{t.user_type}} {{t.name}} {
 {%for e in t.entries %}    pub {{e.name}}: {{e.value}},
 {% endfor -%}
 }
@@ -403,7 +401,7 @@ pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(),
                 // }
 
                 Some(TemplateUserType {
-                    user_type: "struct",
+                    user_type: if s.is_union { "union" } else { "struct" },
                     name: u.get_name().clone(),
                     has_default: s.fields.iter().all(|f| has_default_type(&f.field_type)),
                     base_type: Default::default(),

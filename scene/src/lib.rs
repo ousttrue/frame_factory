@@ -1,4 +1,6 @@
 extern crate gltf2;
+#[macro_use]
+extern crate bitflags;
 
 pub mod message;
 

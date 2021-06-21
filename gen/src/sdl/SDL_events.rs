@@ -407,7 +407,7 @@ pub struct SDL_SysWMEvent {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct SDL_Event {
+pub union SDL_Event {
     pub r#type: u32,
     pub common: SDL_CommonEvent,
     pub display: SDL_DisplayEvent,

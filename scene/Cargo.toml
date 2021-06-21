@@ -10,3 +10,4 @@ edition = "2018"
 cgmath = "0.18.0"
 gltf2 = { path = "../gltf2" }
 serde_json = "1.0.64"
+bitflags = "1.2.1"

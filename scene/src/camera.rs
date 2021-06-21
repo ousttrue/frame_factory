@@ -83,7 +83,7 @@ impl Camera {
             self.calc_projection();
         }
 
-        if state.mouse_flag.has(MouseButtonFlags::MiddleDown) {
+        if state.mouse_flag.contains(MouseButtonFlags::MiddleDown) {
             // shift
             self.shift(
                 -dx as f32 / state.width as f32,
@@ -91,17 +91,17 @@ impl Camera {
             );
         }
 
-        if state.mouse_flag.has(MouseButtonFlags::RightDown) {
+        if state.mouse_flag.contains(MouseButtonFlags::RightDown) {
             // yaw, pitch
             self.yaw_pitch(cgmath::Deg(dx as f32), cgmath::Deg(dy as f32));
         }
 
-        if state.mouse_flag.has(MouseButtonFlags::WheelMinus) {
+        if state.mouse_flag.contains(MouseButtonFlags::WheelMinus) {
             // dolly
             self.dolly(-1);
         }
 
-        if state.mouse_flag.has(MouseButtonFlags::WheelPlus) {
+        if state.mouse_flag.contains(MouseButtonFlags::WheelPlus) {
             // dolly
             self.dolly(1);
         }

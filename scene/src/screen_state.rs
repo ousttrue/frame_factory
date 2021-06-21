@@ -1,13 +1,15 @@
-#[repr(u32)]
-#[derive(Clone, Copy)]
-pub enum MouseButtonFlags {
-    None = 0,
-    LeftDown = 0x01,
-    RightDown = 0x02,
-    MiddleDown = 0x04,
-    WheelPlus = 0x08,
-    WheelMinus = 0x10,
-    CursorUpdate = 0x20,
+
+
+bitflags! {
+    pub struct MouseButtonFlags: u32 {
+        const None = 0;
+        const LeftDown = 0x01;
+        const RightDown = 0x02;
+        const MiddleDown = 0x04;
+        const WheelPlus = 0x08;
+        const WheelMinus = 0x10;
+        const CursorUpdate = 0x20;
+    }
 }
 
 impl Default for MouseButtonFlags {
@@ -16,12 +18,12 @@ impl Default for MouseButtonFlags {
     }
 }
 
-impl MouseButtonFlags {
-    pub fn has(self, flag: MouseButtonFlags) -> bool {
-        let value = self;
-        (value as u32 & flag as u32) != 0
-    }
-}
+// impl MouseButtonFlags {
+//     pub fn has(self, flag: MouseButtonFlags) -> bool {
+//         let value = self;
+//         (value as u32 & flag as u32) != 0
+//     }
+// }
 
 #[repr(C)]
 #[derive(Default)]
@@ -36,6 +38,41 @@ pub struct ScreenState {
 }
 
 impl ScreenState {
+    pub fn new(
+        width: i16,
+        height: i16,
+        mouse_x: i16,
+        mouse_y: i16,
+        button_left: bool,
+        button_middle: bool,
+        button_right: bool,
+        wheel: i32,
+    ) -> ScreenState {
+        let mut mouse_flag = Default::default();
+        if button_left {
+            mouse_flag |= MouseButtonFlags::LeftDown;
+        }
+        if button_middle {
+            mouse_flag |= MouseButtonFlags::MiddleDown;
+        }
+        if button_right {
+            mouse_flag |= MouseButtonFlags::RightDown;
+        }
+        if wheel > 0 {
+            mouse_flag |= MouseButtonFlags::WheelPlus;
+        } else if wheel < 0 {
+            mouse_flag |= MouseButtonFlags::WheelMinus;
+        }
+
+        ScreenState {
+            width,
+            height,
+            mouse_x,
+            mouse_y,
+            mouse_flag,
+        }
+    }
+
     pub fn crop(&self, x: i16, y: i16, w: i16, h: i16) -> ScreenState {
         ScreenState {
             width: w,

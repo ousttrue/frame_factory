@@ -227,8 +227,21 @@ pub fn main() -> Result<(), String> {
                             }
             }
 
+            let mut w = 0;
+            let mut h = 0;
+            sdl::SDL_GetWindowSize(window, &mut w, &mut h);
+
+            // sdl::SDL_GetMouseState
+
+            let state = scene::ScreenState
+            {
+                width: w as i16,
+                height: h as i16,
+                ..Default::default()
+            };
+
             // gui
-            gui.update(window, &device.device, &device.context);
+            gui.update(window, &device.device, &device.context, &state);
 
             // d3d
             let clear_color_with_alpha = [

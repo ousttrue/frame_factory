@@ -92,7 +92,7 @@ impl Gui {
         imgui::ImGui_ImplSDL2_ProcessEvent(p as *const c_void);
     }
 
-    pub unsafe fn docking_sace(&mut self) {
+    pub unsafe fn docking(&mut self) {
         let mut window_flags = imgui::ImGuiWindowFlags_MenuBar | imgui::ImGuiWindowFlags_NoDocking;
 
         {
@@ -155,6 +155,7 @@ impl Gui {
         &mut self,
         device: &ComPtr<d3d11::ID3D11Device>,
         context: &ComPtr<d3d11::ID3D11DeviceContext>,
+        state: &scene::ScreenState,
     ) {
         // 1. Show the big demo window (Most of the sample code is in imgui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if self.show_demo_window {
@@ -242,17 +243,17 @@ impl Gui {
                 let mut pos = Default::default();
                 imgui::pGetWindowPos(&mut pos);
                 // https://forum.dlang.org/thread/dkamxcamwttszxwwxttv@forum.dlang.org
-                // let frame_height = imgui::GetFrameHeight();
 
-                let mut state = scene::ScreenState::default();
-                state.width = size.x as i16;
-                state.height = size.y as i16;
+                let frame_height = imgui::GetFrameHeight() as i16;
 
                 // render
-                // let crop = state.Crop(
-                //     static_cast<int>(pos.x), static_cast<int>(pos.y + frameHeight),
-                //     static_cast<int>(size.x), static_cast<int>(size.y));
-                if let Ok(srv) = scene.render(device, context, &state) {
+                let crop = state.crop(
+                    pos.x as i16,
+                    pos.y as i16 + frame_height,
+                    size.x as i16,
+                    size.y as i16,
+                );
+                if let Ok(srv) = scene.render(device, context, &crop) {
                     imgui::ImageButton(
                         srv.as_ptr() as *mut c_void,
                         &size,
@@ -282,13 +283,14 @@ impl Gui {
         window: *mut c_void,
         device: &ComPtr<d3d11::ID3D11Device>,
         context: &ComPtr<d3d11::ID3D11DeviceContext>,
+        state: &scene::ScreenState,
     ) {
         imgui::ImGui_ImplDX11_NewFrame();
         imgui::ImGui_ImplSDL2_NewFrame(window);
         imgui::NewFrame();
 
-        self.docking_sace();
-        self.gui(device, context);
+        self.docking();
+        self.gui(device, context, state);
 
         // Rendering
         imgui::Render();

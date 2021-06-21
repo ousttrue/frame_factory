@@ -25,3 +25,5 @@ pub mod SDL_keyboard;
 pub use SDL_keyboard::*;
 pub mod SDL_events;
 pub use SDL_events::*;
+pub mod SDL_mouse;
+pub use SDL_mouse::*;

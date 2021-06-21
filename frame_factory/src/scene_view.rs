@@ -1,7 +1,4 @@
-use std::{
-    ffi::{CStr},
-    ptr,
-};
+use std::{ffi::{CStr}, path::Path, ptr};
 
 use com_ptr::ComPtr;
 use com_ptr_util::{ComCreate, ComError};
@@ -49,10 +46,12 @@ impl SceneView {
         if scene_id == 0 {
             return None;
         }
-
+        
         let cstr = unsafe { CStr::from_ptr(path.as_ptr()) }.to_owned();
+        let path = cstr.to_string_lossy().to_string();
+        let path = Path::new(&path);
         Some(SceneView {
-            name: format!("{}##view{}\0", cstr.to_string_lossy(), next_view_id()),
+            name: format!("{}##view{}\0", path.file_stem().unwrap().to_string_lossy(), next_view_id()),
             scene_id: scene_id,
             width: 0,
             height: 0,

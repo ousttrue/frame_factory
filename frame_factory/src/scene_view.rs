@@ -1,8 +1,10 @@
-use std::{ffi::{CStr}, path::Path, ptr};
+use std::{ffi::CStr, path::Path, ptr};
 
 use com_ptr::ComPtr;
 use com_ptr_util::{ComCreate, ComError};
-use frame_factory::{FRAME_FACTORY_scene_load, FRAME_FACTORY_scene_render, FRAME_FACTORY_shutdown};
+use frame_factory::{
+    FRAME_FACTORY_scene_load, FRAME_FACTORY_scene_render, FRAME_FACTORY_scene_destroy,
+};
 use winapi::{
     shared::{dxgiformat, dxgitype::DXGI_SAMPLE_DESC},
     um::d3d11,
@@ -30,13 +32,14 @@ pub struct SceneView {
     scene_id: u32,
     width: i16,
     height: i16,
+    pub open: bool,
 
     texture_srv: Option<TextureWithSRV>,
 }
 
 impl Drop for SceneView {
     fn drop(&mut self) {
-        FRAME_FACTORY_shutdown();
+        FRAME_FACTORY_scene_destroy(self.scene_id);
     }
 }
 
@@ -46,16 +49,21 @@ impl SceneView {
         if scene_id == 0 {
             return None;
         }
-        
+
         let cstr = unsafe { CStr::from_ptr(path.as_ptr()) }.to_owned();
         let path = cstr.to_string_lossy().to_string();
         let path = Path::new(&path);
         Some(SceneView {
-            name: format!("{}##view{}\0", path.file_stem().unwrap().to_string_lossy(), next_view_id()),
-            scene_id: scene_id,
+            name: format!(
+                "{}##view{}\0",
+                path.file_stem().unwrap().to_string_lossy(),
+                next_view_id()
+            ),
+            scene_id,
             width: 0,
             height: 0,
             texture_srv: None,
+            open: true,
         })
     }
 

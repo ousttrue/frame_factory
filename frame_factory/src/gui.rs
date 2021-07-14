@@ -2,6 +2,7 @@ use std::default::Default;
 use std::{ffi::c_void, ptr};
 
 use com_ptr::ComPtr;
+use frame_factory::FRAME_FACTORY_shutdown;
 use gen::imgui;
 use gen::sdl;
 use winapi::um::commdlg::OPENFILENAMEA;
@@ -22,6 +23,7 @@ pub struct Gui {
 impl Drop for Gui {
     fn drop(&mut self) {
         unsafe {
+            FRAME_FACTORY_shutdown();
             imgui::ImGui_ImplDX11_Shutdown();
             imgui::ImGui_ImplSDL2_Shutdown();
             imgui::DestroyContext(ptr::null_mut());
@@ -235,7 +237,7 @@ impl Gui {
             );
             if imgui::Begin(
                 scene.name.as_ptr() as *mut i8,
-                ptr::null_mut(),
+                &mut scene.open,
                 imgui::ImGuiWindowFlags_NoScrollbar | imgui::ImGuiWindowFlags_NoScrollWithMouse,
             ) {
                 let mut size = Default::default();
@@ -276,6 +278,7 @@ impl Gui {
             imgui::End();
             imgui::PopStyleVar(1);
         }
+        self.scenes.retain(|x| x.open);
     }
 
     pub unsafe fn update(

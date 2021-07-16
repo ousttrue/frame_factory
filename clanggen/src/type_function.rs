@@ -18,6 +18,7 @@ fn get_default_value(cursor: CXCursor) -> Option<String> {
 
 pub struct Function {
     pub export_name: Option<String>,
+    pub result_is_const: bool,
     pub result: Rc<Type>,
     pub params: Vec<Param>,
 }
@@ -89,7 +90,7 @@ impl Visitor for FunctionVisitor {
     type Result = Function;
 
     fn result(&mut self, type_map: &mut TypeMap) -> Self::Result {
-        let (result, _is_const) = type_map.type_from_cx_type(self.result_type, self.cursor);
+        let (result, is_const) = type_map.type_from_cx_type(self.result_type, self.cursor);
 
         // let export_name = if self.export {
         let mangling = cx_string::CXString::cursor_mangling(self.cursor).to_string();
@@ -101,6 +102,7 @@ impl Visitor for FunctionVisitor {
         Function {
             export_name: Some(mangling),
             result,
+            result_is_const: is_const,
             params: self.params.drain(..).collect(),
         }
     }

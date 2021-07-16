@@ -1,6 +1,5 @@
-use tera::Tera;
-
 use crate::{Decl, Export, Function, Primitives, Type, TypeMap, UserType};
+use serde::Serialize;
 use std::{
     borrow::Cow,
     cmp::Ordering,
@@ -8,12 +7,32 @@ use std::{
     fs::File,
     io::{BufWriter, Write},
     path::Path,
+    rc::Rc,
 };
+use tera::Tera;
 
 const TEMPLATE: &str = "-- this is generated.
 local ffi = require 'ffi'
 
 ffi.cdef[[
+{% for t in types -%}
+{% if t.user_type == 'enum' -%}
+enum {{t.name}} {
+{% for e in t.entries %}    {{e.name}} = {{e.value}},
+{% endfor -%}
+};
+{% elif t.user_type == 'struct' or t.user_type == 'union' -%}
+{%- if t.entries | length == 0 -%}
+typedef struct {{t.name}} {{t.name}};
+{% else -%}
+typedef {{t.user_type}} {{t.name}} {
+{% for e in t.entries %}     {{e.field}};
+{% endfor -%}
+} {{t.name}};
+{% endif -%}
+{% endif -%}
+{% endfor -%}
+    
 {% if functions | length > 0 -%}
 {% for f in functions -%}{{f}}
 {% endfor %}
@@ -137,20 +156,21 @@ fn get_lua_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
             Decl::Struct(_) => u.get_name().to_owned().into(),
             // to function pointer
             Decl::Function(f) => {
-                let mut params = String::new();
-                for p in &f.params {
-                    std::fmt::Write::write_fmt(
-                        &mut params,
-                        format_args!("{},", get_lua_type(&*p.param_type, context.mutable())),
-                    )
-                    .unwrap();
-                }
-                format!(
-                    "extern fn({}) -> {}",
-                    params,
-                    get_lua_type(&*f.result, context.mutable())
-                )
-                .into()
+                // let mut params = String::new();
+                // for p in &f.params {
+                //     std::fmt::Write::write_fmt(
+                //         &mut params,
+                //         format_args!("{},", get_lua_type(&*p.param_type, context.mutable())),
+                //     )
+                //     .unwrap();
+                // }
+                // format!(
+                //     "extern fn({}) -> {}",
+                //     params,
+                //     get_lua_type(&*f.result, context.mutable())
+                // )
+                // .into()
+                "void".into()
             }
             Decl::None => rename_type(&u.get_name()).into(),
         },
@@ -174,14 +194,9 @@ fn write_function(name: &str, t: &UserType, f: &Function) -> Option<String> {
 
         let mut i = 0;
         for param in &f.params {
-            let comma = if i==f.params.len()-1 {
-                ""
-            }
-            else{
-                ","
-            };
+            let comma = if i == f.params.len() - 1 { "" } else { "," };
             pw.write_fmt(format_args!(
-                "        {} {}{}\n",
+                "    {} {}{}\n",
                 get_lua_type(
                     &*param.param_type,
                     TypeContext {
@@ -215,12 +230,12 @@ fn write_function(name: &str, t: &UserType, f: &Function) -> Option<String> {
     // let mut result = comment;
     let mut result = String::new();
     result.push_str(&format!(
-        "    {} {}({})",
+        "{} {}({})",
         get_lua_type(
             &*f.result,
             TypeContext {
                 is_argument: false,
-                is_const: false
+                is_const: f.result_is_const
             }
         ),
         name,
@@ -234,6 +249,60 @@ fn write_function(name: &str, t: &UserType, f: &Function) -> Option<String> {
     Some(result)
 }
 
+#[derive(Serialize)]
+struct TemplateUserTypeEntry {
+    name: String,
+    value: String,
+    field: String,
+}
+
+#[derive(Serialize)]
+struct TemplateUserType {
+    user_type: &'static str,
+    base_type: String,
+    entries: Vec<TemplateUserTypeEntry>,
+    name: String,
+    has_default: bool,
+}
+
+fn enum_value(value: i64) -> String {
+    if value > 0 {
+        format!("0x{:x}", value as i32)
+    } else {
+        value.to_string()
+    }
+}
+
+fn has_default_type(t: &Rc<Type>) -> bool {
+    match &**t {
+        Type::Pointer(_) => false,
+        Type::Array(_, _) => false,
+        Type::UserType(u) => match &*u.get_decl() {
+            Decl::Typedef(d) => has_default_type(&d.base_type),
+            _ => false,
+        },
+        _ => true,
+    }
+}
+
+fn get_field(name: &str, value: &str) -> String {
+    if value.starts_with('[') {
+        let mut cs = value.to_owned();
+        cs.pop();
+        cs.remove(0);
+
+        let x: Vec<&str> = cs.split(';').collect();
+        // let cs = cs.drain(1..cs.len()-2);
+
+        // split [void*; 2]
+        // let unquoted = value.chars().skip(1).collect();
+        // let x = unquoted.split(';');
+        format!("{} {}[{}]", x[0], name, x[1])
+    } else {
+        return format!("{} {}", value, name);
+    }
+}
+
 ///
 /// entry point
 ///
@@ -244,6 +313,102 @@ pub fn generate(f: &mut File, type_map: &TypeMap, export: &Export) -> Result<(),
     // Using the tera Context struct
     let mut context = tera::Context::new();
 
+    //
+    // enum, struct, typedef
+    //
+    let types = get_sorted_entries(type_map, &export.header, |u| {
+        if let Decl::Function(_) = &*u.get_decl() {
+            false
+        } else {
+            true
+        }
+    });
+
+    // rename anonymous struct / union
+    let mut anonymous_count = 0;
+    for t in &types {
+        match &*t.get_decl() {
+            Decl::Struct(_) => {
+                if t.get_name().len() == 0 {
+                    // anonymous
+                    t.set_name(format!("anonymous_{}", anonymous_count));
+                    anonymous_count += 1;
+                }
+            }
+            _ => (),
+        }
+    }
+
+    let types: Vec<TemplateUserType> = types
+        .iter()
+        .filter_map(|u| match &*u.get_decl() {
+            Decl::Enum(e) => Some(TemplateUserType {
+                user_type: "enum",
+                name: u.get_name().clone(),
+                has_default: false,
+                base_type: get_lua_type(
+                    &*e.base_type,
+                    TypeContext {
+                        is_argument: false,
+                        is_const: false,
+                    },
+                )
+                .to_string(),
+                entries: e
+                    .entries
+                    .iter()
+                    .map(|e| TemplateUserTypeEntry {
+                        name: e.name.clone(),
+                        value: enum_value(e.value),
+                        field: String::new(),
+                    })
+                    .collect(),
+            }),
+            Decl::Struct(s) => {
+                if s.fields.len() == 0 && s.definition.is_some() {
+                    return None;
+                }
+
+                // if s.fields.len() == 0 {
+                //     w.write_fmt(format_args!("pub type {} = c_void;\n", &t.get_name()))?;
+
+                //     return Ok(());
+                // }
+
+                Some(TemplateUserType {
+                    user_type: if s.is_union { "union" } else { "struct" },
+                    name: u.get_name().clone(),
+                    has_default: s.fields.iter().all(|f| has_default_type(&f.field_type)),
+                    base_type: Default::default(),
+                    entries: s
+                        .fields
+                        .iter()
+                        .enumerate()
+                        .map(|(i, f)| {
+                            let name = escape_symbol(&f.name, i).to_string();
+                            let value = get_lua_type(
+                                &*f.field_type,
+                                TypeContext {
+                                    is_argument: false,
+                                    is_const: false,
+                                },
+                            )
+                            .to_string();
+                            let field = get_field(&name, &value);
+                            let t = TemplateUserTypeEntry { name, value, field };
+                            t
+                        })
+                        .collect(),
+                })
+            }
+            _ => None,
+        })
+        .collect();
+    context.insert("types", &types);
+
+    ///
+    /// functions
+    ///
     let functions = get_sorted_entries(type_map, &export.header, |u| {
         if u.get_name().starts_with("operator ") {
             return false;

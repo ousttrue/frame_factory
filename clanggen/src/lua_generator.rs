@@ -16,7 +16,7 @@ local ffi = require 'ffi'
 ffi.cdef[[
 {% if functions | length > 0 -%}
 {% for f in functions -%}{{f}}
-{%- endfor %}
+{% endfor %}
 {% endif %}
 ]]
 ";
@@ -60,30 +60,21 @@ fn escape_symbol(src: &str, i: usize) -> Cow<str> {
 
 fn rename_type(t: &str) -> String {
     match t {
-        "size_t" => "usize".into(),
-        "va_list" => "va_list::VaList".into(),
+        "size_t" => "size_t".into(),
+        "va_list" => "...".into(),
         //
-        "Sint8" => "i8".into(),
-        "Sint16" => "i16".into(),
-        "Sint32" => "i32".into(),
-        "Sint64" => "i64".into(),
-        "Uint8" => "u8".into(),
-        "Uint16" => "u16".into(),
-        "Uint32" => "u32".into(),
-        "Uint64" => "u64".into(),
+        "Sint8" => "char".into(),
+        "Sint16" => "short".into(),
+        "Sint32" => "int".into(),
+        "Sint64" => "int64_t".into(),
+        "Uint8" => "uint8_t".into(),
+        "Uint16" => "uint16_t".into(),
+        "Uint32" => "uint32_t".into(),
+        "Uint64" => "uint64_t".into(),
         //
-        "int8_t" => "i8".into(),
-        "int16_t" => "i16".into(),
-        "int32_t" => "i32".into(),
-        "int64_t" => "i64".into(),
-        "uint8_t" => "u8".into(),
-        "uint16_t" => "u16".into(),
-        "uint32_t" => "u32".into(),
-        "uint64_t" => "u64".into(),
-        //
-        "HWND__" => "c_void".into(),
-        "HDC__" => "c_void".into(),
-        "HINSTANCE__" => "c_void".into(),
+        "HWND__" => "void".into(),
+        "HDC__" => "void".into(),
+        "HINSTANCE__" => "void".into(),
         _ => t.into(),
     }
 }
@@ -105,23 +96,23 @@ impl TypeContext {
 
 fn get_lua_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
     match t {
-        Type::Primitive(Primitives::Void) => "c_void".into(),
+        Type::Primitive(Primitives::Void) => "void".into(),
         Type::Primitive(Primitives::Bool) => "bool".into(),
-        Type::Primitive(Primitives::I8) => "i8".into(),
-        Type::Primitive(Primitives::I16) => "i16".into(),
-        Type::Primitive(Primitives::I32) => "i32".into(),
-        Type::Primitive(Primitives::I64) => "i64".into(),
-        Type::Primitive(Primitives::U8) => "u8".into(),
-        Type::Primitive(Primitives::U16) => "u16".into(),
-        Type::Primitive(Primitives::U32) => "u32".into(),
-        Type::Primitive(Primitives::U64) => "u64".into(),
-        Type::Primitive(Primitives::F32) => "f32".into(),
-        Type::Primitive(Primitives::F64) => "f64".into(),
+        Type::Primitive(Primitives::I8) => "char".into(),
+        Type::Primitive(Primitives::I16) => "short".into(),
+        Type::Primitive(Primitives::I32) => "int".into(),
+        Type::Primitive(Primitives::I64) => "int64_t".into(),
+        Type::Primitive(Primitives::U8) => "uint8_t".into(),
+        Type::Primitive(Primitives::U16) => "uint16_t".into(),
+        Type::Primitive(Primitives::U32) => "uint32_t".into(),
+        Type::Primitive(Primitives::U64) => "uint64_t".into(),
+        Type::Primitive(Primitives::F32) => "float".into(),
+        Type::Primitive(Primitives::F64) => "double".into(),
         Type::Pointer(pointee) => {
             let pointee_type = get_lua_type(&pointee, context.mutable());
             format!(
-                "*{} {}",
-                if context.is_const { "const" } else { "mut" },
+                "{}{}*",
+                if context.is_const { "const " } else { "" },
                 pointee_type
             )
             .into()
@@ -131,8 +122,8 @@ fn get_lua_type(t: &Type, context: TypeContext) -> Cow<'static, str> {
             if context.is_argument {
                 // not FFI-safe warning
                 format!(
-                    "*{} {}",
-                    if context.is_const { "const" } else { "mut" },
+                    "{}{}*",
+                    if context.is_const { "const " } else { "" },
                     element_type
                 )
                 .into()
@@ -183,8 +174,14 @@ fn write_function(name: &str, t: &UserType, f: &Function) -> Option<String> {
 
         let mut i = 0;
         for param in &f.params {
+            let comma = if i==f.params.len()-1 {
+                ""
+            }
+            else{
+                ","
+            };
             pw.write_fmt(format_args!(
-                "        {} {},\n",
+                "        {} {}{}\n",
                 get_lua_type(
                     &*param.param_type,
                     TypeContext {
@@ -193,6 +190,7 @@ fn write_function(name: &str, t: &UserType, f: &Function) -> Option<String> {
                     }
                 ),
                 escape_symbol(&param.name, i),
+                comma
             ))
             .unwrap();
 
@@ -214,7 +212,8 @@ fn write_function(name: &str, t: &UserType, f: &Function) -> Option<String> {
         pw.write_str("    ").unwrap();
     }
 
-    let mut result = comment;
+    // let mut result = comment;
+    let mut result = String::new();
     result.push_str(&format!(
         "    {} {}({})",
         get_lua_type(

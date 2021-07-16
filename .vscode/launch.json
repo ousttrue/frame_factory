@@ -181,5 +181,33 @@
             },
             "cwd": "${workspaceFolder}"
         },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "from cpp header(libclang) => lua",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--package=clanggen",
+                    "--bin=clanggen"
+                ],
+                "filter": {
+                    "name": "clanggen",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "lua",
+                "-IC:/Program Files/LLVM/include",
+                // Export
+                "-EC:/Program Files/LLVM/include/clang-c/Index.h,libclang.dll",
+                // OUt
+                "-O${workspaceFolder}/lua/clang",
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PATH": "${env:PATH};C:\\Program Files\\LLVM\\bin",
+            },
+        },
     ]
 }
